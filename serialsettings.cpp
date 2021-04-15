@@ -48,9 +48,6 @@ bool SerialSettings::fill_all()
         }
      }
 
-
-
-
     //Заполнение данных о компорте
 
     //fill_serial_desctipton(0);

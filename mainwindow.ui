@@ -37,6 +37,15 @@
      <height>20</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>Настрйоки</string>
+    </property>
+    <addaction name="connect"/>
+    <addaction name="disconnect"/>
+    <addaction name="settings"/>
+   </widget>
+   <addaction name="menu"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -45,10 +54,42 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="connect"/>
+   <addaction name="disconnect"/>
+   <addaction name="settings"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="connect">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/connect.png</normaloff>:/1/Resources/connect.png</iconset>
+   </property>
+   <property name="text">
+    <string>Подключиться</string>
+   </property>
+  </action>
+  <action name="disconnect">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/disconnect.png</normaloff>:/1/Resources/disconnect.png</iconset>
+   </property>
+   <property name="text">
+    <string>Отключиться</string>
+   </property>
+  </action>
+  <action name="settings">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/settings.png</normaloff>:/1/Resources/settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Настройки</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="res.qrc"/>
+ </resources>
  <connections/>
 </ui>
