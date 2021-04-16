@@ -33,7 +33,6 @@ bool SerialSettings::fill_all()
 
     serialSettings->SerialSelect->addItems(list);
 
-
      for (int i=0; i<ports.count();i++){
         QSerialPortInfo p = ports.at(i);
         QString descr = p.description();
