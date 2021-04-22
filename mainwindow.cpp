@@ -2,15 +2,42 @@
 #include "ui_mainwindow.h"
 #include "serialsettings.h"
 #include "qcustomplot/qcustomplot.h"
+#include "slip.h"
+#include "transp.h"
+#include "statusbar.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    ui->setupUi(this);
     settings_ptr = new SerialSettings();
     serial = new QSerialPort();
     customPlot = new QCustomPlot();
 
-    ui->setupUi(this);
+    m_transp = new Transp(new Slip(serial));
+    connect(m_transp, &Transp::answerReceive, this, &MainWindow::handlerTranspAnswerReceive);
+    connect(m_transp, &Transp::transpError, this, &MainWindow::handlerTranspError);
+
+    m_timer = new QTimer();
+    connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
+    m_timer->start(1000);
+
+
+    connect(this, &MainWindow::statusUpdate, [this](bool online) {
+        statusBar->setStatus(online);
+    });
+    connect(this, &MainWindow::timeUpdate, [this](const QDateTime &time) {
+        statusBar->setTime(time);
+    });
+    connect(this, &MainWindow::manualUpdate, [this](bool manual) {
+        statusBar->setManual(manual);
+    });
+    statusBar = new StatusBar(ui->statusBar);
+
+
+
+
     connect(serial, &QSerialPort::readyRead, this, &MainWindow::readData);
     ui->disconnect->setEnabled(false);
     ui->pushButton->setText("Start");
@@ -18,20 +45,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-
     std::srand(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0);
-
     ui->verticalLayout_7->addWidget(customPlot);
-
-
-    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes |
-                                    QCP::iSelectLegend | QCP::iSelectPlottables);
-    customPlot->xAxis->setRange(-8, 8);
-    customPlot->yAxis->setRange(-5, 5);
+    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    //customPlot->xAxis->setRange(-8, 8);
+    //customPlot->yAxis->setRange(-5, 5);
     customPlot->axisRect()->setupFullAxesBox();
 
     customPlot->plotLayout()->insertRow(0);
-    QCPTextElement *title = new QCPTextElement(customPlot, "Interaction Example", QFont("sans", 17, QFont::Bold));
+    QCPTextElement *title = new QCPTextElement(customPlot, "Видеосигнал", QFont("sans", 17, QFont::Bold));
     customPlot->plotLayout()->addElement(0, 0, title);
 
     customPlot->xAxis->setLabel("x Axis");
@@ -155,6 +177,52 @@ void MainWindow::on_pushButton_clicked()
     }
 }
 
+void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
+    char cmd = bytes[0];
+    switch(cmd) {
+    case ASK_MCU:
+        if (bytes[1] == OK) {
+            m_online = true;
+            emit statusUpdate(m_online);
+        }
+        break;
+    case REQUEST_STATUS:
+        if (bytes[1] == OK) {
+            bool manual = bytes[2];
+            QDateTime time;
+            uint t;
+            memcpy(&t, bytes.data() + 3, sizeof(uint));
+            time.setTime_t(t);
+            uint32_t dali;
+            memcpy(&dali, bytes.data() + 7, sizeof(uint32_t));
+            emit timeUpdate(time);
+            emit manualUpdate(manual);
+            emit daliUpdate(dali);
+        }
+        break;
+    }
+}
+
+void MainWindow::handlerTranspError() {
+    m_online = false;
+    //serial->close();
+    emit statusUpdate(m_online);
+}
+
+void MainWindow::handlerTimer() {
+    if (m_online) {
+        QByteArray data;
+        data.append(REQUEST_STATUS);
+        m_transp->sendPacket(data);
+    }
+    else {
+        if (serial->isOpen()) {
+            QByteArray data;
+            data.append(ASK_MCU);
+            m_transp->sendPacket(data);
+        }
+     }
+}
 
 
 //customPlot
