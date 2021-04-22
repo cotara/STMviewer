@@ -21,14 +21,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_timer = new QTimer();
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
-    m_timer->start(1000);
+    m_timer->start(5000);
 
 
     connect(this, &MainWindow::statusUpdate, [this](bool online) {
         statusBar->setStatus(online);
     });
-    connect(this, &MainWindow::timeUpdate, [this](const QDateTime &time) {
-        statusBar->setTime(time);
+    connect(this, &MainWindow::dataReadyUpdate, [this](int ready) {
+        statusBar->setDataReady(ready);
     });
     connect(this, &MainWindow::manualUpdate, [this](bool manual) {
         statusBar->setManual(manual);
@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-    connect(serial, &QSerialPort::readyRead, this, &MainWindow::readData);
+    //connect(serial, &QSerialPort::readyRead, this, &MainWindow::readData);
     ui->disconnect->setEnabled(false);
     ui->pushButton->setText("Start");
     ui->pushButton->setEnabled(false);
@@ -187,18 +187,14 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         }
         break;
     case REQUEST_STATUS:
-        if (bytes[1] == OK) {
-            bool manual = bytes[2];
-            QDateTime time;
-            uint t;
-            memcpy(&t, bytes.data() + 3, sizeof(uint));
-            time.setTime_t(t);
-            uint32_t dali;
-            memcpy(&dali, bytes.data() + 7, sizeof(uint32_t));
-            emit timeUpdate(time);
-            emit manualUpdate(manual);
-            emit daliUpdate(dali);
+        int dataReady=-1;
+        if (bytes[1] == DATA_READY) {
+            dataReady = 1;
         }
+        else if (bytes[1] == NO_DATA_READY) {
+            dataReady = 0;
+        }
+        emit dataReadyUpdate(dataReady);
         break;
     }
 }

@@ -28,12 +28,19 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     serialsettings.cpp \
-    qcustomplot/qcustomplot.cpp
+    qcustomplot/qcustomplot.cpp \
+	statusbar.cpp \
+	transp.cpp \
+	slip.cpp \
 
 HEADERS += \
         mainwindow.h \
     serialsettings.h \
-    qcustomplot/qcustomplot.h
+    qcustomplot/qcustomplot.h \
+	statusbar.h \
+	transp.h \
+	slip.h \
+	types.h \
 
 FORMS += \
         mainwindow.ui

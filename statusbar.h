@@ -11,12 +11,12 @@ class StatusBar {
 public:
     StatusBar(QStatusBar *statusBar);
     void setStatus(bool online);
-    void setTime(const QDateTime &time);
+    void setDataReady(int ready);
     void setManual(bool manual);
 
 private:
     QStatusBar *m_statusBar;
-    QLabel *timeLabel;
+    QLabel *dataReadyLabel;
     QLabel *mcuLabel;
     QLabel *modeLabel;
 

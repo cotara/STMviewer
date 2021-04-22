@@ -7,12 +7,12 @@
 StatusBar::StatusBar(QStatusBar *statusBar)
     : m_statusBar(statusBar) {
 
-    timeLabel = new QLabel("", statusBar);
+    dataReadyLabel = new QLabel("Error Status", statusBar);
     mcuLabel = new QLabel("Off-line", statusBar);
     mcuLabel->setStyleSheet(red);
     modeLabel = new QLabel("", statusBar);
 
-    statusBar->addPermanentWidget(timeLabel);
+    statusBar->addPermanentWidget(dataReadyLabel);
     statusBar->addPermanentWidget(mcuLabel);
     statusBar->addPermanentWidget(modeLabel);
 }
@@ -24,13 +24,23 @@ void StatusBar::setStatus(bool online) {
     } else {
         mcuLabel->setStyleSheet(red);
         mcuLabel->setText("Off-line");
-        timeLabel->setText("");
+        dataReadyLabel->setText("");
         modeLabel->setText("");
     }
 }
 
-void StatusBar::setTime(const QDateTime &time) {
-    timeLabel->setText(time.toString());
+void StatusBar::setDataReady(int ready) {
+    if (ready == 1) {
+        dataReadyLabel->setStyleSheet(lightgreen);
+        dataReadyLabel->setText("Data Ready");
+    } else if (ready == 0) {
+        dataReadyLabel->setStyleSheet(yellow);
+        dataReadyLabel->setText("No Data");
+    }
+    else{
+        dataReadyLabel->setStyleSheet(red);
+        dataReadyLabel->setText("Error Status");
+    }
 }
 void StatusBar::setManual(bool manual) {
     if (manual) {

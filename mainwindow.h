@@ -10,8 +10,11 @@
 // answer status
 const char FAIL             = 0x00;
 const char OK               = 0x01;
+
 const char ON               = 0x02;
 const char OFF              = 0x03;
+const char DATA_READY       = 0x04;
+const char NO_DATA_READY    = 0x05;
 
 // commands
 const char ASK_MCU          = 0x41;
@@ -44,7 +47,7 @@ public:
 
 signals:
     void statusUpdate(bool);
-    void timeUpdate(const QDateTime &time);
+    void dataReadyUpdate(int);
     void manualUpdate(bool);
     void daliUpdate(const uint32_t);
 
