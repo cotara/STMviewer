@@ -39,7 +39,7 @@ bool SerialSettings::fill_all()
         QList<QString> list_temp=descr.split(' ');
         for (int k=0;k<list_temp.count();k++){
             if (list_temp.at(k).length() > 0){
-                if (list_temp.at(k) == "Arduino"){
+                if (list_temp.at(k) == "CH340"){
                     on_SerialSelect_currentIndexChanged(i);
                     serialSettings->SerialSelect->setCurrentText(ports.at(i).portName());
                 }

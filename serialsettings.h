@@ -47,7 +47,6 @@ signals:
 public slots:
 
 private slots:
-
     void on_SerialSelect_currentIndexChanged(int index);
     void on_Ok_Cancel_box_clicked(QAbstractButton *button);
     void on_UpdateAvaiblePorts_clicked();

@@ -6,6 +6,7 @@
 #include "transp.h"
 #include "statusbar.h"
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -21,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_timer = new QTimer();
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
-    m_timer->start(5000);
+
 
 
     connect(this, &MainWindow::statusUpdate, [this](bool online) {
@@ -36,17 +37,40 @@ MainWindow::MainWindow(QWidget *parent) :
     statusBar = new StatusBar(ui->statusBar);
 
 
-
-
-    //connect(serial, &QSerialPort::readyRead, this, &MainWindow::readData);
     ui->disconnect->setEnabled(false);
-    ui->pushButton->setText("Start");
-    ui->pushButton->setEnabled(false);
-
 
 
     std::srand(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0);
-    ui->verticalLayout_7->addWidget(customPlot);
+    //Интерфейс
+    layout = new QHBoxLayout;
+    controlLayout = new QVBoxLayout;
+    controlGroup = new QGroupBox;
+    getButton = new QPushButton;
+    autoGetCheckBox = new QCheckBox;
+    autoSaveShotCheckBox = new QCheckBox;
+    shotsComboBox = new QComboBox;
+
+    centralWidget()->setLayout(layout);
+    layout->addWidget(customPlot);
+    layout->addWidget(controlGroup);
+    controlGroup->setLayout(controlLayout);
+    controlGroup->setMinimumWidth(100);
+    customPlot->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+
+    controlLayout->addWidget(autoGetCheckBox);
+    autoGetCheckBox->setText("Авто-получение по готовности");
+    controlLayout->addWidget(autoSaveShotCheckBox);
+    autoSaveShotCheckBox->setText("Авто-сохранение снимка");
+    controlLayout->addWidget(getButton);
+    getButton->setText("Получить снимок, если готов");
+    connect(getButton,&QPushButton::clicked,this, &MainWindow::manualGetShotButton);
+    controlLayout->addWidget(shotsComboBox);
+    //connect(shotsComboBox,&QComboBox::currentTextChanged,this, &MainWindow::selectShot);
+    connect(shotsComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          [=](int index){
+            selectShot(index);
+    });
+    //Настройка CustomPlot
     customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
     //customPlot->xAxis->setRange(-8, 8);
     //customPlot->yAxis->setRange(-5, 5);
@@ -65,11 +89,6 @@ MainWindow::MainWindow(QWidget *parent) :
     customPlot->legend->setSelectedFont(legendFont);
     customPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
 
-    /*addRandomGraph();
-    addRandomGraph();
-    addRandomGraph();
-    addRandomGraph();*/
-    customPlot->rescaleAxes();
 
     // connect slot that ties some axis selections together (especially opposite axes):
     connect(customPlot, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged()));
@@ -89,11 +108,10 @@ MainWindow::MainWindow(QWidget *parent) :
     // connect slot that shows a message in the status bar when a graph is clicked:
     connect(customPlot, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
 
-    // setup policy and connect slot for context menu popup:
-    customPlot->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(customPlot, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequest(QPoint)));
-
-
+    QDir dir(dirname);
+    if (!dir.exists()) {
+        QDir().mkdir(dirname);
+    }
 }
 
 MainWindow::~MainWindow()
@@ -119,7 +137,7 @@ void MainWindow::on_connect_triggered()
         ui->connect->setEnabled(false);
         ui->settings->setEnabled(false);
         ui->disconnect->setEnabled(true);
-        ui->pushButton->setEnabled(true);
+        m_timer->start(1000);
 
     }
     else{
@@ -134,51 +152,36 @@ void MainWindow::on_disconnect_triggered()
         ui->connect->setEnabled(true);
         ui->settings->setEnabled(true);
         ui->disconnect->setEnabled(false);
-        ui->pushButton->setEnabled(false);
         ui->statusBar->showMessage("Отключено от " + settings_ptr->getName());
+        m_timer->stop();
+        m_online=false;
+        emit statusUpdate(m_online);
+        emit dataReadyUpdate(-1);
     }
     else {
         ui->statusBar->showMessage("Невозможно отключиться от COM-порта");
     }
 }
 
-//Прием данных из COM-порта
-void MainWindow::readData()
+void MainWindow::manualGetShotButton()
 {
-    const QByteArray data = serial->readAll();
-    static QByteArray stringa;
-
-    for (char i : data){
-        if( i!='\n')
-            fromSTM[counter++]=i;
-        else{
-            addUserGraph(fromSTM,counter);
-            counter=0;
-        }
-   }
-
+    QByteArray data;
+    data.append(REQUEST_POINTS);
+    m_transp->sendPacket(data);
 }
 
-void MainWindow::on_pushButton_clicked()
+
+void MainWindow::selectShot(int index)
 {
-    if(!butState){
-        QString message = "START";
-                message+= '\n';
-        serial->write(message.toUtf8().data());
-        ui->pushButton->setText("Stop");
-        butState=1;
-    }
-    else{
-        QString message = "STOP";
-                message+= '\n';
-        serial->write(message.toUtf8().data());
-        ui->pushButton->setText("Start");
-        butState=0;
-    }
+    QByteArray shot = shots.at(index);                   //Взяли из листа нужный шот.
+
+    addUserGraph(shot,shot.size());
 }
 
+//Обработка входящих пакетов
 void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     char cmd = bytes[0];
+    int dataReady=-1;
     switch(cmd) {
     case ASK_MCU:
         if (bytes[1] == OK) {
@@ -187,14 +190,45 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         }
         break;
     case REQUEST_STATUS:
-        int dataReady=-1;
         if (bytes[1] == DATA_READY) {
             dataReady = 1;
+            if(autoGetCheckBox->isChecked()){   //Если включен автозапрос данных
+                QByteArray data;
+                data.append(REQUEST_POINTS);
+                m_transp->sendPacket(data);
+            }
         }
         else if (bytes[1] == NO_DATA_READY) {
             dataReady = 0;
         }
         emit dataReadyUpdate(dataReady);
+        break;
+     case REQUEST_POINTS:
+        if (bytes[1] == OK) {
+            bytes.remove(0, 2);                     //Удалили 2 байта (команду и значение)
+            shots.append(bytes);                    //Добавили шот в лист
+            //addUserGraph(bytes,bytes.size());
+            shotsComboBox->addItem(QString::number(shots.count()));
+            shotsComboBox->setCurrentIndex(shots.count()-1);
+            //Если включено автосохранение
+            if(autoSaveShotCheckBox->isChecked()){
+                if (dirname.isEmpty()){
+                    QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
+                }
+                else{
+                    filename=QString::number(shots.count());
+                    file.setFileName(dirname + "/" + filename + ".txt");
+                    if(file.open(QIODevice::WriteOnly) == true){
+                        file.write(bytes);
+                        file.close();
+                     }
+                }
+            }
+
+        }
+        else if(bytes[1] == NO_DATA_READY){
+            QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
+        }
         break;
     }
 }
@@ -206,7 +240,7 @@ void MainWindow::handlerTranspError() {
 }
 
 void MainWindow::handlerTimer() {
-    if (m_online) {
+    if (m_online) {      
         QByteArray data;
         data.append(REQUEST_STATUS);
         m_transp->sendPacket(data);
@@ -219,7 +253,6 @@ void MainWindow::handlerTimer() {
         }
      }
 }
-
 
 //customPlot
 void MainWindow::titleDoubleClick(QMouseEvent* event)
@@ -339,39 +372,7 @@ void MainWindow::mouseWheel()
     customPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
 }
 
-void MainWindow::addRandomGraph()
-{
-  int n = 50; // number of points in graph
-  double xScale = (std::rand()/(double)RAND_MAX + 0.5)*2;
-  double yScale = (std::rand()/(double)RAND_MAX + 0.5)*2;
-  double xOffset = (std::rand()/(double)RAND_MAX - 0.5)*4;
-  double yOffset = (std::rand()/(double)RAND_MAX - 0.5)*10;
-  double r1 = (std::rand()/(double)RAND_MAX - 0.5)*2;
-  double r2 = (std::rand()/(double)RAND_MAX - 0.5)*2;
-  double r3 = (std::rand()/(double)RAND_MAX - 0.5)*2;
-  double r4 = (std::rand()/(double)RAND_MAX - 0.5)*2;
-  QVector<double> x(n), y(n);
-  for (int i=0; i<n; i++)
-  {
-    x[i] = (i/(double)n-0.5)*10.0*xScale + xOffset;
-    y[i] = (qSin(x[i]*r1*5)*qSin(qCos(x[i]*r2)*r4*3)+r3*qCos(qSin(x[i])*r4*2))*yScale + yOffset;
-  }
-
-  customPlot->addGraph();
-  customPlot->graph()->setName(QString("New graph %1").arg(customPlot->graphCount()-1));
-  customPlot->graph()->setData(x, y);
-  customPlot->graph()->setLineStyle((QCPGraph::LineStyle)(std::rand()%5+1));
-  if (std::rand()%100 > 50)
-    customPlot->graph()->setScatterStyle(QCPScatterStyle((QCPScatterStyle::ScatterShape)(std::rand()%14+1)));
-  QPen graphPen;
-  graphPen.setColor(QColor(std::rand()%245+10, std::rand()%245+10, std::rand()%245+10));
-  graphPen.setWidthF(std::rand()/(double)RAND_MAX*2+1);
-  customPlot->graph()->setPen(graphPen);
-  customPlot->replot();
-
-}
-
-void MainWindow::addUserGraph(int* buf, int len){
+void MainWindow::addUserGraph(QByteArray &buf, int len){
 
     int n = len; // number of points in graph
 
@@ -380,10 +381,12 @@ void MainWindow::addUserGraph(int* buf, int len){
     for (int i=0; i<len; i++)
     {
       x[i] = i;
-      y[i] = buf[i];
+      y[i] = buf.at(i);
     }
+    if(customPlot->graphCount()!=0)
+        customPlot->clearGraphs();
     customPlot->addGraph();
-    customPlot->graph()->setName(QString("New graph %1").arg(customPlot->graphCount()-1));
+    customPlot->graph()->setName(QString("New graph %1").arg(shots.count()));
     customPlot->graph()->setData(x, y);
     /*
     customPlot->graph()->setLineStyle((QCPGraph::LineStyle)(std::rand()%5+1));
@@ -394,45 +397,9 @@ void MainWindow::addUserGraph(int* buf, int len){
     graphPen.setWidthF(std::rand()/(double)RAND_MAX*2+1);
     customPlot->graph()->setPen(graphPen);
     */
+    customPlot->rescaleAxes();
     customPlot->replot();
-}
-void MainWindow::removeSelectedGraph()
-{
-  if (customPlot->selectedGraphs().size() > 0)
-  {
-    customPlot->removeGraph(customPlot->selectedGraphs().first());
-    customPlot->replot();
-  }
-}
 
-void MainWindow::removeAllGraphs()
-{
-  customPlot->clearGraphs();
-  customPlot->replot();
-}
-
-void MainWindow::contextMenuRequest(QPoint pos)
-{
-  QMenu *menu = new QMenu(this);
-  menu->setAttribute(Qt::WA_DeleteOnClose);
-
-  if (customPlot->legend->selectTest(pos, false) >= 0) // context menu on legend requested
-  {
-    menu->addAction("Move to top left", this, SLOT(moveLegend()))->setData((int)(Qt::AlignTop|Qt::AlignLeft));
-    menu->addAction("Move to top center", this, SLOT(moveLegend()))->setData((int)(Qt::AlignTop|Qt::AlignHCenter));
-    menu->addAction("Move to top right", this, SLOT(moveLegend()))->setData((int)(Qt::AlignTop|Qt::AlignRight));
-    menu->addAction("Move to bottom right", this, SLOT(moveLegend()))->setData((int)(Qt::AlignBottom|Qt::AlignRight));
-    menu->addAction("Move to bottom left", this, SLOT(moveLegend()))->setData((int)(Qt::AlignBottom|Qt::AlignLeft));
-  } else  // general context menu on graphs requested
-  {
-    menu->addAction("Add random graph", this, SLOT(addRandomGraph()));
-    if (customPlot->selectedGraphs().size() > 0)
-      menu->addAction("Remove selected graph", this, SLOT(removeSelectedGraph()));
-    if (customPlot->graphCount() > 0)
-      menu->addAction("Remove all graphs", this, SLOT(removeAllGraphs()));
-  }
-
-  menu->popup(customPlot->mapToGlobal(pos));
 }
 
 void MainWindow::moveLegend()

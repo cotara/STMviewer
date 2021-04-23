@@ -43,7 +43,8 @@ HEADERS += \
 	types.h \
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+        serialsettings.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

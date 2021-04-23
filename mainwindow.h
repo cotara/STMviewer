@@ -6,6 +6,8 @@
 #include "serialsettings.h"
 #include "qcustomplot/qcustomplot.h"
 #include <QTimer>
+#include <QVBoxLayout>
+
 
 // answer status
 const char FAIL             = 0x00;
@@ -19,13 +21,8 @@ const char NO_DATA_READY    = 0x05;
 // commands
 const char ASK_MCU          = 0x41;
 const char REQUEST_STATUS   = 0x50;
-const char REQUEST_TIME     = 0x71;
-const char SET_TIME         = 0x72;
-const char REQUEST_PROG     = 0x81;
-const char SET_PROG         = 0x82;
-const char MANUAL_CONTROL   = 0x91;
-const char SET_MANUAL_MODE  = 0x93;
-const char BALLAST_INIT     = 0xA0;
+const char REQUEST_POINTS   = 0x70;
+
 
 class QSerialPort;
 class QTimer;
@@ -49,18 +46,13 @@ signals:
     void statusUpdate(bool);
     void dataReadyUpdate(int);
     void manualUpdate(bool);
-    void daliUpdate(const uint32_t);
 
 private slots:
     void on_settings_triggered();
-
     void on_connect_triggered();
-
     void on_disconnect_triggered();
-
-    void readData();
-
-    void on_pushButton_clicked();
+    void manualGetShotButton();
+    void selectShot(int index);
 
     //customPlots
     void titleDoubleClick(QMouseEvent *event);
@@ -69,32 +61,37 @@ private slots:
     void selectionChanged();
     void mousePress();
     void mouseWheel();
-    void addRandomGraph();
-    void removeSelectedGraph();
-    void removeAllGraphs();
-    void contextMenuRequest(QPoint pos);
     void moveLegend();
     void graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
+    void addUserGraph(QByteArray &buf, int len);
 
-    void addUserGraph(int* buf, int len);
-
+    //Slip handlers
     void handlerTranspAnswerReceive(QByteArray &bytes);
     void handlerTranspError();
     void handlerTimer();
+
 
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
     QCustomPlot *customPlot;
     QSerialPort *serial;
-    int butState=0;
-    int fromSTM[11000];
-    int counter=0;
-
-    bool m_online = false;
     Transp *m_transp;
     QTimer *m_timer;
     StatusBar *statusBar;
+
+    QHBoxLayout *layout;
+    QVBoxLayout *controlLayout;
+    QPushButton *getButton;
+    QGroupBox *controlGroup;
+    QCheckBox * autoGetCheckBox, *autoSaveShotCheckBox;
+    QComboBox *shotsComboBox;
+
+    QList<QByteArray> shots;
+    QString dirname = "log";
+    QString filename;
+    QFile file;
+    bool m_online = false;
 
 };
 
