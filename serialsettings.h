@@ -29,7 +29,7 @@ public:
      void updateSettings();
 
 private:
-    QSerialPort::BaudRate boudeRate = QSerialPort::Baud9600;
+    QSerialPort::BaudRate boudeRate = QSerialPort::Baud115200;
     QSerialPort::DataBits dataBits = QSerialPort::Data8;
     QSerialPort::Parity parity = QSerialPort::NoParity;
     QSerialPort::StopBits stopBits = QSerialPort::OneStop;

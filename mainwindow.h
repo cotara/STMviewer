@@ -22,6 +22,7 @@ const char NO_DATA_READY    = 0x05;
 const char ASK_MCU          = 0x41;
 const char REQUEST_STATUS   = 0x50;
 const char REQUEST_POINTS   = 0x70;
+const char WRITE_POINTS     = 0x74;
 
 
 class QSerialPort;
@@ -45,7 +46,8 @@ public:
 signals:
     void statusUpdate(bool);
     void dataReadyUpdate(int);
-    void manualUpdate(bool);
+    void infoUpdate(int);
+    void downloadUpdate(bool);
 
 private slots:
     void on_settings_triggered();
@@ -53,8 +55,8 @@ private slots:
     void on_disconnect_triggered();
     void manualGetShotButton();
     void selectShot(int index);
-
-    //customPlots
+    void on_clearButton();
+    //customPlot
     void titleDoubleClick(QMouseEvent *event);
     void axisLabelDoubleClick(QCPAxis* axis, QCPAxis::SelectablePart part);
     void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
@@ -70,7 +72,6 @@ private slots:
     void handlerTranspError();
     void handlerTimer();
 
-
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
@@ -83,16 +84,17 @@ private:
     QHBoxLayout *layout;
     QVBoxLayout *controlLayout;
     QPushButton *getButton;
+    QPushButton *clearButton;
     QGroupBox *controlGroup;
     QCheckBox * autoGetCheckBox, *autoSaveShotCheckBox;
     QComboBox *shotsComboBox;
+    QSpacerItem *m_spacer;
 
     QList<QByteArray> shots;
     QString dirname = "log";
     QString filename;
     QFile file;
     bool m_online = false;
-
 };
 
 #endif // MAINWINDOW_H

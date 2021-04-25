@@ -15,6 +15,8 @@ public:
     Transp(Slip *slip);
     ~Transp();
     void sendPacket(const QByteArray &bytes);
+    void setTimeoutValue(int n);
+    int getQueueCount();
 
 signals:
     void answerReceive(QByteArray &bytes);
@@ -26,6 +28,7 @@ private:
     QTimer *timeout;
     int waitACK = 0;
     int repeatCount = 0;
+    int timeoutValue=500;
 
     uint16_t crc16(const QByteArray &buf, int len);
     bool checkCrc16(QByteArray &buf);

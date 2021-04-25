@@ -42,20 +42,18 @@ bool SerialSettings::fill_all()
                 if (list_temp.at(k) == "CH340"){
                     on_SerialSelect_currentIndexChanged(i);
                     serialSettings->SerialSelect->setCurrentText(ports.at(i).portName());
+                    fill_serial_desctipton(i);
                 }
             }
         }
      }
 
-    //Заполнение данных о компорте
-
-    //fill_serial_desctipton(0);
-
     //Заполнение настроек компорта
+    serialSettings->speedBox->addItem(QStringLiteral("115200"), QSerialPort::Baud115200);
     serialSettings->speedBox->addItem(QStringLiteral("9600"), QSerialPort::Baud9600);
     serialSettings->speedBox->addItem(QStringLiteral("19200"), QSerialPort::Baud19200);
     serialSettings->speedBox->addItem(QStringLiteral("38400"), QSerialPort::Baud38400);
-    serialSettings->speedBox->addItem(QStringLiteral("115200"), QSerialPort::Baud115200);
+
 
     serialSettings->dataBitBox->addItem(QStringLiteral("5"), QSerialPort::Data5);
     serialSettings->dataBitBox->addItem(QStringLiteral("6"), QSerialPort::Data6);
@@ -74,6 +72,7 @@ bool SerialSettings::fill_all()
     serialSettings->stopBitBox->addItem(QStringLiteral("2"), QSerialPort::TwoStop);
     serialSettings->stopBitBox->setCurrentText(QVariant::fromValue(stopBits).toString());
 
+    updateSettings();
     return true;
 
 }

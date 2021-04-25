@@ -3,15 +3,14 @@
 #include <QTimer>
 #include <QDebug>
 
-#define TIMEOUT 500
 
 Transp::Transp(Slip *slip) : m_slip(slip) {
-    connect(m_slip, &Slip::packetReceive, this, Transp::slipPacketReceive);
+    connect(m_slip, &Slip::packetReceive, this, &Transp::slipPacketReceive);
 
     timeout = new QTimer;
-    timeout->setInterval(TIMEOUT);
+    timeout->setInterval(timeoutValue);
 
-    connect(timeout, &QTimer::timeout, this, Transp::timeoutHandler);
+    connect(timeout, &QTimer::timeout, this, &Transp::timeoutHandler);
 }
 
 Transp::~Transp() {
@@ -46,9 +45,19 @@ void Transp::sendPacket(const QByteArray &bytes) {
     if (!waitACK) {
         waitACK = 1;
         m_slip->sendPacket(buff);
+        timeout->setInterval(timeoutValue);
         timeout->start();
     }
 }
+
+void Transp::setTimeoutValue(int n){
+    timeoutValue=n;
+}
+int Transp::getQueueCount(){
+    return sendQueue.count();
+}
+
+
 
 void Transp::slipPacketReceive(QByteArray &bytes) {
     if (waitACK) {
@@ -63,6 +72,7 @@ void Transp::slipPacketReceive(QByteArray &bytes) {
                 if (!sendQueue.isEmpty()) {
                     waitACK = 1;
                     m_slip->sendPacket(sendQueue.head());
+                    timeout->setInterval(timeoutValue);
                     timeout->start();
                 } else
                     waitACK = 0;
