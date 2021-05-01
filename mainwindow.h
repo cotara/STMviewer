@@ -10,19 +10,16 @@
 
 
 // answer status
-const char FAIL             = 0x00;
-const char OK               = 0x01;
-
-const char ON               = 0x02;
-const char OFF              = 0x03;
-const char DATA_READY       = 0x04;
-const char NO_DATA_READY    = 0x05;
+const unsigned short FAIL             = 0x0000;
+const unsigned short OK               = 0x0101;
+const unsigned short DATA_READY       = 0xFFF1;
+const unsigned short NO_DATA_READY    = 0xFFFF;
 
 // commands
-const char ASK_MCU          = 0x41;
-const char REQUEST_STATUS   = 0x50;
-const char REQUEST_POINTS   = 0x70;
-const char WRITE_POINTS     = 0x74;
+const unsigned short ASK_MCU          = 0x41;
+const unsigned short REQUEST_STATUS   = 0x50;
+const unsigned short REQUEST_POINTS   = 0x70;
+const unsigned short WRITE_POINTS     = 0x74;
 
 
 class QSerialPort;
@@ -53,7 +50,9 @@ private slots:
     void on_settings_triggered();
     void on_connect_triggered();
     void on_disconnect_triggered();
+    void setPacketSize(short n);
     void manualGetShotButton();
+    void getPacketFromMCU(short n);
     void selectShot(int index);
     void on_clearButton();
     //customPlot
@@ -70,6 +69,7 @@ private slots:
     //Slip handlers
     void handlerTranspAnswerReceive(QByteArray &bytes);
     void handlerTranspError();
+    void reSentInc();
     void handlerTimer();
 
 private:
@@ -83,6 +83,7 @@ private:
 
     QHBoxLayout *layout;
     QVBoxLayout *controlLayout;
+    QSpinBox *packetSizeSpinbox;
     QPushButton *getButton;
     QPushButton *clearButton;
     QGroupBox *controlGroup;
@@ -91,6 +92,10 @@ private:
     QSpacerItem *m_spacer;
 
     QList<QByteArray> shots;
+    QByteArray nowShot;
+    short packetSize=100;
+    short countAvaibleDots=0;
+    short countRecievedDots=0;
     QString dirname = "log";
     QString filename;
     QFile file;

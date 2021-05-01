@@ -8,7 +8,7 @@ Transp::Transp(Slip *slip) : m_slip(slip) {
     connect(m_slip, &Slip::packetReceive, this, &Transp::slipPacketReceive);
 
     timeout = new QTimer;
-    timeout->setInterval(timeoutValue);
+    timeout->setInterval(500);
 
     connect(timeout, &QTimer::timeout, this, &Transp::timeoutHandler);
 }
@@ -45,16 +45,17 @@ void Transp::sendPacket(const QByteArray &bytes) {
     if (!waitACK) {
         waitACK = 1;
         m_slip->sendPacket(buff);
-        timeout->setInterval(timeoutValue);
         timeout->start();
     }
 }
 
-void Transp::setTimeoutValue(int n){
-    timeoutValue=n;
-}
 int Transp::getQueueCount(){
     return sendQueue.count();
+}
+
+void Transp::clearQueue()
+{
+    sendQueue.clear();
 }
 
 
@@ -72,7 +73,6 @@ void Transp::slipPacketReceive(QByteArray &bytes) {
                 if (!sendQueue.isEmpty()) {
                     waitACK = 1;
                     m_slip->sendPacket(sendQueue.head());
-                    timeout->setInterval(timeoutValue);
                     timeout->start();
                 } else
                     waitACK = 0;
@@ -96,6 +96,7 @@ void Transp::timeoutHandler() {
     } else {
         m_slip->sendPacket(sendQueue.head());
         qDebug() << "repeat send";
+        emit reSentInc();
         repeatCount++;
     }
 }

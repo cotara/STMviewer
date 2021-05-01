@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_transp = new Transp(new Slip(serial));
     connect(m_transp, &Transp::answerReceive, this, &MainWindow::handlerTranspAnswerReceive);
     connect(m_transp, &Transp::transpError, this, &MainWindow::handlerTranspError);
+    connect(m_transp, &Transp::reSentInc,this, &MainWindow::reSentInc);
 
     m_timer = new QTimer();
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
@@ -30,7 +31,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &MainWindow::statusUpdate, [this](bool online) { statusBar->setStatus(online); });
     connect(this, &MainWindow::dataReadyUpdate, [this](int ready) { statusBar->setDataReady(ready); });
     connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
-    connect(this, &MainWindow::downloadUpdate, [this](bool downloading) { statusBar->setDownloadGif(downloading); });
 
     //График
     customPlot = new QCustomPlot();
@@ -76,6 +76,7 @@ MainWindow::MainWindow(QWidget *parent) :
     layout = new QHBoxLayout;
     controlLayout = new QVBoxLayout;
     controlGroup = new QGroupBox;
+    packetSizeSpinbox = new QSpinBox;
     getButton = new QPushButton;
     autoGetCheckBox = new QCheckBox;
     autoSaveShotCheckBox = new QCheckBox;
@@ -95,9 +96,19 @@ MainWindow::MainWindow(QWidget *parent) :
     controlLayout->addWidget(autoSaveShotCheckBox);
     autoSaveShotCheckBox->setText("Авто-сохранение снимка");
 
+    controlLayout->addWidget(packetSizeSpinbox);
+    packetSizeSpinbox->setRange(50,1000);
+    packetSizeSpinbox->setValue(100);
+    connect(packetSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+         [=](short i){
+            setPacketSize(i);});
+
     controlLayout->addWidget(getButton);
     getButton->setText("Получить снимок");
     connect(getButton,&QPushButton::clicked,this, &MainWindow::manualGetShotButton);
+
+    m_spacer= new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::Expanding);
+    controlLayout->addSpacerItem(m_spacer);
 
     controlLayout->addWidget(shotsComboBox);
     connect(shotsComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -108,9 +119,6 @@ MainWindow::MainWindow(QWidget *parent) :
     controlLayout->addWidget(clearButton);
     clearButton->setText("Очистить список");
     connect(clearButton,&QPushButton::clicked,this, &MainWindow::on_clearButton);
-
-    m_spacer= new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    controlLayout->addSpacerItem(m_spacer);
 
     //Создание папки с логами, если ее нет.
     QDir dir(dirname);
@@ -140,14 +148,15 @@ void MainWindow::on_connect_triggered()
     serial->setParity(settings_ptr->getParity());
     serial->setStopBits(settings_ptr->getStopBits());
     if (serial->open(QIODevice::ReadWrite)){
-        ui->statusBar->showMessage("Подключено к " + settings_ptr->getName());
+        statusBar->setMessageBar("Подключено к " + settings_ptr->getName());
         ui->connect->setEnabled(false);
         ui->settings->setEnabled(false);
         ui->disconnect->setEnabled(true);
         m_timer->start(1000);
+        statusBar->clearReSent();
     }
     else{
-         ui->statusBar->showMessage("Невозможно подключиться COM-порту");
+         statusBar->setMessageBar("Невозможно подключиться COM-порту");
     }
 }
 void MainWindow::on_disconnect_triggered(){
@@ -156,26 +165,49 @@ void MainWindow::on_disconnect_triggered(){
         ui->connect->setEnabled(true);
         ui->settings->setEnabled(true);
         ui->disconnect->setEnabled(false);
-        ui->statusBar->showMessage("Отключено от " + settings_ptr->getName());
+        statusBar->setMessageBar("Отключено от " + settings_ptr->getName());
         m_timer->stop();
         m_online=false;
         emit statusUpdate(m_online);
+        m_transp->clearQueue();
+        countRecievedDots=0;
+        statusBar->setDownloadBarValue(0);
         emit dataReadyUpdate(-1);
-        emit downloadUpdate(false);
     }
     else {
-        ui->statusBar->showMessage("Невозможно отключиться от COM-порта");
+        statusBar->setMessageBar("Невозможно отключиться от COM-порта");
     }
 }
 
-//Получить шот
-void MainWindow::manualGetShotButton(){
+//Настройка разбиения данных на пакеты
+void MainWindow::setPacketSize(short n){
+    packetSize=n;
+}
+//Запрость у MCU пакет длины n
+void MainWindow::getPacketFromMCU(short n)
+{
     QByteArray data;
-    m_transp->setTimeoutValue(5000);                       //Устанавилваем таймаут повторной отправки на 5 секунд
-    emit downloadUpdate(true);
+    char msb,lsb;
+    msb=(n&0xFF00)>>8;
+    lsb=n&0x00FF;
     data.append(REQUEST_POINTS);
+    data.append(msb);
+    data.append(lsb);
     m_transp->sendPacket(data);
 }
+//Запихиваем в очередь Х запросов в соответствии с разбивкой по пакетам, установленной в спинбоксе
+void MainWindow::manualGetShotButton(){
+    if(countAvaibleDots){
+        statusBar->setDownloadBarRange(countAvaibleDots);
+        while (countAvaibleDots>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
+            getPacketFromMCU(countAvaibleDots>packetSize?packetSize:countAvaibleDots);
+            countAvaibleDots-=packetSize;
+        }
+    }
+    else
+         QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
+}
+
 //Выбрать шот из списка
 void MainWindow::selectShot(int index){
     if(!shots.isEmpty()){
@@ -193,102 +225,97 @@ void MainWindow::on_clearButton(){
 
 //Обработка входящих пакетов
 void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
-    char cmd = bytes[0];
+    unsigned char cmd = bytes[0];
+    unsigned short value = (unsigned char)bytes[1]*256+(unsigned char)bytes[2];
     int dataReady=-1;
     switch(cmd){
-    case ASK_MCU:                                                   //Пришел ответ, mcu жив
-        if (bytes[1] == OK) {
+    case ASK_MCU:                                                           //Пришел ответ, mcu жив
+        if (value == OK) {
             m_online = true;
-            m_timer->start(1000);
-            emit downloadUpdate(false);
             emit statusUpdate(m_online);
         }
         else{
-            qDebug() << "error: wrong answer message!";
+            statusBar->setMessageBar("Error: Wrong ASK_MCU ansver message!");
         }
         break;
-    case REQUEST_STATUS:                                            //Пришел ответ на запрос статуса
-        m_timer->start(1000);
-        if (bytes[1] == DATA_READY) {
-            dataReady = 1;
-            emit downloadUpdate(false);
-            if(autoGetCheckBox->isChecked()){                       //Если включен автозапрос данных
-                    m_transp->setTimeoutValue(5000);                //Устанавилваем таймаут повторной отправки на 5 секунд
-                    QByteArray data;
-                    data.append(REQUEST_POINTS);                    //Заправшиваем точки
-                    emit downloadUpdate(true);
-                    m_transp->sendPacket(data);
+
+
+    case REQUEST_STATUS:                                                    //Пришло количество точек
+        if (value != NO_DATA_READY) {
+            dataReady = value;
+            countAvaibleDots=value;
+            if(autoGetCheckBox->isChecked()){                                //Если включен автозапрос данных
+                manualGetShotButton();                                       //Запрашиваем шот
             }
         }
-        else if (bytes[1] == NO_DATA_READY) {
-            emit downloadUpdate(false);
+        else {
             dataReady = 0;
-        }
-        else{
-            qDebug() << "error: wrong answer message!";
         }
         emit dataReadyUpdate(dataReady);
         break;
-     case REQUEST_POINTS:                                               //Пришли точки
-        m_timer->start(1000);
-        if (bytes[1] == OK) {
-            m_transp->setTimeoutValue(500);                             //Переводим таймаут в обычный режим
-            emit downloadUpdate(false);
-            bytes.remove(0, 2);                                         //Удалили 2 байта (команду и значение)
-            shots.append(bytes);                                        //Добавили шот в лист
-            shotsComboBox->addItem(QString::number(shots.count()));
-            shotsComboBox->setCurrentIndex(shots.count()-1);
-            //Если включено автосохранение
-            if(autoSaveShotCheckBox->isChecked()){
-                if (dirname.isEmpty()){
-                    QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
+
+
+     case REQUEST_POINTS:                                                   //Пришли точки
+        if (value == OK) {
+            bytes.remove(0, 3);                                             //Удалили 3 байта (команду и значение)
+            countRecievedDots+=bytes.count();
+            statusBar->setDownloadBarValue(countRecievedDots);
+            nowShot.append(bytes);                                          //Добавили пришедшие байты в шот
+
+            if (countRecievedDots == statusBar->getDownloadBarRange()){     //Все точки пакета приняты
+                countRecievedDots=0;
+                shots.append(nowShot);                                      //Добавили шот в лист
+                shotsComboBox->addItem(QString::number(shots.count()));
+                shotsComboBox->setCurrentIndex(shots.count()-1);
+
+                //Если включено автосохранение
+                if(autoSaveShotCheckBox->isChecked()){
+                    if (dirname.isEmpty()){
+                        QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
+                    }
+                    else{
+                        filename=QString::number(shots.count());
+                        file.setFileName(dirname + "/" + filename + ".txt");
+                        if(file.open(QIODevice::WriteOnly) == true){
+                            file.write(nowShot);
+                            file.close();
+                         }
+                    }
                 }
-                else{
-                    filename=QString::number(shots.count());
-                    file.setFileName(dirname + "/" + filename + ".txt");
-                    if(file.open(QIODevice::WriteOnly) == true){
-                        file.write(bytes);
-                        file.close();
-                     }
-                }
+                nowShot.clear();
             }
         }
-        else if(bytes[1] == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
-            emit downloadUpdate(false);
+        else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
             QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
         }
-        else{
-            qDebug() << "error: wrong answer message!";
-            emit downloadUpdate(false);
-            m_transp->setTimeoutValue(500);
-        }
+        else
+            statusBar->setMessageBar("Error: Wrong REQUEST_POINTS ansver message!");
         break;
     }
 }
 
 //Обработка ошибок SLIP
 void MainWindow::handlerTranspError() {
-    m_online = false;
-    emit on_disconnect_triggered();                         //Отключаемся
-    emit statusUpdate(m_online);
+    emit on_disconnect_triggered();                         //Отключаемся   
+}
+//Слот на сигнал от m_transp, что произошла повторная отправка
+void MainWindow::reSentInc(){
+    statusBar->incReSent();
 }
 // Обработчик таймаута опроса состояние MCU (1 сек)
 void MainWindow::handlerTimer() {
     statusBar->setInfo(m_transp->getQueueCount());
+    QByteArray data;
     if (m_online) {      
-        QByteArray data;
         data.append(REQUEST_STATUS);
         m_transp->sendPacket(data);
     }
     else {
-        if (serial->isOpen()) {
-            QByteArray data;
+        if (serial->isOpen()) {           
             data.append(ASK_MCU);
             m_transp->sendPacket(data);
         }
      }
-    m_timer->stop();
-    emit downloadUpdate(true);
 }
 
 /**************************************************/

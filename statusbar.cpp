@@ -9,23 +9,33 @@
 StatusBar::StatusBar(QStatusBar *statusBar)
     : m_statusBar(statusBar) {
 
-    dataReadyLabel = new QLabel("", statusBar);
+    dataReadyLabel = new QLabel("Error Status", statusBar);
+    dataReadyLabel->setStyleSheet(red);
     mcuLabel = new QLabel("Off-line", statusBar);
     mcuLabel->setStyleSheet(red);
     infoLabel = new QLabel("", statusBar);
-    downloadGif = new QMovie(":/1/Resources/unnamed2.gif");
-    downloadLabel = new QLabel("",statusBar);
+    downloadBar = new QProgressBar();
+    reSent = new QLabel("Переотправлено: ", statusBar);
 
-
-    downloadLabel->setMovie(downloadGif);
-    downloadLabel->setMinimumWidth(20);
-    statusBar->addPermanentWidget(downloadLabel);
+    statusBar->addPermanentWidget(reSent);
+    downloadBar->setMinimumWidth(100);
+    downloadBar->setMinimumHeight(2);
+    statusBar->addPermanentWidget(downloadBar);
 
     statusBar->addPermanentWidget(dataReadyLabel);
+    dataReadyLabel->setMinimumWidth(50);
+    dataReadyLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    dataReadyLabel->setAlignment(Qt::AlignHCenter);
+
     statusBar->addPermanentWidget(mcuLabel);
+    mcuLabel->setMinimumWidth(50);
+    mcuLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    mcuLabel->setAlignment(Qt::AlignHCenter);
+
     statusBar->addPermanentWidget(infoLabel);
-
-
+    infoLabel->setMinimumWidth(20);
+    infoLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
+    infoLabel->setAlignment(Qt::AlignHCenter);
 }
 
 void StatusBar::setStatus(bool online) {
@@ -39,32 +49,46 @@ void StatusBar::setStatus(bool online) {
 }
 
 void StatusBar::setDataReady(int ready) {
-    if (ready == 1) {
-        dataReadyLabel->setStyleSheet(lightgreen);
-        dataReadyLabel->setText("Data Ready");
+    if (ready < 0) {
+        dataReadyLabel->setStyleSheet(red);
+        dataReadyLabel->setText("Error Status");
+
     } else if (ready == 0) {
         dataReadyLabel->setStyleSheet(yellow);
         dataReadyLabel->setText("No Data");
     }
     else{
-        dataReadyLabel->setStyleSheet(red);
-        dataReadyLabel->setText("Error Status");
+        dataReadyLabel->setStyleSheet(lightgreen);
+        dataReadyLabel->setText(QString::number(ready));
     }
 }
 void StatusBar::setInfo(int info) {
     infoLabel->setText(QString::number(info));
 }
 
-void StatusBar::setDownloadGif(bool downloading)
-{
-    if(downloading){
-        downloadLabel->setMovie(downloadGif);
-        downloadGif->setSpeed(200);
-        downloadGif->start();
-    }
-    else
-        downloadLabel->clear();
-        //downloadGif->stop();
+void StatusBar::setDownloadBarRange(int value){
+    downloadBar->setRange(0,value);
+}
 
+int StatusBar::getDownloadBarRange(){
+    return downloadBar->maximum();
+}
+
+void StatusBar::incReSent(){
+    reSent->setText("Переотправлено: " + QString::number(++reSentCount));
+}
+
+void StatusBar::clearReSent(){
+    reSentCount=0;
+    reSent->setText("Переотправлено: ");
+}
+
+void StatusBar::setMessageBar(QString status){
+    m_statusBar->showMessage(status);
+}
+
+
+void StatusBar::setDownloadBarValue(int value){
+    downloadBar->setValue(value);
 }
 
