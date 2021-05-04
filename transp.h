@@ -37,6 +37,7 @@ private:
 private slots:
     void slipPacketReceive(QByteArray &bytes);
     void timeoutHandler();
+    void slipSerialButtonDisconnected();
 };
 
 #endif // TRANSP_H

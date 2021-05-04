@@ -6,11 +6,13 @@
 
 Transp::Transp(Slip *slip) : m_slip(slip) {
     connect(m_slip, &Slip::packetReceive, this, &Transp::slipPacketReceive);
+    connect(m_slip, &Slip::serialPortClosed,this,&Transp::slipSerialButtonDisconnected);
 
     timeout = new QTimer;
     timeout->setInterval(500);
 
     connect(timeout, &QTimer::timeout, this, &Transp::timeoutHandler);
+
 }
 
 Transp::~Transp() {
@@ -59,7 +61,6 @@ void Transp::clearQueue()
 }
 
 
-
 void Transp::slipPacketReceive(QByteArray &bytes) {
     if (waitACK) {
         if (checkCrc16(bytes)) {
@@ -88,17 +89,24 @@ void Transp::slipPacketReceive(QByteArray &bytes) {
 
 void Transp::timeoutHandler() {
     if (repeatCount > 5) {
+        qDebug() << "error: not ACK";
         timeout->stop();
         repeatCount = 0;
         waitACK = 0;
-        qDebug() << "error: not ACK";
         emit transpError();
     } else {
-        m_slip->sendPacket(sendQueue.head());
         qDebug() << "repeat send";
+        m_slip->sendPacket(sendQueue.head());
         emit reSentInc();
         repeatCount++;
     }
+}
+
+void Transp::slipSerialButtonDisconnected(){
+   timeout->stop();
+   repeatCount = 0;
+   waitACK = 0;
+   qDebug() << "error: serial was closed";
 }
 
 uint16_t Transp::crc16(const QByteArray &buf, int len) {

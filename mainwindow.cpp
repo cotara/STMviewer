@@ -17,14 +17,22 @@ MainWindow::MainWindow(QWidget *parent) :
     settings_ptr = new SerialSettings();
     serial = new QSerialPort();
 
+    m_timer = new QTimer();
+    connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
+
+    //Консоль
+    m_console = new Console;
+    m_console->setMaximumHeight(200);
+
     //Транспортный уровень SLIP протокола
-    m_transp = new Transp(new Slip(serial));
+    m_slip = new Slip(serial,m_console);
+    connect(m_slip,&Slip::serialPortError,this,&MainWindow::on_disconnect_triggered);
+
+    m_transp = new Transp(m_slip);
     connect(m_transp, &Transp::answerReceive, this, &MainWindow::handlerTranspAnswerReceive);
     connect(m_transp, &Transp::transpError, this, &MainWindow::handlerTranspError);
     connect(m_transp, &Transp::reSentInc,this, &MainWindow::reSentInc);
 
-    m_timer = new QTimer();
-    connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
 
     //Статус бар
     statusBar = new StatusBar(ui->statusBar);
@@ -72,20 +80,27 @@ MainWindow::MainWindow(QWidget *parent) :
     // connect slot that shows a message in the status bar when a graph is clicked:
     //connect(customPlot, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
 
+
+
     //Интерфейс
-    layout = new QHBoxLayout;
+    layoutH = new QHBoxLayout;
+    layoutV = new QVBoxLayout;
     controlLayout = new QVBoxLayout;
     controlGroup = new QGroupBox;
     packetSizeSpinbox = new QSpinBox;
     getButton = new QPushButton;
     autoGetCheckBox = new QCheckBox;
     autoSaveShotCheckBox = new QCheckBox;
+    consoleEnable = new QCheckBox;
     shotsComboBox = new QComboBox;
     clearButton = new QPushButton;
 
-    centralWidget()->setLayout(layout);
-    layout->addWidget(customPlot);
-    layout->addWidget(controlGroup);
+    centralWidget()->setLayout(layoutV);
+    layoutV->addLayout(layoutH);
+
+    layoutV->addWidget(m_console);
+    layoutH->addWidget(customPlot);
+    layoutH->addWidget(controlGroup);
     controlGroup->setLayout(controlLayout);
     controlGroup->setMinimumWidth(100);
     customPlot->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
@@ -105,10 +120,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
     controlLayout->addWidget(getButton);
     getButton->setText("Получить снимок");
+    getButton->setEnabled(false);
     connect(getButton,&QPushButton::clicked,this, &MainWindow::manualGetShotButton);
 
     m_spacer= new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     controlLayout->addSpacerItem(m_spacer);
+
+    controlLayout->addWidget(consoleEnable);
+    consoleEnable->setText("Включить вывод в консоль");
+    consoleEnable->setChecked(true);
+    connect(consoleEnable,&QCheckBox::stateChanged,this,&MainWindow::consoleEnabledCheked);
 
     controlLayout->addWidget(shotsComboBox);
     connect(shotsComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -147,36 +168,49 @@ void MainWindow::on_connect_triggered()
     serial->setDataBits(settings_ptr->getDataBits());
     serial->setParity(settings_ptr->getParity());
     serial->setStopBits(settings_ptr->getStopBits());
+
     if (serial->open(QIODevice::ReadWrite)){
         statusBar->setMessageBar("Подключено к " + settings_ptr->getName());
+
         ui->connect->setEnabled(false);
         ui->settings->setEnabled(false);
         ui->disconnect->setEnabled(true);
         m_timer->start(1000);
         statusBar->clearReSent();
+        getButton->setEnabled(true);
+        m_transp->clearQueue();
+        serial->readAll();
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
     }
+
+
 }
 void MainWindow::on_disconnect_triggered(){
+
     if(serial->isOpen()){
         serial->close();
-        ui->connect->setEnabled(true);
-        ui->settings->setEnabled(true);
-        ui->disconnect->setEnabled(false);
         statusBar->setMessageBar("Отключено от " + settings_ptr->getName());
-        m_timer->stop();
-        m_online=false;
-        emit statusUpdate(m_online);
-        m_transp->clearQueue();
-        countRecievedDots=0;
-        statusBar->setDownloadBarValue(0);
-        emit dataReadyUpdate(-1);
+        emit m_slip->serialPortClosed();
     }
     else {
         statusBar->setMessageBar("Невозможно отключиться от COM-порта");
     }
+
+    getButton->setEnabled(false);
+    ui->connect->setEnabled(true);
+    ui->settings->setEnabled(true);
+    ui->disconnect->setEnabled(false);
+
+    m_timer->stop();
+    m_online=false;
+
+    emit statusUpdate(m_online);
+    countRecievedDots=0;
+    statusBar->setDownloadBarValue(0);
+    emit dataReadyUpdate(-1);
+    nowShot.clear();
 }
 
 //Настройка разбиения данных на пакеты
@@ -191,13 +225,18 @@ void MainWindow::getPacketFromMCU(short n)
     msb=(n&0xFF00)>>8;
     lsb=n&0x00FF;
     data.append(REQUEST_POINTS);
+
     data.append(msb);
     data.append(lsb);
     m_transp->sendPacket(data);
 }
+
+
 //Запихиваем в очередь Х запросов в соответствии с разбивкой по пакетам, установленной в спинбоксе
 void MainWindow::manualGetShotButton(){
     if(countAvaibleDots){
+        m_console->putData("REQUEST_POINTS: ");
+        m_timer->stop();
         statusBar->setDownloadBarRange(countAvaibleDots);
         while (countAvaibleDots>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
             getPacketFromMCU(countAvaibleDots>packetSize?packetSize:countAvaibleDots);
@@ -207,7 +246,19 @@ void MainWindow::manualGetShotButton(){
     else
          QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
 }
+//Показать консоль
+void MainWindow::consoleEnabledCheked(bool en){
+    if(en){
+        m_console->show();
+    }
+    else{
+        m_console->clear();
+        m_console->hide();
+    }
 
+
+
+}
 //Выбрать шот из списка
 void MainWindow::selectShot(int index){
     if(!shots.isEmpty()){
@@ -232,15 +283,19 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     case ASK_MCU:                                                           //Пришел ответ, mcu жив
         if (value == OK) {
             m_online = true;
+            m_console->putData(" :RECIEVED ANSWER_MCU\n");
             emit statusUpdate(m_online);
         }
         else{
             statusBar->setMessageBar("Error: Wrong ASK_MCU ansver message!");
+            m_console->putData("Error: Wrong ASK_MCU ansver message!\n");
         }
+        m_console->putData("\n");
         break;
 
 
     case REQUEST_STATUS:                                                    //Пришло количество точек
+        m_console->putData(" :RECIEVED ANSWER_STATUS\n");
         if (value != NO_DATA_READY) {
             dataReady = value;
             countAvaibleDots=value;
@@ -250,12 +305,15 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         }
         else {
             dataReady = 0;
+            m_console->putData("Warning: MCU has no data\n");
         }
         emit dataReadyUpdate(dataReady);
+        m_console->putData("\n");
         break;
 
 
      case REQUEST_POINTS:                                                   //Пришли точки
+        m_console->putData(" :RECIEVED ANSWER_POINTS\n");
         if (value == OK) {
             bytes.remove(0, 3);                                             //Удалили 3 байта (команду и значение)
             countRecievedDots+=bytes.count();
@@ -264,6 +322,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             if (countRecievedDots == statusBar->getDownloadBarRange()){     //Все точки пакета приняты
                 countRecievedDots=0;
+                m_timer->start();
                 shots.append(nowShot);                                      //Добавили шот в лист
                 shotsComboBox->addItem(QString::number(shots.count()));
                 shotsComboBox->setCurrentIndex(shots.count()-1);
@@ -287,9 +346,13 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         }
         else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
             QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
+            m_console->putData("Warning: MCU has no data\n");
         }
-        else
+        else{
             statusBar->setMessageBar("Error: Wrong REQUEST_POINTS ansver message!");
+            m_console->putData("Warning: MCU has no data\n");
+        }
+        m_console->putData("\n");
         break;
     }
 }
@@ -308,11 +371,14 @@ void MainWindow::handlerTimer() {
     QByteArray data;
     if (m_online) {      
         data.append(REQUEST_STATUS);
+        m_console->putData("SEND REQUEST_STATUS: ");
         m_transp->sendPacket(data);
+
     }
     else {
         if (serial->isOpen()) {           
             data.append(ASK_MCU);
+            m_console->putData("SEND ASK_MCU: ");
             m_transp->sendPacket(data);
         }
      }
@@ -325,7 +391,7 @@ void MainWindow::addUserGraph(QByteArray &buf, int len){
     QVector<double> x(len), y(len);
     for (int i=0; i<len; i++){
       x[i] = i;
-      y[i] = buf.at(i);
+      y[i] = (unsigned char)buf.at(i);
     }
     if(customPlot->graphCount()!=0)
         customPlot->clearGraphs();

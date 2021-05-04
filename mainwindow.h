@@ -5,10 +5,11 @@
 #include <QInputDialog>
 #include "serialsettings.h"
 #include "qcustomplot/qcustomplot.h"
+#include "console.h"
 #include <QTimer>
 #include <QVBoxLayout>
-
-
+#include "slip.h"
+#include "console.h"
 // answer status
 const unsigned short FAIL             = 0x0000;
 const unsigned short OK               = 0x0101;
@@ -53,8 +54,10 @@ private slots:
     void setPacketSize(short n);
     void manualGetShotButton();
     void getPacketFromMCU(short n);
+    void consoleEnabledCheked(bool);
     void selectShot(int index);
     void on_clearButton();
+
     //customPlot
     void titleDoubleClick(QMouseEvent *event);
     void axisLabelDoubleClick(QCPAxis* axis, QCPAxis::SelectablePart part);
@@ -76,18 +79,21 @@ private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
     QCustomPlot *customPlot;
+    Console *m_console;
     QSerialPort *serial;
+    Slip *m_slip;
     Transp *m_transp;
     QTimer *m_timer;
     StatusBar *statusBar;
 
-    QHBoxLayout *layout;
+    QHBoxLayout *layoutH;
+    QVBoxLayout *layoutV;
     QVBoxLayout *controlLayout;
     QSpinBox *packetSizeSpinbox;
     QPushButton *getButton;
     QPushButton *clearButton;
     QGroupBox *controlGroup;
-    QCheckBox * autoGetCheckBox, *autoSaveShotCheckBox;
+    QCheckBox * autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QComboBox *shotsComboBox;
     QSpacerItem *m_spacer;
 

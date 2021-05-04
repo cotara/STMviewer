@@ -1,4 +1,5 @@
 #include "slip.h"
+#include "console.h"
 #include <QSerialPort>
 #include <QDebug>
 
@@ -12,44 +13,70 @@ enum {
     STATE_ESC
 };
 
-Slip::Slip(QSerialPort *serial) : serialPort(serial) {
+Slip::Slip(QSerialPort *serial, Console *console) : serialPort(serial), slipConsole(console) {
     connect(serialPort, &QSerialPort::readyRead, [this]() {
         QByteArray bytes = serialPort->readAll();
         for (char i : bytes) {
             new_rx_byte(i);
         }
     });
+    //connect(serialPort,&QSerialPort::errorOccurred,this,&Slip::slipSerialError);
 }
 
 void Slip::sendPacket(const QByteArray &bytes) {
     if (!serialPort->isOpen()) {
+        emit serialPortClosed();
         qDebug() << "serial port not open";
         return;
     }
+    if(send_byte(END))       return;
 
-    send_byte(END);
     for (auto i : bytes) {
         if (i == END) {
-            send_byte(ESC);
+            if(send_byte(ESC)) return;
             i = ESC_END;
         }
         if (i == ESC) {
-            send_byte(ESC);
+            if(send_byte(ESC)) return;
             i = ESC_ESC;
         }
-        send_byte(i);
+        if(send_byte(i)) return;
     }
-    send_byte(END);
+    if(send_byte(END)) return;
+
+    QByteArray temp;
+    temp.append("\n");
+    slipConsole->putData(temp);
+
 }
 
-void Slip::send_byte(const char &byte) {
-    serialPort->write(&byte, 1);
+bool Slip::send_byte(const char &byte) {
+    if (serialPort->isOpen())
+        serialPort->write(&byte, 1);
+
+
+    QSerialPort::SerialPortError err = serialPort->error();
+    if(err){
+        qDebug() << "error: serial Port Error";
+        emit serialPortError();
+        return true;
+    }
+    QByteArray temp;
+    temp.append(byte);
+    slipConsole->putData(temp.toHex());
+    temp = " ";
+    slipConsole->putData(temp);
+    return false;
 }
 
 void Slip::new_rx_byte(char byte) {
+
     switch(byte) {
     case END:
         if (rx_buffer.size()) {
+            if(rx_buffer.size()<20){
+                slipConsole->putData(rx_buffer.toHex());
+            }
             emit packetReceive(rx_buffer);
             rx_buffer.clear();
         }
@@ -73,5 +100,13 @@ void Slip::new_rx_byte(char byte) {
     default:
         rx_buffer.append(byte);
         state = STATE_OK;
+    }
+}
+
+void Slip::slipSerialError(){
+    QSerialPort::SerialPortError err = serialPort->error();
+    if(err){
+       emit serialPortError();
+       serialPort->clearError();
     }
 }

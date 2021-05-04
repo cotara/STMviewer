@@ -25,6 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+    console.cpp \
         main.cpp \
         mainwindow.cpp \
     serialsettings.cpp \
@@ -34,6 +35,7 @@ SOURCES += \
 	slip.cpp \
 
 HEADERS += \
+    console.h \
         mainwindow.h \
     serialsettings.h \
     qcustomplot/qcustomplot.h \
