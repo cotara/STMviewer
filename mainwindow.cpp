@@ -22,8 +22,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Консоль
     m_console = new Console;
-    m_console->setMaximumHeight(200);
-
+    m_console->setMaximumHeight(150);
+    m_console->hide();
     //Транспортный уровень SLIP протокола
     m_slip = new Slip(serial,m_console);
     connect(m_slip,&Slip::serialPortError,this,&MainWindow::on_disconnect_triggered);
@@ -42,18 +42,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //График
     customPlot = new QCustomPlot();
-    std::srand(QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0);
 
     //Настройка CustomPlot
     customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
     customPlot->axisRect()->setupFullAxesBox();
 
-    customPlot->plotLayout()->insertRow(0);
-    QCPTextElement *title = new QCPTextElement(customPlot, "Видеосигнал", QFont("sans", 17, QFont::Bold));
-    customPlot->plotLayout()->addElement(0, 0, title);
+    //customPlot->plotLayout()->insertRow(0);
+    //QCPTextElement *title = new QCPTextElement(customPlot, "Видеосигнал", QFont("sans", 17, QFont::Bold));
+    //customPlot->plotLayout()->addElement(0, 0, title);
 
     customPlot->xAxis->setLabel("X");
+    customPlot->xAxis->setRangeLower(0);
+    customPlot->xAxis->setRangeUpper(11000);
     customPlot->yAxis->setLabel("Y");
+    customPlot->yAxis->setRangeLower(-1);
+    customPlot->yAxis->setRangeUpper(260);
     customPlot->legend->setVisible(true);
     QFont legendFont = font();
     legendFont.setPointSize(10);
@@ -75,77 +78,120 @@ MainWindow::MainWindow(QWidget *parent) :
     // connect some interaction slots:
     connect(customPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisLabelDoubleClick(QCPAxis*,QCPAxis::SelectablePart)));
     //connect(customPlot, SIGNAL(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*)));
-    connect(title, SIGNAL(doubleClicked(QMouseEvent*)), this, SLOT(titleDoubleClick(QMouseEvent*)));
+    //connect(title, SIGNAL(doubleClicked(QMouseEvent*)), this, SLOT(titleDoubleClick(QMouseEvent*)));
 
-    // connect slot that shows a message in the status bar when a graph is clicked:
-    //connect(customPlot, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
-
-
+    //connect slot that shows a message in the status bar when a graph is clicked:
+    connect(customPlot, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
 
     //Интерфейс
-    layoutH = new QHBoxLayout;
     layoutV = new QVBoxLayout;
-    controlLayout = new QVBoxLayout;
-    controlGroup = new QGroupBox;
-    packetSizeSpinbox = new QSpinBox;
-    getButton = new QPushButton;
-    autoGetCheckBox = new QCheckBox;
-    autoSaveShotCheckBox = new QCheckBox;
-    consoleEnable = new QCheckBox;
-    shotsComboBox = new QComboBox;
-    clearButton = new QPushButton;
-
     centralWidget()->setLayout(layoutV);
-    layoutV->addLayout(layoutH);
 
+    layoutH = new QHBoxLayout;
+    layoutV->addLayout(layoutH);
     layoutV->addWidget(m_console);
+
+    controlLayout = new QVBoxLayout;
     layoutH->addWidget(customPlot);
-    layoutH->addWidget(controlGroup);
-    controlGroup->setLayout(controlLayout);
-    controlGroup->setMinimumWidth(100);
+    layoutH->addLayout(controlLayout);
     customPlot->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
-    controlLayout->addWidget(autoGetCheckBox);
-    autoGetCheckBox->setText("Авто-получение по готовности");
+    transmitGroup = new QGroupBox("Обмен данными");
+    appSettingsGroup = new QGroupBox("Настройки интерфейса");
+    logGroup = new QGroupBox("Логирование");
+    historyGrouop = new QGroupBox("История");
 
-    controlLayout->addWidget(autoSaveShotCheckBox);
-    autoSaveShotCheckBox->setText("Авто-сохранение снимка");
+    transmitGroup->setMinimumWidth(100);
+    appSettingsGroup->setMinimumWidth(100);
+    logGroup->setMinimumWidth(100);
+    historyGrouop->setMinimumWidth(100);
 
-    controlLayout->addWidget(packetSizeSpinbox);
-    packetSizeSpinbox->setRange(50,1000);
-    packetSizeSpinbox->setValue(100);
+    controlLayout->addWidget(transmitGroup);
+    controlLayout->addWidget(appSettingsGroup);
+    controlLayout->addWidget(logGroup);
+    controlLayout->addWidget(historyGrouop);
+
+
+    transmitLayout = new QVBoxLayout;
+    appSettingsLayout = new QVBoxLayout;
+    logLayout = new QVBoxLayout;
+    historyLayout = new QVBoxLayout;
+    transmitGroup->setLayout(transmitLayout);
+    appSettingsGroup->setLayout(appSettingsLayout);
+    logGroup->setLayout(logLayout);
+    historyGrouop->setLayout(historyLayout);
+
+    //Настройки передачи
+    packetSizeLabel = new QLabel("Размер пакета:");
+    packetSizeSpinbox = new QSpinBox;
+    ch1CheckBox = new QCheckBox("Канал 1. Карловы Пивовары");
+    ch2CheckBox = new QCheckBox("Канал 1. Нефильтрофф");
+    ch3CheckBox = new QCheckBox("Канал 2. Карловы Пивовары");
+    ch4CheckBox = new QCheckBox("Канал 2. Нефильтрофф");
+    getButton = new QPushButton("Получить снимок");
+    autoGetCheckBox = new QCheckBox("Авто-получение по готовности");
+    transmitLayout->addWidget(packetSizeLabel);
+    transmitLayout->addWidget(packetSizeSpinbox);
+    transmitLayout->addWidget(ch1CheckBox);
+    transmitLayout->addWidget(ch2CheckBox);
+    transmitLayout->addWidget(ch3CheckBox);
+    transmitLayout->addWidget(ch4CheckBox);
+    transmitLayout->addWidget(getButton);
+    transmitLayout->addWidget(autoGetCheckBox);
+
+    packetSizeSpinbox->setRange(50,15000);
+    packetSizeSpinbox->setValue(11000);
     connect(packetSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
          [=](short i){
             setPacketSize(i);});
+    emit packetSizeSpinbox->valueChanged(packetSizeSpinbox->value());
 
-    controlLayout->addWidget(getButton);
-    getButton->setText("Получить снимок");
+    connect(ch1CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh);
+    connect(ch2CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh);
+    connect(ch3CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh);
+    connect(ch4CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh);
+
     getButton->setEnabled(false);
     connect(getButton,&QPushButton::clicked,this, &MainWindow::manualGetShotButton);
 
-    m_spacer= new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    controlLayout->addSpacerItem(m_spacer);
+    autoGetCheckBox->setEnabled(false);
+    //m_spacer= new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::Expanding);
+    //controlLayout->addSpacerItem(m_spacer);
 
-    controlLayout->addWidget(consoleEnable);
-    consoleEnable->setText("Включить вывод в консоль");
-    consoleEnable->setChecked(true);
+    //Настройки интерфейса
+    consoleEnable = new QCheckBox("Вывод в консоль");
+    appSettingsLayout->addWidget(consoleEnable);
+    consoleEnable->setChecked(false);
     connect(consoleEnable,&QCheckBox::stateChanged,this,&MainWindow::consoleEnabledCheked);
 
-    controlLayout->addWidget(shotsComboBox);
-    connect(shotsComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-          [=](int index){
-            selectShot(index);
-    });
+    autoRangeGraph = new QPushButton("Автомасштаб");
+    appSettingsLayout->addWidget(autoRangeGraph);
+    connect(autoRangeGraph,&QPushButton::clicked,this, &MainWindow::autoRangeGraphClicked);
 
-    controlLayout->addWidget(clearButton);
-    clearButton->setText("Очистить список");
-    connect(clearButton,&QPushButton::clicked,this, &MainWindow::on_clearButton);
+    //Настройки логирования
+    autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка");
+    logLayout->addWidget(autoSaveShotCheckBox);
 
     //Создание папки с логами, если ее нет.
     QDir dir(dirname);
     if (!dir.exists()) {
         QDir().mkdir(dirname);
     }
+
+
+    //История
+    shotsComboBox = new QComboBox;
+    clearButton = new QPushButton("Очистить список");
+    historyLayout->addWidget(shotsComboBox);
+    historyLayout->addWidget(clearButton);
+
+    connect(shotsComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          [=](int index){
+            selectShot(index);
+    });
+
+    connect(clearButton,&QPushButton::clicked,this, &MainWindow::on_clearButton);
+
 }
 
 MainWindow::~MainWindow(){
@@ -175,7 +221,7 @@ void MainWindow::on_connect_triggered()
         ui->connect->setEnabled(false);
         ui->settings->setEnabled(false);
         ui->disconnect->setEnabled(true);
-        m_timer->start(1000);
+        m_timer->start(500);
         statusBar->clearReSent();
         getButton->setEnabled(true);
         m_transp->clearQueue();
@@ -210,37 +256,71 @@ void MainWindow::on_disconnect_triggered(){
     countRecievedDots=0;
     statusBar->setDownloadBarValue(0);
     emit dataReadyUpdate(-1);
-    nowShot.clear();
+    nowShotCH1.clear();
+    nowShotCH2.clear();
+    nowShotCH3.clear();
+    nowShotCH4.clear();
 }
 
+//Подсчет количества отмеченных каналов
+void MainWindow::incCountCh(bool st){
+    if(st) chCountChecked++;
+    else   chCountChecked--;
+
+    if(chCountChecked)  autoGetCheckBox->setEnabled(true);
+    else                autoGetCheckBox->setEnabled(false);
+}
 //Настройка разбиения данных на пакеты
 void MainWindow::setPacketSize(short n){
     packetSize=n;
 }
-//Запрость у MCU пакет длины n
-void MainWindow::getPacketFromMCU(short n)
+//Запрость у MCU пакет длины n с канала ch
+void MainWindow::getPacketFromMCU(short n, const unsigned short ch)
 {
     QByteArray data;
     char msb,lsb;
+
+    data.append(ch);
     msb=(n&0xFF00)>>8;
     lsb=n&0x00FF;
-    data.append(REQUEST_POINTS);
-
     data.append(msb);
     data.append(lsb);
     m_transp->sendPacket(data);
 }
 
-
-//Запихиваем в очередь Х запросов в соответствии с разбивкой по пакетам, установленной в спинбоксе
+//Запихиваем в очередь Х запросов в соответствии с разбивкой по пакетам, установленной в спинбоксе и отмеченным каналам
 void MainWindow::manualGetShotButton(){
     if(countAvaibleDots){
+        if (!ch1CheckBox->isChecked() && !ch2CheckBox->isChecked() && !ch3CheckBox->isChecked() && !ch4CheckBox->isChecked()){
+            QMessageBox::critical(nullptr,"Ошибка!","Не выбрано ни одного канала для получения данных");
+            return;
+        }
+
         m_console->putData("REQUEST_POINTS: ");
         m_timer->stop();
-        statusBar->setDownloadBarRange(countAvaibleDots);
-        while (countAvaibleDots>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
-            getPacketFromMCU(countAvaibleDots>packetSize?packetSize:countAvaibleDots);
-            countAvaibleDots-=packetSize;
+        statusBar->setDownloadBarRange(countAvaibleDots*chCountChecked);
+
+
+        if(ch1CheckBox->isChecked())     countAvaibleDotsCH1 = countAvaibleDots;
+        if(ch2CheckBox->isChecked())     countAvaibleDotsCH2 = countAvaibleDots;
+        if(ch3CheckBox->isChecked())     countAvaibleDotsCH3 = countAvaibleDots;
+        if(ch4CheckBox->isChecked())     countAvaibleDotsCH4 = countAvaibleDots;
+
+        while (countAvaibleDotsCH1>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
+            getPacketFromMCU(countAvaibleDotsCH1>packetSize?packetSize:countAvaibleDotsCH1,CH1);
+            countAvaibleDotsCH1-=packetSize;
+        }
+        while (countAvaibleDotsCH2>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
+            getPacketFromMCU(countAvaibleDotsCH2>packetSize?packetSize:countAvaibleDotsCH2,CH2);
+            countAvaibleDotsCH2-=packetSize;
+        }
+        while (countAvaibleDotsCH3>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
+            getPacketFromMCU(countAvaibleDotsCH3>packetSize?packetSize:countAvaibleDotsCH3,CH3);
+            countAvaibleDotsCH3-=packetSize;
+        }
+        while (countAvaibleDotsCH4>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
+            getPacketFromMCU(countAvaibleDotsCH4>packetSize?packetSize:countAvaibleDotsCH4,CH4);
+            countAvaibleDotsCH4-=packetSize;
         }
     }
     else
@@ -256,19 +336,48 @@ void MainWindow::consoleEnabledCheked(bool en){
         m_console->hide();
     }
 
-
-
 }
+
+void MainWindow::autoRangeGraphClicked(){
+    customPlot->rescaleAxes();
+    customPlot->yAxis->setRange(customPlot->yAxis->range().lower-1,customPlot->yAxis->range().upper+5);
+    customPlot->xAxis->setRange(customPlot->xAxis->range().lower,customPlot->xAxis->range().upper );
+    customPlot->replot();
+}
+
 //Выбрать шот из списка
 void MainWindow::selectShot(int index){
-    if(!shots.isEmpty()){
-        QByteArray shot = shots.at(index);                   //Взяли из листа нужный шот.
-        addUserGraph(shot,shot.size());
+    if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
+        QByteArray ch;
+        if(customPlot->graphCount()!=0)
+            customPlot->clearGraphs();
+
+        if(shotsCH1.contains(index)){
+            ch = shotsCH1[index];
+            addUserGraph(ch,ch.size(),1);
+        }
+        if(shotsCH2.contains(index)){
+            ch = shotsCH2[index];
+            addUserGraph(ch,ch.size(),2);
+        }
+        if(shotsCH3.contains(index)){
+            ch = shotsCH3[index];
+            addUserGraph(ch,ch.size(),3);
+        }
+        if(shotsCH4.contains(index)){
+            ch = shotsCH4[index];
+            addUserGraph(ch,ch.size(),4);
+        }
+
     }
 }
 //Очистить список
 void MainWindow::on_clearButton(){
-    shots.clear();
+    shotCountRecieved=0;
+    shotsCH1.clear();
+    shotsCH2.clear();
+    shotsCH3.clear();
+    shotsCH4.clear();
     shotsComboBox->clear();
     customPlot->clearGraphs();
     customPlot->replot();
@@ -283,49 +392,73 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     case ASK_MCU:                                                           //Пришел ответ, mcu жив
         if (value == OK) {
             m_online = true;
-            m_console->putData(" :RECIEVED ANSWER_MCU\n");
+            m_console->putData(" :RECIEVED ANSWER_MCU\n\n");
             emit statusUpdate(m_online);
         }
         else{
             statusBar->setMessageBar("Error: Wrong ASK_MCU ansver message!");
-            m_console->putData("Error: Wrong ASK_MCU ansver message!\n");
+            m_console->putData("Error: Wrong ASK_MCU ansver message!\n\n");
         }
-        m_console->putData("\n");
         break;
 
 
     case REQUEST_STATUS:                                                    //Пришло количество точек
-        m_console->putData(" :RECIEVED ANSWER_STATUS\n");
+        m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
+        countAvaibleDots=value;
         if (value != NO_DATA_READY) {
             dataReady = value;
-            countAvaibleDots=value;
             if(autoGetCheckBox->isChecked()){                                //Если включен автозапрос данных
                 manualGetShotButton();                                       //Запрашиваем шот
             }
         }
         else {
             dataReady = 0;
-            m_console->putData("Warning: MCU has no data\n");
+            m_console->putData("Warning: MCU has no data\n\n");
         }
         emit dataReadyUpdate(dataReady);
-        m_console->putData("\n");
         break;
 
 
-     case REQUEST_POINTS:                                                   //Пришли точки
-        m_console->putData(" :RECIEVED ANSWER_POINTS\n");
-        if (value == OK) {
-            bytes.remove(0, 3);                                             //Удалили 3 байта (команду и значение)
+     case REQUEST_POINTS:
+        if ((value == CH1*256+CH1) || (value == CH2*256+CH2) || (value == CH3*256+CH3) || (value == CH4*256+CH4)){
+            bytes.remove(0, 3);                                                             //Удалили 3 байта (команду и значение)
             countRecievedDots+=bytes.count();
             statusBar->setDownloadBarValue(countRecievedDots);
-            nowShot.append(bytes);                                          //Добавили пришедшие байты в шот
+            if (value == CH1*256+CH1) {
+                nowShotCH1.append(bytes);                                                     //Добавили пришедшие байты в шот
+                 m_console->putData(" :RECIEVED ANSWER_POINTS CH1  ");
+            }
+            else if(value == CH2*256+CH2){
+                 nowShotCH2.append(bytes);
+                  m_console->putData(" :RECIEVED ANSWER_POINTS CH2  ");
+            }
+            else if(value == CH3*256+CH3){
+                 nowShotCH3.append(bytes);
+                 m_console->putData(" :RECIEVED ANSWER_POINTS CH3  ");
+            }
+            else if(value == CH4*256+CH4){
+                 nowShotCH4.append(bytes);
+                 m_console->putData(" :RECIEVED ANSWER_POINTS CH4  ");
+            }
 
-            if (countRecievedDots == statusBar->getDownloadBarRange()){     //Все точки пакета приняты
+            if (countRecievedDots == statusBar->getDownloadBarRange()){     //Все точки всех отмеченных каналов приняты
+                m_console->putData("\n\n");
+                //Раскладываем принятое по контенерам. Отдельно хранятся 4 канала в мапе.
+                if(!nowShotCH1.isEmpty())
+                    shotsCH1.insert(shotCountRecieved,nowShotCH1);
+                if(!nowShotCH2.isEmpty())
+                    shotsCH2.insert(shotCountRecieved,nowShotCH2);
+                if(!nowShotCH3.isEmpty())
+                    shotsCH3.insert(shotCountRecieved,nowShotCH3);
+                if(!nowShotCH4.isEmpty())
+                    shotsCH4.insert(shotCountRecieved,nowShotCH4);
+
+                shotCountRecieved++;
                 countRecievedDots=0;
-                m_timer->start();
-                shots.append(nowShot);                                      //Добавили шот в лист
-                shotsComboBox->addItem(QString::number(shots.count()));
-                shotsComboBox->setCurrentIndex(shots.count()-1);
+                countAvaibleDots=0;
+
+                shotsComboBox->addItem(QString::number(shotCountRecieved));
+                shotsComboBox->setCurrentIndex(shotCountRecieved-1);
 
                 //Если включено автосохранение
                 if(autoSaveShotCheckBox->isChecked()){
@@ -333,28 +466,43 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
                     }
                     else{
-                        filename=QString::number(shots.count());
+                        filename=QString::number(shotCountRecieved);
                         file.setFileName(dirname + "/" + filename + ".txt");
                         if(file.open(QIODevice::WriteOnly) == true){
-                            file.write(nowShot);
+                            file.write(nowShotCH1);
+                            file.write(nowShotCH2);
+                            file.write(nowShotCH3);
+                            file.write(nowShotCH4);
                             file.close();
                          }
                     }
                 }
-                nowShot.clear();
+                nowShotCH1.clear();
+                nowShotCH2.clear();
+                nowShotCH3.clear();
+                nowShotCH4.clear();
+                statusBar->setInfo(m_transp->getQueueCount());
+                m_timer->start();
+               QByteArray data;
+               if (m_online) {                                                                     //Сразу после запроса данных запрашиваем статус
+                   data.append(REQUEST_STATUS);
+                   m_console->putData("SEND REQUEST_STATUS: ");
+                   m_transp->sendPacket(data);
+               }
             }
         }
+
         else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
             QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
-            m_console->putData("Warning: MCU has no data\n");
+            m_console->putData("Warning: MCU has no data\n\n");
         }
         else{
             statusBar->setMessageBar("Error: Wrong REQUEST_POINTS ansver message!");
-            m_console->putData("Warning: MCU has no data\n");
+            m_console->putData("Warning: MCU has no data\n\n");
         }
-        m_console->putData("\n");
         break;
-    }
+
+   }
 }
 
 //Обработка ошибок SLIP
@@ -387,23 +535,31 @@ void MainWindow::handlerTimer() {
 /**************************************************/
 /*                  customPlot                    */
 /**************************************************/
-void MainWindow::addUserGraph(QByteArray &buf, int len){
+void MainWindow::addUserGraph(QByteArray &buf, int len, int ch){
     QVector<double> x(len), y(len);
     for (int i=0; i<len; i++){
       x[i] = i;
       y[i] = (unsigned char)buf.at(i);
     }
-    if(customPlot->graphCount()!=0)
-        customPlot->clearGraphs();
     customPlot->addGraph();
-    customPlot->graph()->setName(QString("New graph %1").arg(shots.count()));
+    customPlot->graph()->setName(QString("Канал %1").arg(ch));
     customPlot->graph()->setData(x, y);
 
     QPen graphPen;
-    graphPen.setColor(QColor(std::rand()%245+10, std::rand()%245+10, std::rand()%245+10));
+    QColor color;
+    if (ch==1)
+        color =  QColorConstants::Black;
+    if (ch==2)
+        color =  QColorConstants::DarkGray;
+    if (ch==3)
+        color =  QColorConstants::DarkRed;
+    if (ch==4)
+        color =  QColorConstants::Red;
+
+    graphPen.setColor(color);
     customPlot->graph()->setPen(graphPen);
 
-    customPlot->rescaleAxes();
+
     customPlot->replot();
 }
 void MainWindow::titleDoubleClick(QMouseEvent* event)
@@ -475,28 +631,66 @@ void MainWindow::selectionChanged(){
     }
   }
 }
-void MainWindow::mousePress()
-{
+void MainWindow::mousePress(){
   // if an axis is selected, only allow the direction of that axis to be dragged
   // if no axis is selected, both directions may be dragged
 
-  if (customPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
+  if (customPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
     customPlot->axisRect()->setRangeDrag(customPlot->xAxis->orientation());
-  else if (customPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
+    if(customPlot->xAxis->range().lower <0)
+         customPlot->xAxis->setRangeLower(0);
+    if(customPlot->xAxis->range().upper > 11000)
+         customPlot->xAxis->setRangeUpper(11000);
+  }
+  else if (customPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
    customPlot->axisRect()->setRangeDrag(customPlot->yAxis->orientation());
-  else
+   if(customPlot->yAxis->range().lower <-1)
+        customPlot->yAxis->setRangeLower(-1);
+   if(customPlot->yAxis->range().upper >260)
+        customPlot->yAxis->setRangeUpper(260);
+  }
+  else{
     customPlot->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
+    if(customPlot->xAxis->range().lower <0)
+         customPlot->xAxis->setRangeLower(0);
+    if(customPlot->xAxis->range().upper > 11000)
+         customPlot->xAxis->setRangeUpper(11000);
+    if(customPlot->yAxis->range().lower <-1)
+         customPlot->yAxis->setRangeLower(-1);
+    if(customPlot->yAxis->range().upper >260)
+         customPlot->yAxis->setRangeUpper(260);
+  }
 }
 void MainWindow::mouseWheel(){
   // if an axis is selected, only allow the direction of that axis to be zoomed
   // if no axis is selected, both directions may be zoomed
 
-  if (customPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
-    customPlot->axisRect()->setRangeZoom(customPlot->xAxis->orientation());
-  else if (customPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
+  if (customPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+      customPlot->axisRect()->setRangeZoom(customPlot->xAxis->orientation());
+      if(customPlot->xAxis->range().lower <0)
+           customPlot->xAxis->setRangeLower(0);
+      if(customPlot->xAxis->range().upper > 11000)
+           customPlot->xAxis->setRangeUpper(11000);
+   }
+
+  else if (customPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
     customPlot->axisRect()->setRangeZoom(customPlot->yAxis->orientation());
-  else
+    if(customPlot->yAxis->range().lower <-1)
+         customPlot->yAxis->setRangeLower(-1);
+    if(customPlot->yAxis->range().upper >260)
+         customPlot->yAxis->setRangeUpper(260);
+  }
+  else{
     customPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
+    if(customPlot->xAxis->range().lower <0)
+         customPlot->xAxis->setRangeLower(0);
+    if(customPlot->xAxis->range().upper > 11000)
+         customPlot->xAxis->setRangeUpper(11000);
+    if(customPlot->yAxis->range().lower <-1)
+         customPlot->yAxis->setRangeLower(-1);
+    if(customPlot->yAxis->range().upper >260)
+         customPlot->yAxis->setRangeUpper(260);
+   }
 }
 void MainWindow::moveLegend(){
   if (QAction* contextAction = qobject_cast<QAction*>(sender())) // make sure this slot is really called by a context menu action, so it carries the data we need

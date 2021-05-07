@@ -21,7 +21,10 @@ const unsigned short ASK_MCU          = 0x41;
 const unsigned short REQUEST_STATUS   = 0x50;
 const unsigned short REQUEST_POINTS   = 0x70;
 const unsigned short WRITE_POINTS     = 0x74;
-
+const unsigned short CH1              = 0x01;
+const unsigned short CH2              = 0x02;
+const unsigned short CH3              = 0x03;
+const unsigned short CH4              = 0x04;
 
 class QSerialPort;
 class QTimer;
@@ -52,9 +55,13 @@ private slots:
     void on_connect_triggered();
     void on_disconnect_triggered();
     void setPacketSize(short n);
+    void incCountCh(bool);
     void manualGetShotButton();
-    void getPacketFromMCU(short n);
+    void getPacketFromMCU(short n, const unsigned short ch);
+
     void consoleEnabledCheked(bool);
+    void autoRangeGraphClicked();
+
     void selectShot(int index);
     void on_clearButton();
 
@@ -67,7 +74,7 @@ private slots:
     void mouseWheel();
     void moveLegend();
     void graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
-    void addUserGraph(QByteArray &buf, int len);
+    void addUserGraph(QByteArray &buf, int len, int ch);
 
     //Slip handlers
     void handlerTranspAnswerReceive(QByteArray &bytes);
@@ -88,20 +95,22 @@ private:
 
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *controlLayout;
+    QVBoxLayout *controlLayout,*transmitLayout, *appSettingsLayout, *logLayout, *historyLayout;
+    QLabel *packetSizeLabel;
     QSpinBox *packetSizeSpinbox;
-    QPushButton *getButton;
-    QPushButton *clearButton;
-    QGroupBox *controlGroup;
-    QCheckBox * autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
+    QPushButton *getButton, *autoRangeGraph, *clearButton;
+    QGroupBox *transmitGroup, *appSettingsGroup, *logGroup, *historyGrouop;
+    QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
+    QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
     QSpacerItem *m_spacer;
 
-    QList<QByteArray> shots;
-    QByteArray nowShot;
+    QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4;
+    QByteArray nowShotCH1,nowShotCH2,nowShotCH3,nowShotCH4;
+    int chCountChecked=0,shotCountRecieved=0; //Текущее количество отмеченных каналов и текущее количество принятых шотов
     short packetSize=100;
-    short countAvaibleDots=0;
-    short countRecievedDots=0;
+    short countAvaibleDots=0,countAvaibleDotsCH1=0,countAvaibleDotsCH2=0,countAvaibleDotsCH3=0,countAvaibleDotsCH4=0;
+    unsigned short countRecievedDots=0;
     QString dirname = "log";
     QString filename;
     QFile file;

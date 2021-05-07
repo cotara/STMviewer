@@ -49,6 +49,9 @@ bool SerialSettings::fill_all()
      }
 
     //Заполнение настроек компорта
+    serialSettings->speedBox->addItem(QStringLiteral("460800"), 460800);
+    serialSettings->speedBox->addItem(QStringLiteral("921600"), 921600);
+    serialSettings->speedBox->addItem(QStringLiteral("230400"), 230400);
     serialSettings->speedBox->addItem(QStringLiteral("115200"), QSerialPort::Baud115200);
     serialSettings->speedBox->addItem(QStringLiteral("9600"), QSerialPort::Baud9600);
     serialSettings->speedBox->addItem(QStringLiteral("19200"), QSerialPort::Baud19200);
