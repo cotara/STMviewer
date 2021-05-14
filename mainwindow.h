@@ -21,10 +21,11 @@ const unsigned short ASK_MCU          = 0x41;
 const unsigned short REQUEST_STATUS   = 0x50;
 const unsigned short REQUEST_POINTS   = 0x70;
 const unsigned short WRITE_POINTS     = 0x74;
+const unsigned short CH_ORDER         = 0x81;
 const unsigned short CH1              = 0x01;
 const unsigned short CH2              = 0x02;
-const unsigned short CH3              = 0x03;
-const unsigned short CH4              = 0x04;
+const unsigned short CH3              = 0x04;
+const unsigned short CH4              = 0x08;
 
 class QSerialPort;
 class QTimer;
@@ -57,8 +58,8 @@ private slots:
     void setPacketSize(short n);
     void incCountCh(bool);
     void manualGetShotButton();
-    void getPacketFromMCU(short n, const unsigned short ch);
-
+    void getPacketFromMCU(short n);
+    void autoGetCheckBoxChanged(int);
     void consoleEnabledCheked(bool);
     void autoRangeGraphClicked();
 
@@ -69,10 +70,12 @@ private slots:
     void titleDoubleClick(QMouseEvent *event);
     void axisLabelDoubleClick(QCPAxis* axis, QCPAxis::SelectablePart part);
     void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
-    void selectionChanged();
-    void mousePress();
-    void mouseWheel();
-    void moveLegend();
+    void selectionChanged1();
+    void selectionChanged2();
+    void mousePress1();
+    void mousePress2();
+    void mouseWheel1();
+    void mouseWheel2();
     void graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
     void addUserGraph(QByteArray &buf, int len, int ch);
 
@@ -85,7 +88,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
-    QCustomPlot *customPlot;
+    QCustomPlot *customPlot1, *customPlot2;
     Console *m_console;
     QSerialPort *serial;
     Slip *m_slip;
@@ -95,8 +98,8 @@ private:
 
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *controlLayout,*transmitLayout, *appSettingsLayout, *logLayout, *historyLayout;
-    QLabel *packetSizeLabel;
+    QVBoxLayout *graphsLayout, *controlLayout,*transmitLayout, *appSettingsLayout, *logLayout, *historyLayout;
+    QLabel *packetSizeLabel, *emptyArea;
     QSpinBox *packetSizeSpinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton;
     QGroupBox *transmitGroup, *appSettingsGroup, *logGroup, *historyGrouop;
@@ -106,11 +109,12 @@ private:
     QSpacerItem *m_spacer;
 
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4;
-    QByteArray nowShotCH1,nowShotCH2,nowShotCH3,nowShotCH4;
+    QByteArray currentShot;
     int chCountChecked=0,shotCountRecieved=0; //Текущее количество отмеченных каналов и текущее количество принятых шотов
     short packetSize=100;
-    short countAvaibleDots=0,countAvaibleDotsCH1=0,countAvaibleDotsCH2=0,countAvaibleDotsCH3=0,countAvaibleDotsCH4=0;
-    unsigned short countRecievedDots=0;
+    short countAvaibleDots=0,countWaitingDots=0;
+    int notYetFlag=0;
+    unsigned short countRecievedDots=0, channelsOrder=0;
     QString dirname = "log";
     QString filename;
     QFile file;

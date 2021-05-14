@@ -16,8 +16,10 @@ public:
     void setDataReady(int ready);
     void setInfo(int info);
     void setDownloadBarValue(int value);
+    void incDownloadBarValue(int value);
     void setDownloadBarRange(int value);
     int getDownloadBarRange();
+    int getDownloadBarValue();
     void incReSent();
     void clearReSent();
     void setMessageBar(QString status);

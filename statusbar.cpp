@@ -72,6 +72,12 @@ void StatusBar::setDownloadBarRange(int value){
 
 int StatusBar::getDownloadBarRange(){
     return downloadBar->maximum();
+
+}
+
+int StatusBar::getDownloadBarValue()
+{
+    return downloadBar->value();
 }
 
 void StatusBar::incReSent(){
@@ -90,5 +96,10 @@ void StatusBar::setMessageBar(QString status){
 
 void StatusBar::setDownloadBarValue(int value){
     downloadBar->setValue(value);
+}
+
+void StatusBar::incDownloadBarValue(int value)
+{
+    downloadBar->setValue(getDownloadBarValue()+value);
 }
 

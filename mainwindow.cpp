@@ -41,48 +41,66 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
 
     //График
-    customPlot = new QCustomPlot();
+    customPlot1 = new QCustomPlot();
+    customPlot2 = new QCustomPlot();
 
     //Настройка CustomPlot
-    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
-    customPlot->axisRect()->setupFullAxesBox();
-
+    customPlot1->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    customPlot1->axisRect()->setupFullAxesBox();
+    customPlot2->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    customPlot2->axisRect()->setupFullAxesBox();
     //customPlot->plotLayout()->insertRow(0);
     //QCPTextElement *title = new QCPTextElement(customPlot, "Видеосигнал", QFont("sans", 17, QFont::Bold));
     //customPlot->plotLayout()->addElement(0, 0, title);
 
-    customPlot->xAxis->setLabel("X");
-    customPlot->xAxis->setRangeLower(0);
-    customPlot->xAxis->setRangeUpper(11000);
-    customPlot->yAxis->setLabel("Y");
-    customPlot->yAxis->setRangeLower(-1);
-    customPlot->yAxis->setRangeUpper(260);
-    customPlot->legend->setVisible(true);
+    //customPlot->xAxis->setLabel("X");
+    //customPlot->yAxis->setLabel("Y");
     QFont legendFont = font();
     legendFont.setPointSize(10);
-    customPlot->legend->setFont(legendFont);
-    customPlot->legend->setSelectedFont(legendFont);
-    customPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
+
+    customPlot1->xAxis->setRangeLower(0);
+    customPlot1->xAxis->setRangeUpper(11000);
+    customPlot1->yAxis->setRangeLower(-1);
+    customPlot1->yAxis->setRangeUpper(260);
+    customPlot1->legend->setVisible(true);
+    customPlot1->legend->setFont(legendFont);
+    customPlot1->legend->setSelectedFont(legendFont);
+    customPlot1->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
+
+    customPlot2->xAxis->setRangeLower(0);
+    customPlot2->xAxis->setRangeUpper(11000);
+    customPlot2->yAxis->setRangeLower(-1);
+    customPlot2->yAxis->setRangeUpper(260);
+    customPlot2->legend->setVisible(true);
+    customPlot2->legend->setFont(legendFont);
+    customPlot2->legend->setSelectedFont(legendFont);
+    customPlot2->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
 
 
     // Выделение одной оси, ведет к выделению противоположной
-    connect(customPlot, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged()));
+    connect(customPlot1, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged1()));
+    connect(customPlot2, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged2()));
     // зумируется только выделенная ось
-    connect(customPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress()));
-    connect(customPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
+    connect(customPlot1, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress1()));
+    connect(customPlot1, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
+    connect(customPlot2, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress2()));
+    connect(customPlot2, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel2()));
 
     // При зумировании одной оси зизменяется диапазон противоположной
-    connect(customPlot->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->xAxis2, SLOT(setRange(QCPRange)));
-    connect(customPlot->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot->yAxis2, SLOT(setRange(QCPRange)));
+    connect(customPlot1->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->xAxis2, SLOT(setRange(QCPRange)));
+    connect(customPlot1->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->yAxis2, SLOT(setRange(QCPRange)));
+    connect(customPlot2->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot2->xAxis2, SLOT(setRange(QCPRange)));
+    connect(customPlot2->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot2->yAxis2, SLOT(setRange(QCPRange)));
 
     // connect some interaction slots:
-    connect(customPlot, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisLabelDoubleClick(QCPAxis*,QCPAxis::SelectablePart)));
+    connect(customPlot1, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisLabelDoubleClick(QCPAxis*,QCPAxis::SelectablePart)));
+    connect(customPlot2, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisLabelDoubleClick(QCPAxis*,QCPAxis::SelectablePart)));
     //connect(customPlot, SIGNAL(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*)));
     //connect(title, SIGNAL(doubleClicked(QMouseEvent*)), this, SLOT(titleDoubleClick(QMouseEvent*)));
 
     //connect slot that shows a message in the status bar when a graph is clicked:
-    connect(customPlot, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
-
+    connect(customPlot1, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
+    connect(customPlot2, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
     //Интерфейс
     layoutV = new QVBoxLayout;
     centralWidget()->setLayout(layoutV);
@@ -92,9 +110,20 @@ MainWindow::MainWindow(QWidget *parent) :
     layoutV->addWidget(m_console);
 
     controlLayout = new QVBoxLayout;
-    layoutH->addWidget(customPlot);
+    graphsLayout = new QVBoxLayout;
+    emptyArea = new QLabel;
+    layoutH->addLayout(graphsLayout);
     layoutH->addLayout(controlLayout);
-    customPlot->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+
+    graphsLayout->addWidget(customPlot1);
+    graphsLayout->addWidget(customPlot2);
+    graphsLayout->addWidget(emptyArea);
+    emptyArea->show();
+    customPlot1->hide();
+    customPlot2->hide();
+    customPlot1->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    customPlot2->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    emptyArea->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     transmitGroup = new QGroupBox("Обмен данными");
     appSettingsGroup = new QGroupBox("Настройки интерфейса");
@@ -111,7 +140,6 @@ MainWindow::MainWindow(QWidget *parent) :
     controlLayout->addWidget(logGroup);
     controlLayout->addWidget(historyGrouop);
 
-
     transmitLayout = new QVBoxLayout;
     appSettingsLayout = new QVBoxLayout;
     logLayout = new QVBoxLayout;
@@ -124,10 +152,10 @@ MainWindow::MainWindow(QWidget *parent) :
     //Настройки передачи
     packetSizeLabel = new QLabel("Размер пакета:");
     packetSizeSpinbox = new QSpinBox;
-    ch1CheckBox = new QCheckBox("Канал 1. Карловы Пивовары");
-    ch2CheckBox = new QCheckBox("Канал 1. Нефильтрофф");
-    ch3CheckBox = new QCheckBox("Канал 2. Карловы Пивовары");
-    ch4CheckBox = new QCheckBox("Канал 2. Нефильтрофф");
+    ch1CheckBox = new QCheckBox("Канал 1. Фильтрованный");
+    ch2CheckBox = new QCheckBox("Канал 1. Нефильтрованный");
+    ch3CheckBox = new QCheckBox("Канал 2. Фильтрованный");
+    ch4CheckBox = new QCheckBox("Канал 2. Нефильтрованный");
     getButton = new QPushButton("Получить снимок");
     autoGetCheckBox = new QCheckBox("Авто-получение по готовности");
     transmitLayout->addWidget(packetSizeLabel);
@@ -136,6 +164,10 @@ MainWindow::MainWindow(QWidget *parent) :
     transmitLayout->addWidget(ch2CheckBox);
     transmitLayout->addWidget(ch3CheckBox);
     transmitLayout->addWidget(ch4CheckBox);
+    ch1CheckBox->setEnabled(false);
+    ch2CheckBox->setEnabled(false);
+    ch3CheckBox->setEnabled(false);
+    ch4CheckBox->setEnabled(false);
     transmitLayout->addWidget(getButton);
     transmitLayout->addWidget(autoGetCheckBox);
 
@@ -155,6 +187,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(getButton,&QPushButton::clicked,this, &MainWindow::manualGetShotButton);
 
     autoGetCheckBox->setEnabled(false);
+    connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &MainWindow::autoGetCheckBoxChanged);
     //m_spacer= new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     //controlLayout->addSpacerItem(m_spacer);
 
@@ -200,7 +233,8 @@ MainWindow::~MainWindow(){
     delete serial;
     delete m_transp;
     delete m_timer;
-    delete customPlot;
+    delete customPlot1;
+    delete customPlot2;
 }
 //Настройки, коннекты
 void MainWindow::on_settings_triggered(){
@@ -221,11 +255,15 @@ void MainWindow::on_connect_triggered()
         ui->connect->setEnabled(false);
         ui->settings->setEnabled(false);
         ui->disconnect->setEnabled(true);
-        m_timer->start(500);
+        m_timer->start(150);
         statusBar->clearReSent();
         getButton->setEnabled(true);
         m_transp->clearQueue();
         serial->readAll();
+        ch1CheckBox->setEnabled(true);
+        ch2CheckBox->setEnabled(true);
+        ch3CheckBox->setEnabled(true);
+        ch4CheckBox->setEnabled(true);
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
@@ -254,12 +292,15 @@ void MainWindow::on_disconnect_triggered(){
 
     emit statusUpdate(m_online);
     countRecievedDots=0;
+    countAvaibleDots=0;
+    notYetFlag=0;
     statusBar->setDownloadBarValue(0);
     emit dataReadyUpdate(-1);
-    nowShotCH1.clear();
-    nowShotCH2.clear();
-    nowShotCH3.clear();
-    nowShotCH4.clear();
+    currentShot.clear();
+    ch1CheckBox->setEnabled(false);
+    ch2CheckBox->setEnabled(false);
+    ch3CheckBox->setEnabled(false);
+    ch4CheckBox->setEnabled(false);
 }
 
 //Подсчет количества отмеченных каналов
@@ -267,20 +308,62 @@ void MainWindow::incCountCh(bool st){
     if(st) chCountChecked++;
     else   chCountChecked--;
 
-    if(chCountChecked)  autoGetCheckBox->setEnabled(true);
-    else                autoGetCheckBox->setEnabled(false);
+    if(chCountChecked){
+        autoGetCheckBox->setEnabled(true);
+        emptyArea->hide();
+    }
+    else{
+        autoGetCheckBox->setEnabled(false);
+        emptyArea->show();
+    }
+
+    channelsOrder=0;
+    if(ch1CheckBox->isChecked() || ch2CheckBox->isChecked()){
+        customPlot1->show();
+        if(ch1CheckBox->isChecked())
+            channelsOrder|=0x01;
+        if(ch2CheckBox->isChecked())
+            channelsOrder|=0x02;
+    }
+    else {
+        customPlot1->hide();
+        customPlot1->clearGraphs();
+        customPlot1->replot();
+    }
+    if(ch3CheckBox->isChecked() || ch4CheckBox->isChecked()){
+        customPlot2->show();
+        if(ch3CheckBox->isChecked())
+            channelsOrder|=0x04;
+        if(ch4CheckBox->isChecked())
+            channelsOrder|=0x08;
+    }
+    else {
+        customPlot2->hide();
+        customPlot2->clearGraphs();
+        customPlot2->replot();
+    }
+
+    QByteArray data;
+    char msb,lsb;
+    data.append(CH_ORDER);
+    m_console->putData("SEND CH_ORDER: ");
+
+    msb=(channelsOrder&0xFF00)>>8;
+    lsb=channelsOrder&0x00FF;
+    data.append(msb);
+    data.append(lsb);
+    m_transp->sendPacket(data);
 }
 //Настройка разбиения данных на пакеты
 void MainWindow::setPacketSize(short n){
     packetSize=n;
 }
 //Запрость у MCU пакет длины n с канала ch
-void MainWindow::getPacketFromMCU(short n, const unsigned short ch)
+void MainWindow::getPacketFromMCU(short n)
 {
     QByteArray data;
     char msb,lsb;
-
-    data.append(ch);
+    data.append(REQUEST_POINTS);
     msb=(n&0xFF00)>>8;
     lsb=n&0x00FF;
     data.append(msb);
@@ -288,40 +371,42 @@ void MainWindow::getPacketFromMCU(short n, const unsigned short ch)
     m_transp->sendPacket(data);
 }
 
-//Запихиваем в очередь Х запросов в соответствии с разбивкой по пакетам, установленной в спинбоксе и отмеченным каналам
+void MainWindow::autoGetCheckBoxChanged(int st)
+{
+    if(st){
+        ch1CheckBox->setEnabled(false);
+        ch2CheckBox->setEnabled(false);
+        ch3CheckBox->setEnabled(false);
+        ch4CheckBox->setEnabled(false);
+    }
+    else {
+        ch1CheckBox->setEnabled(true);
+        ch2CheckBox->setEnabled(true);
+        ch3CheckBox->setEnabled(true);
+        ch4CheckBox->setEnabled(true);
+    }
+}
+
+//Запихиваем в очередь Х запросов в соответствии с разбивкой по пакетам, установленной в спинбоксе
 void MainWindow::manualGetShotButton(){
     if(countAvaibleDots){
-        if (!ch1CheckBox->isChecked() && !ch2CheckBox->isChecked() && !ch3CheckBox->isChecked() && !ch4CheckBox->isChecked()){
+        if (!ch1CheckBox->isChecked() && !ch2CheckBox->isChecked()
+            && !ch3CheckBox->isChecked() && !ch4CheckBox->isChecked()){
             QMessageBox::critical(nullptr,"Ошибка!","Не выбрано ни одного канала для получения данных");
             return;
         }
-
         m_console->putData("REQUEST_POINTS: ");
         m_timer->stop();
-        statusBar->setDownloadBarRange(countAvaibleDots*chCountChecked);
-
-
-        if(ch1CheckBox->isChecked())     countAvaibleDotsCH1 = countAvaibleDots;
-        if(ch2CheckBox->isChecked())     countAvaibleDotsCH2 = countAvaibleDots;
-        if(ch3CheckBox->isChecked())     countAvaibleDotsCH3 = countAvaibleDots;
-        if(ch4CheckBox->isChecked())     countAvaibleDotsCH4 = countAvaibleDots;
-
-        while (countAvaibleDotsCH1>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
-            getPacketFromMCU(countAvaibleDotsCH1>packetSize?packetSize:countAvaibleDotsCH1,CH1);
-            countAvaibleDotsCH1-=packetSize;
+        countWaitingDots = countAvaibleDots;                                                                //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
+        statusBar->setDownloadBarRange(countAvaibleDots);                                //Сколько точек по всем каналам
+        statusBar->setDownloadBarValue(0);
+        if(notYetFlag == 0)
+            notYetFlag = chCountChecked;
+        while (countAvaibleDots>0){                                                                          //Отправляем запрос несоклько раз по packetSize точек.
+            getPacketFromMCU(countAvaibleDots>packetSize?packetSize:countAvaibleDots);
+            countAvaibleDots-=packetSize;
         }
-        while (countAvaibleDotsCH2>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
-            getPacketFromMCU(countAvaibleDotsCH2>packetSize?packetSize:countAvaibleDotsCH2,CH2);
-            countAvaibleDotsCH2-=packetSize;
-        }
-        while (countAvaibleDotsCH3>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
-            getPacketFromMCU(countAvaibleDotsCH3>packetSize?packetSize:countAvaibleDotsCH3,CH3);
-            countAvaibleDotsCH3-=packetSize;
-        }
-        while (countAvaibleDotsCH4>0){                                 //Отправляем запрос несоклько раз по packetSize точек.
-            getPacketFromMCU(countAvaibleDotsCH4>packetSize?packetSize:countAvaibleDotsCH4,CH4);
-            countAvaibleDotsCH4-=packetSize;
-        }
+        notYetFlag--;
     }
     else
          QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
@@ -335,39 +420,52 @@ void MainWindow::consoleEnabledCheked(bool en){
         m_console->clear();
         m_console->hide();
     }
-
 }
 
 void MainWindow::autoRangeGraphClicked(){
-    customPlot->rescaleAxes();
-    customPlot->yAxis->setRange(customPlot->yAxis->range().lower-1,customPlot->yAxis->range().upper+5);
-    customPlot->xAxis->setRange(customPlot->xAxis->range().lower,customPlot->xAxis->range().upper );
-    customPlot->replot();
+    customPlot1->rescaleAxes();
+    customPlot1->yAxis->setRange(customPlot1->yAxis->range().lower-1,customPlot1->yAxis->range().upper+5);
+    customPlot1->xAxis->setRange(customPlot1->xAxis->range().lower,customPlot1->xAxis->range().upper );
+    customPlot1->replot();
+    customPlot2->rescaleAxes();
+    customPlot2->yAxis->setRange(customPlot2->yAxis->range().lower-1,customPlot2->yAxis->range().upper+5);
+    customPlot2->xAxis->setRange(customPlot2->xAxis->range().lower,customPlot2->xAxis->range().upper );
+    customPlot2->replot();
 }
 
 //Выбрать шот из списка
 void MainWindow::selectShot(int index){
     if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
         QByteArray ch;
-        if(customPlot->graphCount()!=0)
-            customPlot->clearGraphs();
+        if(customPlot1->graphCount()!=0)
+            customPlot1->clearGraphs();
+        if(customPlot2->graphCount()!=0)
+            customPlot2->clearGraphs();
 
         if(shotsCH1.contains(index)){
             ch = shotsCH1[index];
             addUserGraph(ch,ch.size(),1);
+            customPlot1->show();
         }
+        else customPlot1->hide();
         if(shotsCH2.contains(index)){
             ch = shotsCH2[index];
             addUserGraph(ch,ch.size(),2);
+            customPlot1->show();
         }
+        else customPlot1->hide();
         if(shotsCH3.contains(index)){
             ch = shotsCH3[index];
             addUserGraph(ch,ch.size(),3);
+            customPlot2->show();
         }
+        else customPlot2->hide();
         if(shotsCH4.contains(index)){
             ch = shotsCH4[index];
             addUserGraph(ch,ch.size(),4);
+            customPlot2->show();
         }
+        else customPlot2->hide();
 
     }
 }
@@ -379,8 +477,10 @@ void MainWindow::on_clearButton(){
     shotsCH3.clear();
     shotsCH4.clear();
     shotsComboBox->clear();
-    customPlot->clearGraphs();
-    customPlot->replot();
+    customPlot1->clearGraphs();
+    customPlot1->replot();
+    customPlot2->clearGraphs();
+    customPlot2->replot();
 }
 
 //Обработка входящих пакетов
@@ -388,6 +488,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     unsigned char cmd = bytes[0];
     unsigned short value = (unsigned char)bytes[1]*256+(unsigned char)bytes[2];
     int dataReady=-1;
+    QString chName;
     switch(cmd){
     case ASK_MCU:                                                           //Пришел ответ, mcu жив
         if (value == OK) {
@@ -402,13 +503,13 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         break;
 
 
-    case REQUEST_STATUS:                                                    //Пришло количество точек
+    case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
         countAvaibleDots=value;
         if (value != NO_DATA_READY) {
             dataReady = value;
-            if(autoGetCheckBox->isChecked()){                                //Если включен автозапрос данных
-                manualGetShotButton();                                       //Запрашиваем шот
+            if(autoGetCheckBox->isChecked() || notYetFlag){                       //Если включен автозапрос данных или не вычитали все пачку каналов
+                manualGetShotButton();                                                  //Запрашиваем шот
             }
         }
         else {
@@ -420,75 +521,78 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
 
      case REQUEST_POINTS:
-        if ((value == CH1*256+CH1) || (value == CH2*256+CH2) || (value == CH3*256+CH3) || (value == CH4*256+CH4)){
-            bytes.remove(0, 3);                                                             //Удалили 3 байта (команду и значение)
-            countRecievedDots+=bytes.count();
-            statusBar->setDownloadBarValue(countRecievedDots);
-            if (value == CH1*256+CH1) {
-                nowShotCH1.append(bytes);                                                     //Добавили пришедшие байты в шот
-                 m_console->putData(" :RECIEVED ANSWER_POINTS CH1  ");
-            }
-            else if(value == CH2*256+CH2){
-                 nowShotCH2.append(bytes);
-                  m_console->putData(" :RECIEVED ANSWER_POINTS CH2  ");
-            }
-            else if(value == CH3*256+CH3){
-                 nowShotCH3.append(bytes);
-                 m_console->putData(" :RECIEVED ANSWER_POINTS CH3  ");
-            }
-            else if(value == CH4*256+CH4){
-                 nowShotCH4.append(bytes);
-                 m_console->putData(" :RECIEVED ANSWER_POINTS CH4  ");
-            }
+        if ((value==CH1)||(value==CH2)||(value==CH3)||(value==CH4)){                    //Если пришли точки по одному из каналов, то обрабатываем
+            bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
+            countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
+            statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
+            currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
+            if(countWaitingDots == countRecievedDots){                                  //Приняли канал целиком
+                //Кладем принятый шот в соответствующий мап
 
-            if (countRecievedDots == statusBar->getDownloadBarRange()){     //Все точки всех отмеченных каналов приняты
-                m_console->putData("\n\n");
-                //Раскладываем принятое по контенерам. Отдельно хранятся 4 канала в мапе.
-                if(!nowShotCH1.isEmpty())
-                    shotsCH1.insert(shotCountRecieved,nowShotCH1);
-                if(!nowShotCH2.isEmpty())
-                    shotsCH2.insert(shotCountRecieved,nowShotCH2);
-                if(!nowShotCH3.isEmpty())
-                    shotsCH3.insert(shotCountRecieved,nowShotCH3);
-                if(!nowShotCH4.isEmpty())
-                    shotsCH4.insert(shotCountRecieved,nowShotCH4);
-
-                shotCountRecieved++;
-                countRecievedDots=0;
-                countAvaibleDots=0;
-
-                shotsComboBox->addItem(QString::number(shotCountRecieved));
-                shotsComboBox->setCurrentIndex(shotCountRecieved-1);
-
+                if (value == CH1){
+                     if(shotsCH1.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
+                        qDebug() << "Attantion! Dublicate CH1";
+                     }
+                     else{
+                        chName="CH1_F";
+                        shotsCH1.insert(shotCountRecieved,currentShot);                    //Добавили пришедший канал в мап с текущим индексом
+                        m_console->putData(" :RECIEVED ANSWER_POINTS CH1  ");
+                     }
+                }
+                else if(value == CH2){
+                     if(shotsCH2.contains(shotCountRecieved)) {
+                        qDebug() << "Attantion! Dublicate CH2";
+                     }
+                     else{
+                         chName="CH1_NF";
+                         shotsCH2.insert(shotCountRecieved,currentShot);
+                         m_console->putData(" :RECIEVED ANSWER_POINTS CH2  ");
+                     }
+                }
+                else if(value == CH3){
+                     if(shotsCH3.contains(shotCountRecieved)) {
+                        qDebug() << "Attantion! Dublicate CH3";
+                     }
+                     else{
+                         chName="CH2_F";
+                         shotsCH3.insert(shotCountRecieved,currentShot);
+                         m_console->putData(" :RECIEVED ANSWER_POINTS CH3  ");
+                     }
+                }
+                else if(value == CH4){
+                     if(shotsCH4.contains(shotCountRecieved)) {
+                        qDebug() << "Attantion! Dublicate CH4";
+                     }
+                     else{
+                         chName="CH2_NF";
+                         shotsCH4.insert(shotCountRecieved,currentShot);
+                         m_console->putData(" :RECIEVED ANSWER_POINTS CH4  ");
+                     }
+                }
                 //Если включено автосохранение
                 if(autoSaveShotCheckBox->isChecked()){
                     if (dirname.isEmpty()){
                         QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
                     }
                     else{
-                        filename=QString::number(shotCountRecieved);
+                        filename=QString::number(shotCountRecieved) + "_" + chName;
                         file.setFileName(dirname + "/" + filename + ".txt");
                         if(file.open(QIODevice::WriteOnly) == true){
-                            file.write(nowShotCH1);
-                            file.write(nowShotCH2);
-                            file.write(nowShotCH3);
-                            file.write(nowShotCH4);
+                            file.write(currentShot);
                             file.close();
                          }
                     }
                 }
-                nowShotCH1.clear();
-                nowShotCH2.clear();
-                nowShotCH3.clear();
-                nowShotCH4.clear();
+                countRecievedDots=0;                                                    //Обнуляем коилчество пришедших точек
+                currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
+                m_timer->start();                                                       //Стартуем таймер опроса статуса
                 statusBar->setInfo(m_transp->getQueueCount());
-                m_timer->start();
-               QByteArray data;
-               if (m_online) {                                                                     //Сразу после запроса данных запрашиваем статус
-                   data.append(REQUEST_STATUS);
-                   m_console->putData("SEND REQUEST_STATUS: ");
-                   m_transp->sendPacket(data);
-               }
+                if (notYetFlag == 0){                                                       //Все точки всех отмеченных каналов приняты
+                    m_console->putData("\n\n");
+                    shotCountRecieved++;                                                    //Увеличиваем счетчик пачек
+                    shotsComboBox->addItem(QString::number(shotCountRecieved));
+                    shotsComboBox->setCurrentIndex(shotCountRecieved-1);
+                }
             }
         }
 
@@ -537,30 +641,43 @@ void MainWindow::handlerTimer() {
 /**************************************************/
 void MainWindow::addUserGraph(QByteArray &buf, int len, int ch){
     QVector<double> x(len), y(len);
+    QPen graphPen;
+    QColor color;
+
     for (int i=0; i<len; i++){
       x[i] = i;
       y[i] = (unsigned char)buf.at(i);
     }
-    customPlot->addGraph();
-    customPlot->graph()->setName(QString("Канал %1").arg(ch));
-    customPlot->graph()->setData(x, y);
-
-    QPen graphPen;
-    QColor color;
-    if (ch==1)
-        color =  QColorConstants::Black;
-    if (ch==2)
-        color =  QColorConstants::DarkGray;
-    if (ch==3)
-        color =  QColorConstants::DarkRed;
-    if (ch==4)
-        color =  QColorConstants::Red;
-
-    graphPen.setColor(color);
-    customPlot->graph()->setPen(graphPen);
-
-
-    customPlot->replot();
+    if (ch==1 || ch==2){
+        customPlot1->addGraph();
+        customPlot1->graph()->setData(x, y);
+        if (ch==1){
+            customPlot1->graph()->setName(QString("Канал 1. Фильтрованный"));
+            color =  QColorConstants::Black;
+        }
+        else{
+            customPlot1->graph()->setName(QString("Канал 1. Нефильтрованный"));
+            color =  QColorConstants::DarkGray;
+        }
+        graphPen.setColor(color);
+        customPlot1->graph()->setPen(graphPen);
+        customPlot1->replot();
+    }
+    else if(ch==3 || ch==4){
+        customPlot2->addGraph();
+        customPlot2->graph()->setData(x, y);
+        if (ch==3){
+            customPlot2->graph()->setName(QString("Канал 2. Фильтрованный"));
+            color =  QColorConstants::DarkMagenta;
+        }
+        else{
+            customPlot2->graph()->setName(QString("Канал 2. Нефильтрованный"));
+            color =  QColorConstants::Red;
+        }
+        graphPen.setColor(color);
+        customPlot2->graph()->setPen(graphPen);
+        customPlot2->replot();
+    }
 }
 void MainWindow::titleDoubleClick(QMouseEvent* event)
 {
@@ -573,7 +690,7 @@ void MainWindow::titleDoubleClick(QMouseEvent* event)
     if (ok)
     {
       title->setText(newTitle);
-      customPlot->replot();
+      //customPlot->replot();
     }
   }
 }
@@ -587,10 +704,11 @@ void MainWindow::axisLabelDoubleClick(QCPAxis *axis, QCPAxis::SelectablePart par
     if (ok)
     {
       axis->setLabel(newLabel);
-      customPlot->replot();
+      //customPlot->replot();
     }
   }
 }
+
 void MainWindow::legendDoubleClick(QCPLegend *legend, QCPAbstractLegendItem *item){
   // Rename a graph by double clicking on its legend item
   Q_UNUSED(legend)
@@ -602,108 +720,187 @@ void MainWindow::legendDoubleClick(QCPLegend *legend, QCPAbstractLegendItem *ite
     if (ok)
     {
       plItem->plottable()->setName(newName);
-      customPlot->replot();
+      //customPlot->replot();
     }
   }
 }
-void MainWindow::selectionChanged(){
+void MainWindow::selectionChanged1(){
   // make top and bottom axes be selected synchronously, and handle axis and tick labels as one selectable object:
-  if (customPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot->xAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
-      customPlot->xAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot->xAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
+  if (customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
+      customPlot1->xAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot1->xAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
   {
-    customPlot->xAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-    customPlot->xAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
+    customPlot1->xAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
+    customPlot1->xAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
   }
   // make left and right axes be selected synchronously, and handle axis and tick labels as one selectable object:
-  if (customPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot->yAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
-      customPlot->yAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot->yAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
+  if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
+      customPlot1->yAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot1->yAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
   {
-    customPlot->yAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-    customPlot->yAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
+    customPlot1->yAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
+    customPlot1->yAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
   }
   // synchronize selection of graphs with selection of corresponding legend items:
-  for (int i=0; i<customPlot->graphCount(); ++i){
-    QCPGraph *graph = customPlot->graph(i);
-    QCPPlottableLegendItem *item = customPlot->legend->itemWithPlottable(graph);
+  for (int i=0; i<customPlot1->graphCount(); ++i){
+    QCPGraph *graph = customPlot1->graph(i);
+    QCPPlottableLegendItem *item = customPlot1->legend->itemWithPlottable(graph);
     if (item->selected() || graph->selected())    {
       item->setSelected(true);
       graph->setSelection(QCPDataSelection(graph->data()->dataRange()));
     }
   }
 }
-void MainWindow::mousePress(){
-  // if an axis is selected, only allow the direction of that axis to be dragged
-  // if no axis is selected, both directions may be dragged
 
-  if (customPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-    customPlot->axisRect()->setRangeDrag(customPlot->xAxis->orientation());
-    if(customPlot->xAxis->range().lower <0)
-         customPlot->xAxis->setRangeLower(0);
-    if(customPlot->xAxis->range().upper > 11000)
-         customPlot->xAxis->setRangeUpper(11000);
-  }
-  else if (customPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-   customPlot->axisRect()->setRangeDrag(customPlot->yAxis->orientation());
-   if(customPlot->yAxis->range().lower <-1)
-        customPlot->yAxis->setRangeLower(-1);
-   if(customPlot->yAxis->range().upper >260)
-        customPlot->yAxis->setRangeUpper(260);
-  }
-  else{
-    customPlot->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
-    if(customPlot->xAxis->range().lower <0)
-         customPlot->xAxis->setRangeLower(0);
-    if(customPlot->xAxis->range().upper > 11000)
-         customPlot->xAxis->setRangeUpper(11000);
-    if(customPlot->yAxis->range().lower <-1)
-         customPlot->yAxis->setRangeLower(-1);
-    if(customPlot->yAxis->range().upper >260)
-         customPlot->yAxis->setRangeUpper(260);
-  }
-}
-void MainWindow::mouseWheel(){
-  // if an axis is selected, only allow the direction of that axis to be zoomed
-  // if no axis is selected, both directions may be zoomed
-
-  if (customPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-      customPlot->axisRect()->setRangeZoom(customPlot->xAxis->orientation());
-      if(customPlot->xAxis->range().lower <0)
-           customPlot->xAxis->setRangeLower(0);
-      if(customPlot->xAxis->range().upper > 11000)
-           customPlot->xAxis->setRangeUpper(11000);
-   }
-
-  else if (customPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-    customPlot->axisRect()->setRangeZoom(customPlot->yAxis->orientation());
-    if(customPlot->yAxis->range().lower <-1)
-         customPlot->yAxis->setRangeLower(-1);
-    if(customPlot->yAxis->range().upper >260)
-         customPlot->yAxis->setRangeUpper(260);
-  }
-  else{
-    customPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
-    if(customPlot->xAxis->range().lower <0)
-         customPlot->xAxis->setRangeLower(0);
-    if(customPlot->xAxis->range().upper > 11000)
-         customPlot->xAxis->setRangeUpper(11000);
-    if(customPlot->yAxis->range().lower <-1)
-         customPlot->yAxis->setRangeLower(-1);
-    if(customPlot->yAxis->range().upper >260)
-         customPlot->yAxis->setRangeUpper(260);
-   }
-}
-void MainWindow::moveLegend(){
-  if (QAction* contextAction = qobject_cast<QAction*>(sender())) // make sure this slot is really called by a context menu action, so it carries the data we need
+void MainWindow::selectionChanged2(){
+  // make top and bottom axes be selected synchronously, and handle axis and tick labels as one selectable object:
+  if (customPlot2->xAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot2->xAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
+      customPlot2->xAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot2->xAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
   {
-    bool ok;
-    int dataInt = contextAction->data().toInt(&ok);
-    if (ok)
-    {
-      customPlot->axisRect()->insetLayout()->setInsetAlignment(0, (Qt::Alignment)dataInt);
-      customPlot->replot();
+    customPlot2->xAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
+    customPlot2->xAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
+  }
+  // make left and right axes be selected synchronously, and handle axis and tick labels as one selectable object:
+  if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
+      customPlot2->yAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot2->yAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
+  {
+    customPlot2->yAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
+    customPlot2->yAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
+  }
+  // synchronize selection of graphs with selection of corresponding legend items:
+  for (int i=0; i<customPlot2->graphCount(); ++i){
+    QCPGraph *graph = customPlot2->graph(i);
+    QCPPlottableLegendItem *item = customPlot2->legend->itemWithPlottable(graph);
+    if (item->selected() || graph->selected())    {
+      item->setSelected(true);
+      graph->setSelection(QCPDataSelection(graph->data()->dataRange()));
     }
   }
 }
+
+void MainWindow::mousePress1(){
+  // if an axis is selected, only allow the direction of that axis to be dragged
+  // if no axis is selected, both directions may be dragged
+
+  if (customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+    customPlot1->axisRect()->setRangeDrag(customPlot1->xAxis->orientation());
+    if(customPlot1->xAxis->range().lower <0)
+         customPlot1->xAxis->setRangeLower(0);
+    if(customPlot1->xAxis->range().upper > 11000)
+         customPlot1->xAxis->setRangeUpper(11000);
+  }
+  else if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+   customPlot1->axisRect()->setRangeDrag(customPlot1->yAxis->orientation());
+   if(customPlot1->yAxis->range().lower <-1)
+        customPlot1->yAxis->setRangeLower(-1);
+   if(customPlot1->yAxis->range().upper >260)
+        customPlot1->yAxis->setRangeUpper(260);
+  }
+  else{
+    customPlot1->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
+    if(customPlot1->xAxis->range().lower <0)
+         customPlot1->xAxis->setRangeLower(0);
+    if(customPlot1->xAxis->range().upper > 11000)
+         customPlot1->xAxis->setRangeUpper(11000);
+    if(customPlot1->yAxis->range().lower <-1)
+         customPlot1->yAxis->setRangeLower(-1);
+    if(customPlot1->yAxis->range().upper >260)
+         customPlot1->yAxis->setRangeUpper(260);
+  }
+}
+void MainWindow::mousePress2(){
+  // if an axis is selected, only allow the direction of that axis to be dragged
+  // if no axis is selected, both directions may be dragged
+
+  if (customPlot2->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+    customPlot2->axisRect()->setRangeDrag(customPlot2->xAxis->orientation());
+    if(customPlot2->xAxis->range().lower <0)
+         customPlot2->xAxis->setRangeLower(0);
+    if(customPlot2->xAxis->range().upper > 11000)
+         customPlot2->xAxis->setRangeUpper(11000);
+  }
+  else if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+   customPlot2->axisRect()->setRangeDrag(customPlot2->yAxis->orientation());
+   if(customPlot2->yAxis->range().lower <-1)
+        customPlot2->yAxis->setRangeLower(-1);
+   if(customPlot2->yAxis->range().upper >260)
+        customPlot2->yAxis->setRangeUpper(260);
+  }
+  else{
+    customPlot2->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
+    if(customPlot2->xAxis->range().lower <0)
+         customPlot2->xAxis->setRangeLower(0);
+    if(customPlot2->xAxis->range().upper > 11000)
+         customPlot2->xAxis->setRangeUpper(11000);
+    if(customPlot2->yAxis->range().lower <-1)
+         customPlot2->yAxis->setRangeLower(-1);
+    if(customPlot2->yAxis->range().upper >260)
+         customPlot2->yAxis->setRangeUpper(260);
+  }
+}
+void MainWindow::mouseWheel1(){
+  // if an axis is selected, only allow the direction of that axis to be zoomed
+  // if no axis is selected, both directions may be zoomed
+
+  if (customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+      customPlot1->axisRect()->setRangeZoom(customPlot1->xAxis->orientation());
+      if(customPlot1->xAxis->range().lower <0)
+           customPlot1->xAxis->setRangeLower(0);
+      if(customPlot1->xAxis->range().upper > 11000)
+           customPlot1->xAxis->setRangeUpper(11000);
+   }
+
+  else if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+    customPlot1->axisRect()->setRangeZoom(customPlot1->yAxis->orientation());
+    if(customPlot1->yAxis->range().lower <-1)
+         customPlot1->yAxis->setRangeLower(-1);
+    if(customPlot1->yAxis->range().upper >260)
+         customPlot1->yAxis->setRangeUpper(260);
+  }
+  else{
+    customPlot1->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
+    if(customPlot1->xAxis->range().lower <0)
+         customPlot1->xAxis->setRangeLower(0);
+    if(customPlot1->xAxis->range().upper > 11000)
+         customPlot1->xAxis->setRangeUpper(11000);
+    if(customPlot1->yAxis->range().lower <-1)
+         customPlot1->yAxis->setRangeLower(-1);
+    if(customPlot1->yAxis->range().upper >260)
+         customPlot1->yAxis->setRangeUpper(260);
+   }
+}
+
+void MainWindow::mouseWheel2(){
+  // if an axis is selected, only allow the direction of that axis to be zoomed
+  // if no axis is selected, both directions may be zoomed
+
+  if (customPlot2->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+      customPlot2->axisRect()->setRangeZoom(customPlot2->xAxis->orientation());
+      if(customPlot2->xAxis->range().lower <0)
+           customPlot2->xAxis->setRangeLower(0);
+      if(customPlot2->xAxis->range().upper > 11000)
+           customPlot2->xAxis->setRangeUpper(11000);
+   }
+
+  else if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
+    customPlot2->axisRect()->setRangeZoom(customPlot2->yAxis->orientation());
+    if(customPlot2->yAxis->range().lower <-1)
+         customPlot2->yAxis->setRangeLower(-1);
+    if(customPlot2->yAxis->range().upper >260)
+         customPlot2->yAxis->setRangeUpper(260);
+  }
+  else{
+    customPlot2->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
+    if(customPlot2->xAxis->range().lower <0)
+         customPlot2->xAxis->setRangeLower(0);
+    if(customPlot2->xAxis->range().upper > 11000)
+         customPlot2->xAxis->setRangeUpper(11000);
+    if(customPlot2->yAxis->range().lower <-1)
+         customPlot2->yAxis->setRangeLower(-1);
+    if(customPlot2->yAxis->range().upper >260)
+         customPlot2->yAxis->setRangeUpper(260);
+   }
+}
+
+
 void MainWindow::graphClicked(QCPAbstractPlottable *plottable, int dataIndex){
   // since we know we only have QCPGraphs in the plot, we can immediately access interface1D()
   // usually it's better to first check whether interface1D() returns non-zero, and only then use it.
