@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "serialsettings.h"
-#include "qcustomplot/qcustomplot.h"
+
 #include "slip.h"
 #include "transp.h"
 #include "statusbar.h"
@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_timer = new QTimer();
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
 
+    viewer = new ShotViewer();
+
     //Консоль
     m_console = new Console;
     m_console->setMaximumHeight(150);
@@ -33,74 +35,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_transp, &Transp::transpError, this, &MainWindow::handlerTranspError);
     connect(m_transp, &Transp::reSentInc,this, &MainWindow::reSentInc);
 
-
     //Статус бар
     statusBar = new StatusBar(ui->statusBar);
     connect(this, &MainWindow::statusUpdate, [this](bool online) { statusBar->setStatus(online); });
     connect(this, &MainWindow::dataReadyUpdate, [this](int ready) { statusBar->setDataReady(ready); });
     connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
 
-    //График
-    customPlot1 = new QCustomPlot();
-    customPlot2 = new QCustomPlot();
-
-    //Настройка CustomPlot
-    customPlot1->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
-    customPlot1->axisRect()->setupFullAxesBox();
-    customPlot2->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
-    customPlot2->axisRect()->setupFullAxesBox();
-    //customPlot->plotLayout()->insertRow(0);
-    //QCPTextElement *title = new QCPTextElement(customPlot, "Видеосигнал", QFont("sans", 17, QFont::Bold));
-    //customPlot->plotLayout()->addElement(0, 0, title);
-
-    //customPlot->xAxis->setLabel("X");
-    //customPlot->yAxis->setLabel("Y");
-    QFont legendFont = font();
-    legendFont.setPointSize(10);
-
-    customPlot1->xAxis->setRangeLower(0);
-    customPlot1->xAxis->setRangeUpper(11000);
-    customPlot1->yAxis->setRangeLower(-1);
-    customPlot1->yAxis->setRangeUpper(260);
-    customPlot1->legend->setVisible(true);
-    customPlot1->legend->setFont(legendFont);
-    customPlot1->legend->setSelectedFont(legendFont);
-    customPlot1->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
-
-    customPlot2->xAxis->setRangeLower(0);
-    customPlot2->xAxis->setRangeUpper(11000);
-    customPlot2->yAxis->setRangeLower(-1);
-    customPlot2->yAxis->setRangeUpper(260);
-    customPlot2->legend->setVisible(true);
-    customPlot2->legend->setFont(legendFont);
-    customPlot2->legend->setSelectedFont(legendFont);
-    customPlot2->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
-
-
-    // Выделение одной оси, ведет к выделению противоположной
-    connect(customPlot1, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged1()));
-    connect(customPlot2, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged2()));
-    // зумируется только выделенная ось
-    connect(customPlot1, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress1()));
-    connect(customPlot1, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
-    connect(customPlot2, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress2()));
-    connect(customPlot2, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel2()));
-
-    // При зумировании одной оси зизменяется диапазон противоположной
-    connect(customPlot1->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->xAxis2, SLOT(setRange(QCPRange)));
-    connect(customPlot1->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->yAxis2, SLOT(setRange(QCPRange)));
-    connect(customPlot2->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot2->xAxis2, SLOT(setRange(QCPRange)));
-    connect(customPlot2->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot2->yAxis2, SLOT(setRange(QCPRange)));
-
-    // connect some interaction slots:
-    connect(customPlot1, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisLabelDoubleClick(QCPAxis*,QCPAxis::SelectablePart)));
-    connect(customPlot2, SIGNAL(axisDoubleClick(QCPAxis*,QCPAxis::SelectablePart,QMouseEvent*)), this, SLOT(axisLabelDoubleClick(QCPAxis*,QCPAxis::SelectablePart)));
-    //connect(customPlot, SIGNAL(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*,QMouseEvent*)), this, SLOT(legendDoubleClick(QCPLegend*,QCPAbstractLegendItem*)));
-    //connect(title, SIGNAL(doubleClicked(QMouseEvent*)), this, SLOT(titleDoubleClick(QMouseEvent*)));
-
-    //connect slot that shows a message in the status bar when a graph is clicked:
-    connect(customPlot1, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
-    connect(customPlot2, SIGNAL(plottableClick(QCPAbstractPlottable*,int,QMouseEvent*)), this, SLOT(graphClicked(QCPAbstractPlottable*,int)));
     //Интерфейс
     layoutV = new QVBoxLayout;
     centralWidget()->setLayout(layoutV);
@@ -111,19 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     controlLayout = new QVBoxLayout;
     graphsLayout = new QVBoxLayout;
-    emptyArea = new QLabel;
-    layoutH->addLayout(graphsLayout);
-    layoutH->addLayout(controlLayout);
 
-    graphsLayout->addWidget(customPlot1);
-    graphsLayout->addWidget(customPlot2);
-    graphsLayout->addWidget(emptyArea);
-    emptyArea->show();
-    customPlot1->hide();
-    customPlot2->hide();
-    customPlot1->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    customPlot2->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    emptyArea->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    layoutH->addWidget(viewer);
+    layoutH->addLayout(controlLayout);
 
     transmitGroup = new QGroupBox("Обмен данными");
     appSettingsGroup = new QGroupBox("Настройки интерфейса");
@@ -199,7 +129,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     autoRangeGraph = new QPushButton("Автомасштаб");
     appSettingsLayout->addWidget(autoRangeGraph);
-    connect(autoRangeGraph,&QPushButton::clicked,this, &MainWindow::autoRangeGraphClicked);
+    connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
 
     //Настройки логирования
     autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка");
@@ -210,7 +140,6 @@ MainWindow::MainWindow(QWidget *parent) :
     if (!dir.exists()) {
         QDir().mkdir(dirname);
     }
-
 
     //История
     shotsComboBox = new QComboBox;
@@ -224,7 +153,6 @@ MainWindow::MainWindow(QWidget *parent) :
     });
 
     connect(clearButton,&QPushButton::clicked,this, &MainWindow::on_clearButton);
-
 }
 
 MainWindow::~MainWindow(){
@@ -233,8 +161,7 @@ MainWindow::~MainWindow(){
     delete serial;
     delete m_transp;
     delete m_timer;
-    delete customPlot1;
-    delete customPlot2;
+    delete viewer;
 }
 //Настройки, коннекты
 void MainWindow::on_settings_triggered(){
@@ -264,12 +191,13 @@ void MainWindow::on_connect_triggered()
         ch2CheckBox->setEnabled(true);
         ch3CheckBox->setEnabled(true);
         ch4CheckBox->setEnabled(true);
+        if(channelsOrder!=0){
+            sendChannelOrder();
+        }
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
     }
-
-
 }
 void MainWindow::on_disconnect_triggered(){
 
@@ -297,6 +225,8 @@ void MainWindow::on_disconnect_triggered(){
     statusBar->setDownloadBarValue(0);
     emit dataReadyUpdate(-1);
     currentShot.clear();
+
+    autoGetCheckBox->setCheckState(Qt::Unchecked);          //Вырубаем автополучение на всякий
     ch1CheckBox->setEnabled(false);
     ch2CheckBox->setEnabled(false);
     ch3CheckBox->setEnabled(false);
@@ -310,49 +240,22 @@ void MainWindow::incCountCh(bool st){
 
     if(chCountChecked){
         autoGetCheckBox->setEnabled(true);
-        emptyArea->hide();
     }
     else{
         autoGetCheckBox->setEnabled(false);
-        emptyArea->show();
     }
-
     channelsOrder=0;
-    if(ch1CheckBox->isChecked() || ch2CheckBox->isChecked()){
-        customPlot1->show();
-        if(ch1CheckBox->isChecked())
-            channelsOrder|=0x01;
-        if(ch2CheckBox->isChecked())
-            channelsOrder|=0x02;
-    }
-    else {
-        customPlot1->hide();
-        customPlot1->clearGraphs();
-        customPlot1->replot();
-    }
-    if(ch3CheckBox->isChecked() || ch4CheckBox->isChecked()){
-        customPlot2->show();
-        if(ch3CheckBox->isChecked())
-            channelsOrder|=0x04;
-        if(ch4CheckBox->isChecked())
-            channelsOrder|=0x08;
-    }
-    else {
-        customPlot2->hide();
-        customPlot2->clearGraphs();
-        customPlot2->replot();
-    }
 
-    QByteArray data;
-    char msb,lsb;
-    data.append(CH_ORDER);
-    m_console->putData("SEND CH_ORDER: ");
+    if(ch1CheckBox->isChecked())
+        channelsOrder|=0x01;
+    if(ch2CheckBox->isChecked())
+        channelsOrder|=0x02;
+    if(ch3CheckBox->isChecked())
+        channelsOrder|=0x04;
+    if(ch4CheckBox->isChecked())
+        channelsOrder|=0x08;
 
-    msb=(channelsOrder&0xFF00)>>8;
-    lsb=channelsOrder&0x00FF;
-    data.append(msb);
-    data.append(lsb);
-    m_transp->sendPacket(data);
+    sendChannelOrder();
 }
 //Настройка разбиения данных на пакеты
 void MainWindow::setPacketSize(short n){
@@ -392,9 +295,10 @@ void MainWindow::manualGetShotButton(){
     if(countAvaibleDots){
         if (!ch1CheckBox->isChecked() && !ch2CheckBox->isChecked()
             && !ch3CheckBox->isChecked() && !ch4CheckBox->isChecked()){
-            QMessageBox::critical(nullptr,"Ошибка!","Не выбрано ни одного канала для получения данных");
+            statusBar->setMessageBar("ОШИБКА!, Не выбрано ни одного канала!");
             return;
         }
+        getButton->setEnabled(false);                                                   //Защита от двойного нажатия кнопки
         m_console->putData("REQUEST_POINTS: ");
         m_timer->stop();
         countWaitingDots = countAvaibleDots;                                                                //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
@@ -409,7 +313,7 @@ void MainWindow::manualGetShotButton(){
         notYetFlag--;
     }
     else
-         QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
+         statusBar->setMessageBar("ОШИБКА!, Данные не готовы для получения!");
 }
 //Показать консоль
 void MainWindow::consoleEnabledCheked(bool en){
@@ -422,51 +326,28 @@ void MainWindow::consoleEnabledCheked(bool en){
     }
 }
 
-void MainWindow::autoRangeGraphClicked(){
-    customPlot1->rescaleAxes();
-    customPlot1->yAxis->setRange(customPlot1->yAxis->range().lower-1,customPlot1->yAxis->range().upper+5);
-    customPlot1->xAxis->setRange(customPlot1->xAxis->range().lower,customPlot1->xAxis->range().upper );
-    customPlot1->replot();
-    customPlot2->rescaleAxes();
-    customPlot2->yAxis->setRange(customPlot2->yAxis->range().lower-1,customPlot2->yAxis->range().upper+5);
-    customPlot2->xAxis->setRange(customPlot2->xAxis->range().lower,customPlot2->xAxis->range().upper );
-    customPlot2->replot();
-}
-
 //Выбрать шот из списка
 void MainWindow::selectShot(int index){
     if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
         QByteArray ch;
-        if(customPlot1->graphCount()!=0)
-            customPlot1->clearGraphs();
-        if(customPlot2->graphCount()!=0)
-            customPlot2->clearGraphs();
 
+        viewer->clearGraphs(ShotViewer::Both);
         if(shotsCH1.contains(index)){
             ch = shotsCH1[index];
-            addUserGraph(ch,ch.size(),1);
-            customPlot1->show();
+            viewer->addUserGraph(ch,ch.size(),1);
         }
-        else customPlot1->hide();
         if(shotsCH2.contains(index)){
             ch = shotsCH2[index];
-            addUserGraph(ch,ch.size(),2);
-            customPlot1->show();
+            viewer->addUserGraph(ch,ch.size(),2);
         }
-        else customPlot1->hide();
         if(shotsCH3.contains(index)){
             ch = shotsCH3[index];
-            addUserGraph(ch,ch.size(),3);
-            customPlot2->show();
+            viewer->addUserGraph(ch,ch.size(),3);
         }
-        else customPlot2->hide();
         if(shotsCH4.contains(index)){
             ch = shotsCH4[index];
-            addUserGraph(ch,ch.size(),4);
-            customPlot2->show();
+            viewer->addUserGraph(ch,ch.size(),4);
         }
-        else customPlot2->hide();
-
     }
 }
 //Очистить список
@@ -477,10 +358,7 @@ void MainWindow::on_clearButton(){
     shotsCH3.clear();
     shotsCH4.clear();
     shotsComboBox->clear();
-    customPlot1->clearGraphs();
-    customPlot1->replot();
-    customPlot2->clearGraphs();
-    customPlot2->replot();
+    viewer->clearGraphs(ShotViewer::Both);
 }
 
 //Обработка входящих пакетов
@@ -585,14 +463,15 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 }
                 countRecievedDots=0;                                                    //Обнуляем коилчество пришедших точек
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
-                m_timer->start();                                                       //Стартуем таймер опроса статуса
                 statusBar->setInfo(m_transp->getQueueCount());
                 if (notYetFlag == 0){                                                       //Все точки всех отмеченных каналов приняты
                     m_console->putData("\n\n");
                     shotCountRecieved++;                                                    //Увеличиваем счетчик пачек
                     shotsComboBox->addItem(QString::number(shotCountRecieved));
                     shotsComboBox->setCurrentIndex(shotCountRecieved-1);
+                    getButton->setEnabled(true);
                 }
+                m_timer->start();                                                       //Стартуем таймер опроса статуса
             }
         }
 
@@ -633,278 +512,21 @@ void MainWindow::handlerTimer() {
             m_console->putData("SEND ASK_MCU: ");
             m_transp->sendPacket(data);
         }
-     }
-}
-
-/**************************************************/
-/*                  customPlot                    */
-/**************************************************/
-void MainWindow::addUserGraph(QByteArray &buf, int len, int ch){
-    QVector<double> x(len), y(len);
-    QPen graphPen;
-    QColor color;
-
-    for (int i=0; i<len; i++){
-      x[i] = i;
-      y[i] = (unsigned char)buf.at(i);
-    }
-    if (ch==1 || ch==2){
-        customPlot1->addGraph();
-        customPlot1->graph()->setData(x, y);
-        if (ch==1){
-            customPlot1->graph()->setName(QString("Канал 1. Фильтрованный"));
-            color =  QColorConstants::Black;
-        }
-        else{
-            customPlot1->graph()->setName(QString("Канал 1. Нефильтрованный"));
-            color =  QColorConstants::DarkGray;
-        }
-        graphPen.setColor(color);
-        customPlot1->graph()->setPen(graphPen);
-        customPlot1->replot();
-    }
-    else if(ch==3 || ch==4){
-        customPlot2->addGraph();
-        customPlot2->graph()->setData(x, y);
-        if (ch==3){
-            customPlot2->graph()->setName(QString("Канал 2. Фильтрованный"));
-            color =  QColorConstants::DarkMagenta;
-        }
-        else{
-            customPlot2->graph()->setName(QString("Канал 2. Нефильтрованный"));
-            color =  QColorConstants::Red;
-        }
-        graphPen.setColor(color);
-        customPlot2->graph()->setPen(graphPen);
-        customPlot2->replot();
     }
 }
-void MainWindow::titleDoubleClick(QMouseEvent* event)
-{
-  Q_UNUSED(event)
-  if (QCPTextElement *title = qobject_cast<QCPTextElement*>(sender()))
-  {
-    // Set the plot title by double clicking on it
-    bool ok;
-    QString newTitle = QInputDialog::getText(this, "QCustomPlot example", "New plot title:", QLineEdit::Normal, title->text(), &ok);
-    if (ok)
-    {
-      title->setText(newTitle);
-      //customPlot->replot();
-    }
-  }
-}
-void MainWindow::axisLabelDoubleClick(QCPAxis *axis, QCPAxis::SelectablePart part)
-{
-  // Set an axis label by double clicking on it
-  if (part == QCPAxis::spAxisLabel) // only react when the actual axis label is clicked, not tick label or axis backbone
-  {
-    bool ok;
-    QString newLabel = QInputDialog::getText(this, "QCustomPlot example", "New axis label:", QLineEdit::Normal, axis->label(), &ok);
-    if (ok)
-    {
-      axis->setLabel(newLabel);
-      //customPlot->replot();
-    }
-  }
-}
 
-void MainWindow::legendDoubleClick(QCPLegend *legend, QCPAbstractLegendItem *item){
-  // Rename a graph by double clicking on its legend item
-  Q_UNUSED(legend)
-  if (item) // only react if item was clicked (user could have clicked on border padding of legend where there is no item, then item is 0)
-  {
-    QCPPlottableLegendItem *plItem = qobject_cast<QCPPlottableLegendItem*>(item);
-    bool ok;
-    QString newName = QInputDialog::getText(this, "QCustomPlot example", "New graph name:", QLineEdit::Normal, plItem->plottable()->name(), &ok);
-    if (ok)
-    {
-      plItem->plottable()->setName(newName);
-      //customPlot->replot();
-    }
-  }
-}
-void MainWindow::selectionChanged1(){
-  // make top and bottom axes be selected synchronously, and handle axis and tick labels as one selectable object:
-  if (customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
-      customPlot1->xAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot1->xAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
-  {
-    customPlot1->xAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-    customPlot1->xAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-  }
-  // make left and right axes be selected synchronously, and handle axis and tick labels as one selectable object:
-  if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
-      customPlot1->yAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot1->yAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
-  {
-    customPlot1->yAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-    customPlot1->yAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-  }
-  // synchronize selection of graphs with selection of corresponding legend items:
-  for (int i=0; i<customPlot1->graphCount(); ++i){
-    QCPGraph *graph = customPlot1->graph(i);
-    QCPPlottableLegendItem *item = customPlot1->legend->itemWithPlottable(graph);
-    if (item->selected() || graph->selected())    {
-      item->setSelected(true);
-      graph->setSelection(QCPDataSelection(graph->data()->dataRange()));
-    }
-  }
-}
+void MainWindow::sendChannelOrder(){
+    //Отправка последовательности байт в плату
+    QByteArray data;
+    char msb,lsb;
+    data.append(CH_ORDER);
+    m_console->putData("SEND CH_ORDER: ");
 
-void MainWindow::selectionChanged2(){
-  // make top and bottom axes be selected synchronously, and handle axis and tick labels as one selectable object:
-  if (customPlot2->xAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot2->xAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
-      customPlot2->xAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot2->xAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
-  {
-    customPlot2->xAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-    customPlot2->xAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-  }
-  // make left and right axes be selected synchronously, and handle axis and tick labels as one selectable object:
-  if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis) || customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spTickLabels) ||
-      customPlot2->yAxis2->selectedParts().testFlag(QCPAxis::spAxis) || customPlot2->yAxis2->selectedParts().testFlag(QCPAxis::spTickLabels))
-  {
-    customPlot2->yAxis2->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-    customPlot2->yAxis->setSelectedParts(QCPAxis::spAxis|QCPAxis::spTickLabels);
-  }
-  // synchronize selection of graphs with selection of corresponding legend items:
-  for (int i=0; i<customPlot2->graphCount(); ++i){
-    QCPGraph *graph = customPlot2->graph(i);
-    QCPPlottableLegendItem *item = customPlot2->legend->itemWithPlottable(graph);
-    if (item->selected() || graph->selected())    {
-      item->setSelected(true);
-      graph->setSelection(QCPDataSelection(graph->data()->dataRange()));
-    }
-  }
-}
-
-void MainWindow::mousePress1(){
-  // if an axis is selected, only allow the direction of that axis to be dragged
-  // if no axis is selected, both directions may be dragged
-
-  if (customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-    customPlot1->axisRect()->setRangeDrag(customPlot1->xAxis->orientation());
-    if(customPlot1->xAxis->range().lower <0)
-         customPlot1->xAxis->setRangeLower(0);
-    if(customPlot1->xAxis->range().upper > 11000)
-         customPlot1->xAxis->setRangeUpper(11000);
-  }
-  else if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-   customPlot1->axisRect()->setRangeDrag(customPlot1->yAxis->orientation());
-   if(customPlot1->yAxis->range().lower <-1)
-        customPlot1->yAxis->setRangeLower(-1);
-   if(customPlot1->yAxis->range().upper >260)
-        customPlot1->yAxis->setRangeUpper(260);
-  }
-  else{
-    customPlot1->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
-    if(customPlot1->xAxis->range().lower <0)
-         customPlot1->xAxis->setRangeLower(0);
-    if(customPlot1->xAxis->range().upper > 11000)
-         customPlot1->xAxis->setRangeUpper(11000);
-    if(customPlot1->yAxis->range().lower <-1)
-         customPlot1->yAxis->setRangeLower(-1);
-    if(customPlot1->yAxis->range().upper >260)
-         customPlot1->yAxis->setRangeUpper(260);
-  }
-}
-void MainWindow::mousePress2(){
-  // if an axis is selected, only allow the direction of that axis to be dragged
-  // if no axis is selected, both directions may be dragged
-
-  if (customPlot2->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-    customPlot2->axisRect()->setRangeDrag(customPlot2->xAxis->orientation());
-    if(customPlot2->xAxis->range().lower <0)
-         customPlot2->xAxis->setRangeLower(0);
-    if(customPlot2->xAxis->range().upper > 11000)
-         customPlot2->xAxis->setRangeUpper(11000);
-  }
-  else if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-   customPlot2->axisRect()->setRangeDrag(customPlot2->yAxis->orientation());
-   if(customPlot2->yAxis->range().lower <-1)
-        customPlot2->yAxis->setRangeLower(-1);
-   if(customPlot2->yAxis->range().upper >260)
-        customPlot2->yAxis->setRangeUpper(260);
-  }
-  else{
-    customPlot2->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
-    if(customPlot2->xAxis->range().lower <0)
-         customPlot2->xAxis->setRangeLower(0);
-    if(customPlot2->xAxis->range().upper > 11000)
-         customPlot2->xAxis->setRangeUpper(11000);
-    if(customPlot2->yAxis->range().lower <-1)
-         customPlot2->yAxis->setRangeLower(-1);
-    if(customPlot2->yAxis->range().upper >260)
-         customPlot2->yAxis->setRangeUpper(260);
-  }
-}
-void MainWindow::mouseWheel1(){
-  // if an axis is selected, only allow the direction of that axis to be zoomed
-  // if no axis is selected, both directions may be zoomed
-
-  if (customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-      customPlot1->axisRect()->setRangeZoom(customPlot1->xAxis->orientation());
-      if(customPlot1->xAxis->range().lower <0)
-           customPlot1->xAxis->setRangeLower(0);
-      if(customPlot1->xAxis->range().upper > 11000)
-           customPlot1->xAxis->setRangeUpper(11000);
-   }
-
-  else if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-    customPlot1->axisRect()->setRangeZoom(customPlot1->yAxis->orientation());
-    if(customPlot1->yAxis->range().lower <-1)
-         customPlot1->yAxis->setRangeLower(-1);
-    if(customPlot1->yAxis->range().upper >260)
-         customPlot1->yAxis->setRangeUpper(260);
-  }
-  else{
-    customPlot1->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
-    if(customPlot1->xAxis->range().lower <0)
-         customPlot1->xAxis->setRangeLower(0);
-    if(customPlot1->xAxis->range().upper > 11000)
-         customPlot1->xAxis->setRangeUpper(11000);
-    if(customPlot1->yAxis->range().lower <-1)
-         customPlot1->yAxis->setRangeLower(-1);
-    if(customPlot1->yAxis->range().upper >260)
-         customPlot1->yAxis->setRangeUpper(260);
-   }
-}
-
-void MainWindow::mouseWheel2(){
-  // if an axis is selected, only allow the direction of that axis to be zoomed
-  // if no axis is selected, both directions may be zoomed
-
-  if (customPlot2->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-      customPlot2->axisRect()->setRangeZoom(customPlot2->xAxis->orientation());
-      if(customPlot2->xAxis->range().lower <0)
-           customPlot2->xAxis->setRangeLower(0);
-      if(customPlot2->xAxis->range().upper > 11000)
-           customPlot2->xAxis->setRangeUpper(11000);
-   }
-
-  else if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
-    customPlot2->axisRect()->setRangeZoom(customPlot2->yAxis->orientation());
-    if(customPlot2->yAxis->range().lower <-1)
-         customPlot2->yAxis->setRangeLower(-1);
-    if(customPlot2->yAxis->range().upper >260)
-         customPlot2->yAxis->setRangeUpper(260);
-  }
-  else{
-    customPlot2->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
-    if(customPlot2->xAxis->range().lower <0)
-         customPlot2->xAxis->setRangeLower(0);
-    if(customPlot2->xAxis->range().upper > 11000)
-         customPlot2->xAxis->setRangeUpper(11000);
-    if(customPlot2->yAxis->range().lower <-1)
-         customPlot2->yAxis->setRangeLower(-1);
-    if(customPlot2->yAxis->range().upper >260)
-         customPlot2->yAxis->setRangeUpper(260);
-   }
+    msb=(channelsOrder&0xFF00)>>8;
+    lsb=channelsOrder&0x00FF;
+    data.append(msb);
+    data.append(lsb);
+    m_transp->sendPacket(data);
 }
 
 
-void MainWindow::graphClicked(QCPAbstractPlottable *plottable, int dataIndex){
-  // since we know we only have QCPGraphs in the plot, we can immediately access interface1D()
-  // usually it's better to first check whether interface1D() returns non-zero, and only then use it.
-  double dataValue = plottable->interface1D()->dataMainValue(dataIndex);
-  QString message = QString("Clicked on graph '%1' at data point #%2 with value %3.").arg(plottable->name()).arg(dataIndex).arg(dataValue);
-  ui->statusBar->showMessage(message, 2500);
-}

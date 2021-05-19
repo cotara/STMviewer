@@ -4,12 +4,19 @@
 #include <QMainWindow>
 #include <QInputDialog>
 #include "serialsettings.h"
-#include "qcustomplot/qcustomplot.h"
+
 #include "console.h"
 #include <QTimer>
 #include <QVBoxLayout>
 #include "slip.h"
 #include "console.h"
+#include "QLabel"
+#include "QSpinBox"
+#include "QCheckBox"
+#include "QComboBox"
+#include "QGroupBox"
+#include "shotviewer.h"
+
 // answer status
 const unsigned short FAIL             = 0x0000;
 const unsigned short OK               = 0x0101;
@@ -44,7 +51,6 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-
 signals:
     void statusUpdate(bool);
     void dataReadyUpdate(int);
@@ -61,23 +67,9 @@ private slots:
     void getPacketFromMCU(short n);
     void autoGetCheckBoxChanged(int);
     void consoleEnabledCheked(bool);
-    void autoRangeGraphClicked();
 
     void selectShot(int index);
     void on_clearButton();
-
-    //customPlot
-    void titleDoubleClick(QMouseEvent *event);
-    void axisLabelDoubleClick(QCPAxis* axis, QCPAxis::SelectablePart part);
-    void legendDoubleClick(QCPLegend* legend, QCPAbstractLegendItem* item);
-    void selectionChanged1();
-    void selectionChanged2();
-    void mousePress1();
-    void mousePress2();
-    void mouseWheel1();
-    void mouseWheel2();
-    void graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
-    void addUserGraph(QByteArray &buf, int len, int ch);
 
     //Slip handlers
     void handlerTranspAnswerReceive(QByteArray &bytes);
@@ -85,36 +77,40 @@ private slots:
     void reSentInc();
     void handlerTimer();
 
+    void sendChannelOrder();
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
-    QCustomPlot *customPlot1, *customPlot2;
+
     Console *m_console;
     QSerialPort *serial;
     Slip *m_slip;
     Transp *m_transp;
     QTimer *m_timer;
     StatusBar *statusBar;
-
+    ShotViewer *viewer;
+    //Итерфейс
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
     QVBoxLayout *graphsLayout, *controlLayout,*transmitLayout, *appSettingsLayout, *logLayout, *historyLayout;
-    QLabel *packetSizeLabel, *emptyArea;
-    QSpinBox *packetSizeSpinbox;
-    QPushButton *getButton, *autoRangeGraph, *clearButton;
     QGroupBox *transmitGroup, *appSettingsGroup, *logGroup, *historyGrouop;
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
-    QSpacerItem *m_spacer;
+    QLabel *packetSizeLabel;
 
+    QSpinBox *packetSizeSpinbox;
+    QPushButton *getButton, *autoRangeGraph, *clearButton;
+
+    //Переменные
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4;
     QByteArray currentShot;
-    int chCountChecked=0,shotCountRecieved=0; //Текущее количество отмеченных каналов и текущее количество принятых шотов
-    short packetSize=100;
-    short countAvaibleDots=0,countWaitingDots=0;
-    int notYetFlag=0;
-    unsigned short countRecievedDots=0, channelsOrder=0;
+    int chCountChecked=0,shotCountRecieved=0;                               //Текущее количество отмеченных каналов и текущее количество принятых шотов
+    short packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
+    short countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
+    int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
+
+    //Работа с файлами
     QString dirname = "log";
     QString filename;
     QFile file;

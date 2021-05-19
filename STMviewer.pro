@@ -28,8 +28,10 @@ SOURCES += \
     console.cpp \
         main.cpp \
         mainwindow.cpp \
+    qcustomplot/axistag.cpp \
     serialsettings.cpp \
     qcustomplot/qcustomplot.cpp \
+    shotviewer.cpp \
 	statusbar.cpp \
 	transp.cpp \
 	slip.cpp \
@@ -37,8 +39,10 @@ SOURCES += \
 HEADERS += \
     console.h \
         mainwindow.h \
+    qcustomplot/axistag.h \
     serialsettings.h \
     qcustomplot/qcustomplot.h \
+    shotviewer.h \
 	statusbar.h \
 	transp.h \
 	slip.h \
