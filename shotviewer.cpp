@@ -107,14 +107,22 @@ void ShotViewer::showGraphs(ShotViewer::viewerState state){
 void ShotViewer::clearGraphs(ShotViewer::viewerState state){
     switch (state){
     case CH1_Only:
+        mGraph1.clear();
+        mGraph2.clear();
         customPlot1->clearGraphs();
         customPlot1->replot();
         break;
     case CH2_Only:
+        mGraph3.clear();
+        mGraph4.clear();
         customPlot2->clearGraphs();
         customPlot2->replot();
         break;
     case Both:
+        mGraph1.clear();
+        mGraph2.clear();
+        mGraph3.clear();
+        mGraph4.clear();
         customPlot1->clearGraphs();
         customPlot1->replot();
         customPlot2->clearGraphs();
@@ -141,13 +149,13 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         if (ch==1){
             mGraph1=customPlot1->addGraph();
             mGraph1->setData(x, y);
-            mGraph1->setName(QString("Канал 1. Фильтрованный"));
+            mGraph1->setName(QString("Канал 1. Нефильтрованный"));
             color =  QColorConstants::Black;        
         }
         else{
             mGraph2=customPlot1->addGraph();
             mGraph2->setData(x, y);
-            mGraph2->setName(QString("Канал 1. Нефильтрованный"));
+            mGraph2->setName(QString("Канал 1. Фильтрованный"));
             color =  QColorConstants::DarkGray;
         }
         graphPen.setColor(color);
@@ -158,13 +166,13 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         if (ch==3){
             mGraph3=customPlot2->addGraph();
             mGraph3->setData(x, y);
-            mGraph3->setName(QString("Канал 2. Фильтрованный"));
+            mGraph3->setName(QString("Канал 2. Нефильтрованный"));
             color =  QColorConstants::DarkMagenta;
         }
         else{
             mGraph4=customPlot2->addGraph();
             mGraph4->setData(x, y);
-            mGraph4->setName(QString("Канал 2. Нефильтрованный"));
+            mGraph4->setName(QString("Канал 2. Фильтрованный"));
             color =  QColorConstants::Red;
         }
         graphPen.setColor(color);
@@ -172,6 +180,20 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         customPlot2->replot();
     }
 }
+
+void ShotViewer::shiftCH1(int)
+{
+    int count = mGraph1->dataCount();
+    QVector<double> x, y;
+    if(count>0){
+        for(int i=0; i<count; i++){                                         //Изымаем значения из грфаика
+             x[i]=i;
+             y[i]=mGraph1->dataMainValue(i);
+        }
+    }
+}
+
+
 void ShotViewer::titleDoubleClick1(QMouseEvent* event)
 {
   Q_UNUSED(event)

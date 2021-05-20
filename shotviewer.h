@@ -22,6 +22,8 @@ public:
     void clearGraphs(viewerState);
     void autoScale();
     void addUserGraph(QByteArray &buf, int len, int ch);
+    void shiftCH1(int);
+    void shiftCH2(int);
 signals:
 
 private slots:

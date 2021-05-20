@@ -66,15 +66,18 @@ MainWindow::MainWindow(QWidget *parent) :
     historyGrouop->setMinimumWidth(100);
 
     controlLayout->addWidget(transmitGroup);
+    controlLayout->addWidget(signalProcessingGroup);
     controlLayout->addWidget(appSettingsGroup);
     controlLayout->addWidget(logGroup);
     controlLayout->addWidget(historyGrouop);
 
     transmitLayout = new QVBoxLayout;
+    signalProcessingLayout = new QVBoxLayout;
     appSettingsLayout = new QVBoxLayout;
     logLayout = new QVBoxLayout;
     historyLayout = new QVBoxLayout;
     transmitGroup->setLayout(transmitLayout);
+    signalProcessingGroup->setLayout(signalProcessingLayout);
     appSettingsGroup->setLayout(appSettingsLayout);
     logGroup->setLayout(logLayout);
     historyGrouop->setLayout(historyLayout);
@@ -82,12 +85,13 @@ MainWindow::MainWindow(QWidget *parent) :
     //Настройки передачи
     packetSizeLabel = new QLabel("Размер пакета:");
     packetSizeSpinbox = new QSpinBox;
-    ch1CheckBox = new QCheckBox("Канал 1. Фильтрованный");
-    ch2CheckBox = new QCheckBox("Канал 1. Нефильтрованный");
-    ch3CheckBox = new QCheckBox("Канал 2. Фильтрованный");
-    ch4CheckBox = new QCheckBox("Канал 2. Нефильтрованный");
+    ch1CheckBox = new QCheckBox("Канал 1. Нефильтрованный");
+    ch2CheckBox = new QCheckBox("Канал 1. Фильтрованный");
+    ch3CheckBox = new QCheckBox("Канал 2. Нефильтрованный");
+    ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный");
     getButton = new QPushButton("Получить снимок");
     autoGetCheckBox = new QCheckBox("Авто-получение по готовности");
+
     transmitLayout->addWidget(packetSizeLabel);
     transmitLayout->addWidget(packetSizeSpinbox);
     transmitLayout->addWidget(ch1CheckBox);
@@ -118,8 +122,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     autoGetCheckBox->setEnabled(false);
     connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &MainWindow::autoGetCheckBoxChanged);
-    //m_spacer= new QSpacerItem(1,1, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    //controlLayout->addSpacerItem(m_spacer);
+
+    //Обработка сигнала
+    shiftCH1NF_Slider = new QSlider();
+    shiftCH2NF_Slider = new QSlider();
+    shiftCH1NF_Slider->setRange(-1000,1000);
+    shiftCH2NF_Slider->setRange(-1000,1000);
+    signalProcessingLayout->addWidget(shiftCH1NF_Slider);
+    signalProcessingLayout->addWidget(shiftCH2NF_Slider);
+
+    connect(shiftCH1NF_Slider, &QSlider::valueChanged,viewer,&ShotViewer::shiftCH1);
+    connect(shiftCH2NF_Slider, &QSlider::valueChanged,viewer,&ShotViewer::shiftCH2);
 
     //Настройки интерфейса
     consoleEnable = new QCheckBox("Вывод в консоль");
@@ -281,12 +294,14 @@ void MainWindow::autoGetCheckBoxChanged(int st)
         ch2CheckBox->setEnabled(false);
         ch3CheckBox->setEnabled(false);
         ch4CheckBox->setEnabled(false);
+        getButton->setEnabled(false);
     }
     else {
         ch1CheckBox->setEnabled(true);
         ch2CheckBox->setEnabled(true);
         ch3CheckBox->setEnabled(true);
         ch4CheckBox->setEnabled(true);
+        getButton->setEnabled(true);
     }
 }
 
@@ -395,6 +410,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_console->putData("Warning: MCU has no data\n\n");
         }
         emit dataReadyUpdate(dataReady);
+        m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
         break;
 
 
@@ -469,7 +485,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     shotCountRecieved++;                                                    //Увеличиваем счетчик пачек
                     shotsComboBox->addItem(QString::number(shotCountRecieved));
                     shotsComboBox->setCurrentIndex(shotCountRecieved-1);
-                    getButton->setEnabled(true);
+                    if (!autoGetCheckBox->isChecked())
+                        getButton->setEnabled(true);
                 }
                 m_timer->start();                                                       //Стартуем таймер опроса статуса
             }
@@ -504,7 +521,7 @@ void MainWindow::handlerTimer() {
         data.append(REQUEST_STATUS);
         m_console->putData("SEND REQUEST_STATUS: ");
         m_transp->sendPacket(data);
-
+        m_timer->stop();                                                        //Избегать многократного запроса статуса, если не пришел ответ на первый
     }
     else {
         if (serial->isOpen()) {           

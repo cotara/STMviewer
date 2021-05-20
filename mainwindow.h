@@ -92,13 +92,13 @@ private:
     //Итерфейс
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *graphsLayout, *controlLayout,*transmitLayout, *appSettingsLayout, *logLayout, *historyLayout;
-    QGroupBox *transmitGroup, *appSettingsGroup, *logGroup, *historyGrouop;
+    QVBoxLayout *graphsLayout, *controlLayout,*transmitLayout,*signalProcessingLayout, *appSettingsLayout, *logLayout, *historyLayout;
+    QGroupBox *transmitGroup, *signalProcessingGroup, *appSettingsGroup, *logGroup, *historyGrouop;
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
     QLabel *packetSizeLabel;
-
+    QSlider *shiftCH1NF_Slider, *shiftCH2NF_Slider;
     QSpinBox *packetSizeSpinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton;
 
