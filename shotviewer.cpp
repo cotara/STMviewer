@@ -87,11 +87,11 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
 
 void ShotViewer::showGraphs(ShotViewer::viewerState state){
     switch (state){
-    case CH1_Only:
+    case CH1_CH2:
         customPlot1->show();
         customPlot2->hide();
         break;
-    case CH2_Only:
+    case CH3_CH4:
         customPlot2->show();
         customPlot1->hide();
         break;
@@ -106,17 +106,41 @@ void ShotViewer::showGraphs(ShotViewer::viewerState state){
 
 void ShotViewer::clearGraphs(ShotViewer::viewerState state){
     switch (state){
-    case CH1_Only:
+    case CH1_CH2:
         mGraph1.clear();
         mGraph2.clear();
         customPlot1->clearGraphs();
         customPlot1->replot();
         break;
+    case CH1_Only:
+        if(customPlot1->hasPlottable(mGraph1))
+            customPlot1->removeGraph(mGraph1);
+        customPlot1->replot();
+        mGraph1.clear();
+        break;
     case CH2_Only:
+        if(customPlot1->hasPlottable(mGraph2))
+            customPlot1->removeGraph(mGraph2);
+        customPlot1->replot();
+        mGraph2.clear();
+        break;
+    case CH3_CH4:
         mGraph3.clear();
         mGraph4.clear();
         customPlot2->clearGraphs();
         customPlot2->replot();
+        break;
+    case CH3_Only:
+        if(customPlot2->hasPlottable(mGraph3))
+            customPlot2->removeGraph(mGraph3);
+        customPlot2->replot();
+        mGraph3.clear();
+        break;
+    case CH4_Only:
+        if(customPlot2->hasPlottable(mGraph4))
+            customPlot2->removeGraph(mGraph4);
+        customPlot2->replot();
+        mGraph4.clear();
         break;
     case Both:
         mGraph1.clear();
@@ -180,19 +204,6 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         customPlot2->replot();
     }
 }
-
-void ShotViewer::shiftCH1(int)
-{
-    int count = mGraph1->dataCount();
-    QVector<double> x, y;
-    if(count>0){
-        for(int i=0; i<count; i++){                                         //Изымаем значения из грфаика
-             x[i]=i;
-             y[i]=mGraph1->dataMainValue(i);
-        }
-    }
-}
-
 
 void ShotViewer::titleDoubleClick1(QMouseEvent* event)
 {
@@ -415,13 +426,13 @@ void ShotViewer::mouseWheel2(){
 
 void ShotViewer::graphDoubleClicked1(){
     if(!customPlot2->isHidden())
-        showGraphs(CH1_Only);
+        showGraphs(CH1_CH2);
     else
         showGraphs(Both);
 }
 void ShotViewer::graphDoubleClicked2(){
     if(!customPlot1->isHidden())
-        showGraphs(CH2_Only);
+        showGraphs(CH3_CH4);
     else
         showGraphs(Both);
 

@@ -71,6 +71,9 @@ private slots:
     void selectShot(int index);
     void on_clearButton();
 
+    void shiftCH2(int);
+    void shiftCH4(int);
+
     //Slip handlers
     void handlerTranspAnswerReceive(QByteArray &bytes);
     void handlerTranspError();
@@ -97,7 +100,7 @@ private:
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
-    QLabel *packetSizeLabel;
+    QLabel *packetSizeLabel, *shiftedCH2Label,*shiftedCH4Label;
     QSlider *shiftCH1NF_Slider, *shiftCH2NF_Slider;
     QSpinBox *packetSizeSpinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton;
@@ -109,7 +112,7 @@ private:
     short packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
     short countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
-
+    int shiftedCH2=0,shiftedCH4=0;
     //Работа с файлами
     QString dirname = "log";
     QString filename;

@@ -2,7 +2,6 @@
 #define SHOTVIEWER_H
 #include "qcustomplot/qcustomplot.h"
 #include <QWidget>
-#include "qcustomplot/axistag.h"
 
 namespace Ui {
     class ShotViewer;
@@ -13,8 +12,12 @@ class ShotViewer : public QWidget
     Q_OBJECT
 public:
     enum viewerState{
+        CH1_CH2,
         CH1_Only,
         CH2_Only,
+        CH3_CH4,
+        CH3_Only,
+        CH4_Only,
         Both
     };
     explicit ShotViewer(QWidget *parent = nullptr);
@@ -22,8 +25,7 @@ public:
     void clearGraphs(viewerState);
     void autoScale();
     void addUserGraph(QByteArray &buf, int len, int ch);
-    void shiftCH1(int);
-    void shiftCH2(int);
+
 signals:
 
 private slots:

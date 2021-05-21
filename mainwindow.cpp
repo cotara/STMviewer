@@ -56,14 +56,16 @@ MainWindow::MainWindow(QWidget *parent) :
     layoutH->addLayout(controlLayout);
 
     transmitGroup = new QGroupBox("Обмен данными");
+    signalProcessingGroup = new QGroupBox("Обработка сигнала");
     appSettingsGroup = new QGroupBox("Настройки интерфейса");
     logGroup = new QGroupBox("Логирование");
     historyGrouop = new QGroupBox("История");
 
-    transmitGroup->setMinimumWidth(100);
-    appSettingsGroup->setMinimumWidth(100);
-    logGroup->setMinimumWidth(100);
-    historyGrouop->setMinimumWidth(100);
+    transmitGroup->setMaximumWidth(250);
+    signalProcessingGroup->setMaximumWidth(250);
+    appSettingsGroup->setMaximumWidth(250);
+    logGroup->setMaximumWidth(250);
+    historyGrouop->setMaximumWidth(250);
 
     controlLayout->addWidget(transmitGroup);
     controlLayout->addWidget(signalProcessingGroup);
@@ -76,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
     appSettingsLayout = new QVBoxLayout;
     logLayout = new QVBoxLayout;
     historyLayout = new QVBoxLayout;
+
     transmitGroup->setLayout(transmitLayout);
     signalProcessingGroup->setLayout(signalProcessingLayout);
     appSettingsGroup->setLayout(appSettingsLayout);
@@ -124,15 +127,23 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &MainWindow::autoGetCheckBoxChanged);
 
     //Обработка сигнала
-    shiftCH1NF_Slider = new QSlider();
-    shiftCH2NF_Slider = new QSlider();
+    shiftCH1NF_Slider = new QSlider(Qt::Horizontal);
+    shiftCH2NF_Slider = new QSlider(Qt::Horizontal);
+    shiftedCH2Label = new QLabel("Смещение фильтрованного канала 1: 0");
+    shiftedCH4Label = new QLabel("Смещение фильтрованного канала 2: 0");
+    shiftCH1NF_Slider->setTickPosition(QSlider::TicksBothSides);
+    shiftCH2NF_Slider->setTickPosition(QSlider::TicksBothSides);
+    shiftCH1NF_Slider->setTickInterval(100);
+    shiftCH2NF_Slider->setTickInterval(100);
     shiftCH1NF_Slider->setRange(-1000,1000);
     shiftCH2NF_Slider->setRange(-1000,1000);
+    signalProcessingLayout->addWidget(shiftedCH2Label);
     signalProcessingLayout->addWidget(shiftCH1NF_Slider);
+    signalProcessingLayout->addWidget(shiftedCH4Label);
     signalProcessingLayout->addWidget(shiftCH2NF_Slider);
 
-    connect(shiftCH1NF_Slider, &QSlider::valueChanged,viewer,&ShotViewer::shiftCH1);
-    connect(shiftCH2NF_Slider, &QSlider::valueChanged,viewer,&ShotViewer::shiftCH2);
+    connect(shiftCH1NF_Slider, &QSlider::valueChanged,this,&MainWindow::shiftCH2);
+    connect(shiftCH2NF_Slider, &QSlider::valueChanged,this,&MainWindow::shiftCH4);
 
     //Настройки интерфейса
     consoleEnable = new QCheckBox("Вывод в консоль");
@@ -353,7 +364,8 @@ void MainWindow::selectShot(int index){
         }
         if(shotsCH2.contains(index)){
             ch = shotsCH2[index];
-            viewer->addUserGraph(ch,ch.size(),2);
+            shiftCH2((shiftedCH2));
+            //viewer->addUserGraph(ch,ch.size(),2);
         }
         if(shotsCH3.contains(index)){
             ch = shotsCH3[index];
@@ -361,7 +373,8 @@ void MainWindow::selectShot(int index){
         }
         if(shotsCH4.contains(index)){
             ch = shotsCH4[index];
-            viewer->addUserGraph(ch,ch.size(),4);
+            shiftCH4((shiftedCH4));
+            //viewer->addUserGraph(ch,ch.size(),4);
         }
     }
 }
@@ -374,6 +387,56 @@ void MainWindow::on_clearButton(){
     shotsCH4.clear();
     shotsComboBox->clear();
     viewer->clearGraphs(ShotViewer::Both);
+}
+//Сдвиг графика путем перемещения слайдера
+void MainWindow::shiftCH2(int n){
+    int index;
+    QString str = "Смещение фильтрованного канала 1: " + QString::number(n);
+    shiftedCH2Label->setText(str);
+    shiftedCH2=n;
+    QByteArray ch,chShifted;
+     index=shotsComboBox->currentIndex();               //Двигать будем текущие отрисованные графики
+     if(index!=-1){
+        if(shotsCH2.contains(index)){
+            ch = shotsCH2[index];
+            if(n>=0){                                   //Если двигаем вправо
+                chShifted.fill(0,n);                    //Заполняем нулями первые n байт (на сколько сдвинули
+                ch.truncate(ch.size()-n);               //Обрезаем исходный график
+                chShifted.append(ch);                   //Дописываем в конец
+            }
+            else{                                       //Если двигаем влево
+                chShifted=ch.mid(-n);                   //Берем с позиции n (минус т.к. n - отрицательное)
+                chShifted.append(-n,0);
+            }
+            viewer->clearGraphs(ShotViewer::CH2_Only);//Очищаем график
+            viewer->addUserGraph(chShifted,chShifted.size(),2); //Строим сдвинутый график
+        }
+     }
+}
+
+void MainWindow::shiftCH4(int n){
+    int index;
+    QString str = "Смещение фильтрованного канала 2: " + QString::number(n);
+    shiftedCH4Label->setText(str);
+    shiftedCH4=n;
+    QByteArray ch,chShifted;
+     index=shotsComboBox->currentIndex();
+     if(index!=-1){
+        if(shotsCH4.contains(index)){
+            ch = shotsCH4[index];
+            if(n>=0){
+                chShifted.fill(0,n);
+                ch.truncate(ch.size()-n);
+                chShifted.append(ch);
+            }
+            else{
+                chShifted=ch.mid(-n);
+                chShifted.append(-n,0);
+            }
+            viewer->clearGraphs(ShotViewer::CH4_Only);
+            viewer->addUserGraph(chShifted,chShifted.size(),4);
+        }
+     }
 }
 
 //Обработка входящих пакетов
