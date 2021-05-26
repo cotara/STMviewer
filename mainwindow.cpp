@@ -158,12 +158,20 @@ MainWindow::MainWindow(QWidget *parent) :
     //Настройки логирования
     autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка");
     logLayout->addWidget(autoSaveShotCheckBox);
+    connect(autoSaveShotCheckBox,&QCheckBox::stateChanged,this,&MainWindow::autoSaveShotCheked);
+    autoSaveShotCheckBox->setEnabled(false);
 
     //Создание папки с логами, если ее нет.
-    QDir dir(dirname);
-    if (!dir.exists()) {
-        QDir().mkdir(dirname);
+    dir = new QDir(dirname);
+    if (!dir->exists()) {
+        dir->mkdir(dirname);
     }
+    dir->setFilter( QDir::NoDotAndDotDot);
+
+    file1 = new QFile();
+    file2 = new QFile();
+    file3 = new QFile();
+    file4 = new QFile();
 
     //История
     shotsComboBox = new QComboBox;
@@ -215,6 +223,7 @@ void MainWindow::on_connect_triggered()
         ch2CheckBox->setEnabled(true);
         ch3CheckBox->setEnabled(true);
         ch4CheckBox->setEnabled(true);
+        autoSaveShotCheckBox->setEnabled(true);
         if(channelsOrder!=0){
             sendChannelOrder();
         }
@@ -255,6 +264,8 @@ void MainWindow::on_disconnect_triggered(){
     ch2CheckBox->setEnabled(false);
     ch3CheckBox->setEnabled(false);
     ch4CheckBox->setEnabled(false);
+    autoSaveShotCheckBox->setEnabled(false);
+    autoSaveShotCheckBox->setCheckState(Qt::Unchecked);
 }
 
 //Подсчет количества отмеченных каналов
@@ -349,6 +360,37 @@ void MainWindow::consoleEnabledCheked(bool en){
     else{
         m_console->clear();
         m_console->hide();
+    }
+}
+
+void MainWindow::autoSaveShotCheked(bool en)
+{
+    if(en){
+        filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1";
+        file1->setFileName(dirname + "/" + filename);
+        file1->open(QIODevice::WriteOnly);
+
+
+        filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1F";
+        file2->setFileName(dirname + "/" + filename);
+        file2->open(QIODevice::WriteOnly);
+
+
+        filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2";
+        file3->setFileName(dirname + "/" + filename);
+        file3->open(QIODevice::WriteOnly);
+
+
+        filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2F";
+        file4->setFileName(dirname + "/" + filename);
+        file4->open(QIODevice::WriteOnly);
+
+    }
+    else{
+       file1->close();
+       file2->close();
+       file3->close();
+       file4->close();
     }
 }
 
@@ -491,9 +533,9 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         qDebug() << "Attantion! Dublicate CH1";
                      }
                      else{
-                        chName="CH1_F";
+                        chName="CH1_NF";
                         shotsCH1.insert(shotCountRecieved,currentShot);                    //Добавили пришедший канал в мап с текущим индексом
-                        m_console->putData(" :RECIEVED ANSWER_POINTS CH1  ");
+                        m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
                      }
                 }
                 else if(value == CH2){
@@ -501,9 +543,9 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         qDebug() << "Attantion! Dublicate CH2";
                      }
                      else{
-                         chName="CH1_NF";
+                         chName="CH1_F";
                          shotsCH2.insert(shotCountRecieved,currentShot);
-                         m_console->putData(" :RECIEVED ANSWER_POINTS CH2  ");
+                         m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
                      }
                 }
                 else if(value == CH3){
@@ -511,9 +553,9 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         qDebug() << "Attantion! Dublicate CH3";
                      }
                      else{
-                         chName="CH2_F";
+                         chName="CH2_NF";
                          shotsCH3.insert(shotCountRecieved,currentShot);
-                         m_console->putData(" :RECIEVED ANSWER_POINTS CH3  ");
+                         m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
                      }
                 }
                 else if(value == CH4){
@@ -521,9 +563,9 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         qDebug() << "Attantion! Dublicate CH4";
                      }
                      else{
-                         chName="CH2_NF";
+                         chName="CH2_F";
                          shotsCH4.insert(shotCountRecieved,currentShot);
-                         m_console->putData(" :RECIEVED ANSWER_POINTS CH4  ");
+                         m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
                      }
                 }
                 //Если включено автосохранение
@@ -532,12 +574,26 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
                     }
                     else{
-                        filename=QString::number(shotCountRecieved) + "_" + chName;
-                        file.setFileName(dirname + "/" + filename + ".txt");
-                        if(file.open(QIODevice::WriteOnly) == true){
-                            file.write(currentShot);
-                            file.close();
-                         }
+                        if(chName=="CH1_NF"){
+                            file1->write(currentShot,currentShot.size());
+                            file1->write(endShotLine,endShotLine.size());
+                            file1->flush();
+                        }
+                        else if(chName=="CH1_F"){
+                            file2->write(currentShot,currentShot.size());
+                            file2->write(endShotLine,endShotLine.size());
+                            file2->flush();
+                        }
+                        else if(chName=="CH2_NF"){
+                            file3->write(currentShot,currentShot.size());
+                            file3->write(endShotLine,endShotLine.size());
+                            file3->flush();
+                        }
+                        else if(chName=="CH2_F"){
+                            file4->write(currentShot,currentShot.size());
+                            file4->write(endShotLine,endShotLine.size());
+                            file4->flush();
+                        }
                     }
                 }
                 countRecievedDots=0;                                                    //Обнуляем коилчество пришедших точек

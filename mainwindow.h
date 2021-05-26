@@ -67,7 +67,7 @@ private slots:
     void getPacketFromMCU(short n);
     void autoGetCheckBoxChanged(int);
     void consoleEnabledCheked(bool);
-
+    void autoSaveShotCheked(bool);
     void selectShot(int index);
     void on_clearButton();
 
@@ -92,6 +92,7 @@ private:
     QTimer *m_timer;
     StatusBar *statusBar;
     ShotViewer *viewer;
+    QDir *dir;
     //Итерфейс
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
@@ -116,8 +117,10 @@ private:
     //Работа с файлами
     QString dirname = "log";
     QString filename;
-    QFile file;
+    QFile *file1,*file2,*file3,*file4;
+
     bool m_online = false;
+    QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
 };
 
 #endif // MAINWINDOW_H

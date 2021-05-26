@@ -1,8 +1,6 @@
 #include "shotviewer.h"
 #include "qcustomplot/qcustomplot.h"
 
-
-
 ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
 {
     //Графики
@@ -174,13 +172,13 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
             mGraph1=customPlot1->addGraph();
             mGraph1->setData(x, y);
             mGraph1->setName(QString("Канал 1. Нефильтрованный"));
-            color =  QColorConstants::Black;        
+            color =  Qt::black;
         }
         else{
             mGraph2=customPlot1->addGraph();
             mGraph2->setData(x, y);
             mGraph2->setName(QString("Канал 1. Фильтрованный"));
-            color =  QColorConstants::DarkGray;
+            color =  Qt::darkGray;
         }
         graphPen.setColor(color);
         customPlot1->graph()->setPen(graphPen);
@@ -191,13 +189,13 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
             mGraph3=customPlot2->addGraph();
             mGraph3->setData(x, y);
             mGraph3->setName(QString("Канал 2. Нефильтрованный"));
-            color =  QColorConstants::DarkMagenta;
+            color =  Qt::darkMagenta;
         }
         else{
             mGraph4=customPlot2->addGraph();
             mGraph4->setData(x, y);
             mGraph4->setName(QString("Канал 2. Фильтрованный"));
-            color =  QColorConstants::Red;
+            color =  Qt::red;
         }
         graphPen.setColor(color);
         customPlot2->graph()->setPen(graphPen);
