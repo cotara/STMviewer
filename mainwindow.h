@@ -16,6 +16,7 @@
 #include "QComboBox"
 #include "QGroupBox"
 #include "shotviewer.h"
+#include "firfilter.h"
 
 // answer status
 const unsigned short FAIL             = 0x0000;
@@ -92,6 +93,7 @@ private:
     QTimer *m_timer;
     StatusBar *statusBar;
     ShotViewer *viewer;
+    firFilter *filter;
     QDir *dir;
     //Итерфейс
     QHBoxLayout *layoutH;

@@ -135,8 +135,8 @@ MainWindow::MainWindow(QWidget *parent) :
     shiftCH2NF_Slider->setTickPosition(QSlider::TicksBothSides);
     shiftCH1NF_Slider->setTickInterval(100);
     shiftCH2NF_Slider->setTickInterval(100);
-    shiftCH1NF_Slider->setRange(-1000,1000);
-    shiftCH2NF_Slider->setRange(-1000,1000);
+    shiftCH1NF_Slider->setRange(-250,250);
+    shiftCH2NF_Slider->setRange(-250,250);
     signalProcessingLayout->addWidget(shiftedCH2Label);
     signalProcessingLayout->addWidget(shiftCH1NF_Slider);
     signalProcessingLayout->addWidget(shiftedCH4Label);
@@ -185,6 +185,10 @@ MainWindow::MainWindow(QWidget *parent) :
     });
 
     connect(clearButton,&QPushButton::clicked,this, &MainWindow::on_clearButton);
+
+    //Fir filter
+    filter = new firFilter;
+
 }
 
 MainWindow::~MainWindow(){
@@ -438,13 +442,14 @@ void MainWindow::shiftCH2(int n){
     shiftedCH2=n;
     QByteArray ch,chShifted;
      index=shotsComboBox->currentIndex();               //Двигать будем текущие отрисованные графики
+
      if(index!=-1){
         if(shotsCH2.contains(index)){
             ch = shotsCH2[index];
-            if(n>=0){                                   //Если двигаем вправо
-                chShifted.fill(0,n);                    //Заполняем нулями первые n байт (на сколько сдвинули
-                ch.truncate(ch.size()-n);               //Обрезаем исходный график
-                chShifted.append(ch);                   //Дописываем в конец
+            if(n>=0){
+                chShifted.fill(0,n);
+                ch.truncate(ch.size()-n);
+                chShifted.append(ch);
             }
             else{                                       //Если двигаем влево
                 chShifted=ch.mid(-n);                   //Берем с позиции n (минус т.к. n - отрицательное)
@@ -544,7 +549,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                      }
                      else{
                          chName="CH1_F";
-                         shotsCH2.insert(shotCountRecieved,currentShot);
+                         shotsCH2.insert(shotCountRecieved,filter->toFilter(currentShot,currentShot.size()));
                          m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
                      }
                 }
@@ -564,7 +569,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                      }
                      else{
                          chName="CH2_F";
-                         shotsCH4.insert(shotCountRecieved,currentShot);
+                         shotsCH4.insert(shotCountRecieved,filter->toFilter(currentShot,currentShot.size()));
                          m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
                      }
                 }

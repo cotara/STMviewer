@@ -26,6 +26,7 @@ CONFIG += c++11
 
 SOURCES += \
     console.cpp \
+    firfilter.cpp \
         main.cpp \
         mainwindow.cpp \
     serialsettings.cpp \
@@ -37,6 +38,7 @@ SOURCES += \
 
 HEADERS += \
     console.h \
+    firfilter.h \
         mainwindow.h \
     serialsettings.h \
     qcustomplot/qcustomplot.h \

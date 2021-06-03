@@ -455,11 +455,11 @@ void ShotViewer::graphClicked2(QCPAbstractPlottable *plottable, int dataIndex){
 void ShotViewer::autoScale(){
         customPlot1->rescaleAxes();
         customPlot1->yAxis->setRange(customPlot1->yAxis->range().lower-1,customPlot1->yAxis->range().upper+5);
-        customPlot1->xAxis->setRange(customPlot1->xAxis->range().lower,customPlot1->xAxis->range().upper );
+        customPlot1->xAxis->setRange(customPlot1->xAxis->range().lower-20,customPlot1->xAxis->range().upper+100 );
         customPlot1->replot();
         customPlot2->rescaleAxes();
         customPlot2->yAxis->setRange(customPlot2->yAxis->range().lower-1,customPlot2->yAxis->range().upper+5);
-        customPlot2->xAxis->setRange(customPlot2->xAxis->range().lower,customPlot2->xAxis->range().upper );
+        customPlot2->xAxis->setRange(customPlot2->xAxis->range().lower-20,customPlot2->xAxis->range().upper+100);
         customPlot2->replot();
 }
 
