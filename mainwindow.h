@@ -34,6 +34,10 @@ const unsigned short CH1              = 0x01;
 const unsigned short CH2              = 0x02;
 const unsigned short CH3              = 0x04;
 const unsigned short CH4              = 0x08;
+const unsigned short LAZER1_SET       = 0x10;
+const unsigned short LAZER2_SET       = 0x11;
+const unsigned short LAZERS_SAVE      = 0x12;
+
 
 class QSerialPort;
 class QTimer;
@@ -62,6 +66,9 @@ private slots:
     void on_settings_triggered();
     void on_connect_triggered();
     void on_disconnect_triggered();
+    void sendLazer1(int lazer1Par);
+    void sendLazer2(int lazer2Par);
+    void sendSaveEeprom();
     void setPacketSize(short n);
     void incCountCh(bool);
     void manualGetShotButton();
@@ -98,15 +105,17 @@ private:
     //Итерфейс
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *graphsLayout, *controlLayout,*transmitLayout,*signalProcessingLayout, *appSettingsLayout, *logLayout, *historyLayout;
-    QGroupBox *transmitGroup, *signalProcessingGroup, *appSettingsGroup, *logGroup, *historyGrouop;
+    QVBoxLayout *graphsLayout,*controlLayout,*lazerLayout,*transmitLayout,*signalProcessingLayout, *appSettingsLayout, *logLayout, *historyLayout;
+    QHBoxLayout *lazersHorizontalLayout;
+    QVBoxLayout *lazer1SettingLayout, *lazer2SettingLayout;
+    QGroupBox *lazerGroup, *transmitGroup, *signalProcessingGroup, *appSettingsGroup, *logGroup, *historyGrouop;
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
-    QLabel *packetSizeLabel, *shiftedCH2Label,*shiftedCH4Label;
+    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel, *shiftedCH2Label,*shiftedCH4Label;
     QSlider *shiftCH1NF_Slider, *shiftCH2NF_Slider;
-    QSpinBox *packetSizeSpinbox;
-    QPushButton *getButton, *autoRangeGraph, *clearButton;
+    QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox;
+    QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
 
     //Переменные
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4;

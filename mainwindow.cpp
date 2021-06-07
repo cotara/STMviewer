@@ -55,36 +55,71 @@ MainWindow::MainWindow(QWidget *parent) :
     layoutH->addWidget(viewer);
     layoutH->addLayout(controlLayout);
 
+    lazerGroup = new QGroupBox("Настройка лазеров");
     transmitGroup = new QGroupBox("Обмен данными");
     signalProcessingGroup = new QGroupBox("Обработка сигнала");
     appSettingsGroup = new QGroupBox("Настройки интерфейса");
     logGroup = new QGroupBox("Логирование");
     historyGrouop = new QGroupBox("История");
 
+    lazerGroup->setMaximumWidth(250);
     transmitGroup->setMaximumWidth(250);
     signalProcessingGroup->setMaximumWidth(250);
     appSettingsGroup->setMaximumWidth(250);
     logGroup->setMaximumWidth(250);
     historyGrouop->setMaximumWidth(250);
 
+    controlLayout->addWidget(lazerGroup);
     controlLayout->addWidget(transmitGroup);
     controlLayout->addWidget(signalProcessingGroup);
     controlLayout->addWidget(appSettingsGroup);
     controlLayout->addWidget(logGroup);
     controlLayout->addWidget(historyGrouop);
 
+    lazerLayout = new QVBoxLayout;
     transmitLayout = new QVBoxLayout;
     signalProcessingLayout = new QVBoxLayout;
     appSettingsLayout = new QVBoxLayout;
     logLayout = new QVBoxLayout;
     historyLayout = new QVBoxLayout;
 
+    lazerGroup->setLayout(lazerLayout);
     transmitGroup->setLayout(transmitLayout);
     signalProcessingGroup->setLayout(signalProcessingLayout);
     appSettingsGroup->setLayout(appSettingsLayout);
     logGroup->setLayout(logLayout);
     historyGrouop->setLayout(historyLayout);
 
+    //Настройки лазера
+    lazersHorizontalLayout = new QHBoxLayout;
+    lazerLayout->addLayout(lazersHorizontalLayout);
+    lazer1SettingLayout = new QVBoxLayout;
+    lazer2SettingLayout = new QVBoxLayout;
+    lazersHorizontalLayout->addLayout(lazer1SettingLayout);
+    lazersHorizontalLayout->addLayout(lazer2SettingLayout);
+    lazer1Spinbox = new QSpinBox();
+    lazer2Spinbox = new QSpinBox();
+    lazer1Label = new QLabel("Лазер 1:");
+    lazer2Label = new QLabel("Лазер 2:");
+    lazersSaveButton = new QPushButton("Сохранить в EEPROM");
+
+    lazer1Spinbox->setRange(0,255);
+    lazer2Spinbox->setRange(0,255);
+    lazer1SettingLayout->addWidget(lazer1Label);
+    lazer1SettingLayout->addWidget(lazer1Spinbox);
+    lazer2SettingLayout->addWidget(lazer2Label);
+    lazer2SettingLayout->addWidget(lazer2Spinbox);
+    lazerLayout->addWidget(lazersSaveButton);
+
+    lazer1Spinbox->setEnabled(false);
+    lazer2Spinbox->setEnabled(false);
+    lazersSaveButton->setEnabled(false);
+
+    connect(lazer1Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+          [=](int i){MainWindow::sendLazer1(i);});
+    connect(lazer2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+          [=](int i){MainWindow::sendLazer2(i);});
+    connect(lazersSaveButton,&QPushButton::clicked,this,&MainWindow::sendSaveEeprom);
     //Настройки передачи
     packetSizeLabel = new QLabel("Размер пакета:");
     packetSizeSpinbox = new QSpinBox;
@@ -231,6 +266,9 @@ void MainWindow::on_connect_triggered()
         if(channelsOrder!=0){
             sendChannelOrder();
         }
+        lazer1Spinbox->setEnabled(true);
+        lazer2Spinbox->setEnabled(true);
+        lazersSaveButton->setEnabled(true);
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
@@ -270,8 +308,33 @@ void MainWindow::on_disconnect_triggered(){
     ch4CheckBox->setEnabled(false);
     autoSaveShotCheckBox->setEnabled(false);
     autoSaveShotCheckBox->setCheckState(Qt::Unchecked);
+    lazer1Spinbox->setEnabled(false);
+    lazer2Spinbox->setEnabled(false);
+    lazersSaveButton->setEnabled(false);
 }
 
+void MainWindow::sendLazer1(int lazer1Par){
+    QByteArray data;
+    data.append(LAZER1_SET);
+    data.append(lazer1Par);
+    m_console->putData("Set Lazer1 Setting: ");
+    m_transp->sendPacket(data);
+}
+void MainWindow::sendLazer2(int lazer2Par){
+    QByteArray data;
+    data.append(LAZER2_SET);
+    data.append(lazer2Par);
+    m_console->putData("Set Lazer2 Setting: ");
+    m_transp->sendPacket(data);
+}
+
+void MainWindow::sendSaveEeprom()
+{
+    QByteArray data;
+    data.append(LAZERS_SAVE);
+    m_console->putData("Save lazer's parameters to EEPROM: ");
+    m_transp->sendPacket(data);
+}
 //Подсчет количества отмеченных каналов
 void MainWindow::incCountCh(bool st){
     if(st) chCountChecked++;
