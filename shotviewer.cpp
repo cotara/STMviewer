@@ -81,77 +81,70 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     //запоминание текущей позиции мыши для выведения радом с ней тултипа
     connect(customPlot1, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showPointToolTip(QMouseEvent*)));
     connect(customPlot2, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showPointToolTip(QMouseEvent*)));
+
+    textLabel1 = new QCPItemText(customPlot1);
+    textLabel2 = new QCPItemText(customPlot1);
+    textLabel3 = new QCPItemText(customPlot1);
+    textLabel4 = new QCPItemText(customPlot2);
+    textLabel5 = new QCPItemText(customPlot2);
+    textLabel6 = new QCPItemText(customPlot2);
 }
 
-void ShotViewer::showGraphs(ShotViewer::viewerState state){
-    switch (state){
-    case CH1_CH2:
+void ShotViewer::showGraphs(int state){
+    if(state & CH1)
         customPlot1->show();
-        customPlot2->hide();
-        break;
-    case CH3_CH4:
-        customPlot2->show();
+    else
         customPlot1->hide();
-        break;
-    case Both:
-        customPlot1->show();
+
+    if(state & CH2)
         customPlot2->show();
-        break;
-    default:
-        qDebug() << "in ShotViewer::showGraphs incorrect state!" ;
-    }
+    else
+        customPlot2->hide();
 }
 
-void ShotViewer::clearGraphs(ShotViewer::viewerState state){
-    switch (state){
-    case CH1_CH2:
-        mGraph1.clear();
-        mGraph2.clear();
-        customPlot1->clearGraphs();
-        customPlot1->replot();
-        break;
-    case CH1_Only:
-        if(customPlot1->hasPlottable(mGraph1))
+void ShotViewer::clearGraphs(int state){
+    if(state & CH1){
+        if(customPlot1->hasPlottable(mGraph1)){
             customPlot1->removeGraph(mGraph1);
-        customPlot1->replot();
-        mGraph1.clear();
-        break;
-    case CH2_Only:
-        if(customPlot1->hasPlottable(mGraph2))
+            mGraph1.clear();
+            customPlot1->replot();
+        }
+    }
+    if(state & CH2){
+        if(customPlot1->hasPlottable(mGraph2)){
             customPlot1->removeGraph(mGraph2);
-        customPlot1->replot();
-        mGraph2.clear();
-        break;
-    case CH3_CH4:
-        mGraph3.clear();
-        mGraph4.clear();
-        customPlot2->clearGraphs();
-        customPlot2->replot();
-        break;
-    case CH3_Only:
-        if(customPlot2->hasPlottable(mGraph3))
+            mGraph2.clear();
+            customPlot1->replot();
+        }
+    }
+    if(state & CH3){
+        if(customPlot2->hasPlottable(mGraph3)){
             customPlot2->removeGraph(mGraph3);
-        customPlot2->replot();
-        mGraph3.clear();
-        break;
-    case CH4_Only:
-        if(customPlot2->hasPlottable(mGraph4))
+            mGraph3.clear();
+            customPlot2->replot();
+        }
+    }
+    if(state & CH4){
+        if(customPlot2->hasPlottable(mGraph4)){
             customPlot2->removeGraph(mGraph4);
-        customPlot2->replot();
-        mGraph4.clear();
-        break;
-    case Both:
-        mGraph1.clear();
-        mGraph2.clear();
-        mGraph3.clear();
-        mGraph4.clear();
-        customPlot1->clearGraphs();
-        customPlot1->replot();
-        customPlot2->clearGraphs();
-        customPlot2->replot();
-        break;
-    default:
-        qDebug() << "in ShotViewer::clearGraphs incorrect state!" ;
+            mGraph4.clear();
+            customPlot2->replot();
+        }
+    }
+    //точки экстремума
+    if(state & CH5){
+        if(customPlot1->hasPlottable(mGraph5)){
+            customPlot1->removeGraph(mGraph5);
+            mGraph5.clear();
+            customPlot1->replot();
+        }
+    }
+    if(state & CH6){
+        if(customPlot2->hasPlottable(mGraph6)){
+            customPlot2->removeGraph(mGraph6);
+            mGraph6.clear();
+            customPlot2->replot();
+        }
     }
 }
 
@@ -178,7 +171,7 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
             mGraph2=customPlot1->addGraph();
             mGraph2->setData(x, y);
             mGraph2->setName(QString("Канал 1. Фильтрованный"));
-            color =  Qt::darkGray;
+            color =  Qt::darkGreen;
         }
         graphPen.setColor(color);
         customPlot1->graph()->setPen(graphPen);
@@ -201,6 +194,80 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         customPlot2->graph()->setPen(graphPen);
         customPlot2->replot();
     }
+}
+void ShotViewer::addDots(QVector<QVector<double>> dots, int ch){
+    int dotsSize = dots.size();
+    QVector<double> x(dotsSize), y(dotsSize);
+    QColor color = Qt::red;
+    QFont font;
+    QString periods1,periods2, wightSignal;
+    for (int i=0; i<dotsSize; i+=2){
+      x[i] = dots.at(i).at(0);
+      y[i] = dots.at(i).at(1);
+      x[i+1] = dots.at(i+1).at(0);
+      y[i+1] = dots.at(i+1).at(1);
+      if(i!=0){
+          periods2+=QString::number(x.at(i+1)-x.at(i-1))+"/";
+          periods1.prepend( QString::number(x.at(i-2)-x.at(i))+"/");
+      }
+
+    }
+    font.setPointSize(16);
+    if(dotsSize!=0)
+        wightSignal = QString::number(dots.at(1).at(0) - dots.at(0).at(0));     //Ширина фронта
+    if(ch==1){
+       //textLabel1->setText("");
+       textLabel1->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+       textLabel1->position->setType(QCPItemPosition::ptAxisRectRatio);
+       textLabel1->position->setCoords(0.3, 0.05); // place position at center/top of axis rect
+       textLabel1->setFont(font);
+       textLabel1->setText(periods1);
+
+       textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+       textLabel2->position->setType(QCPItemPosition::ptAxisRectRatio);
+       textLabel2->position->setCoords(0.7, 0.05); // place position at center/top of axis rect
+       textLabel2->setFont(font);
+       textLabel2->setText(periods2);
+
+       textLabel3->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+       textLabel3->position->setType(QCPItemPosition::ptAxisRectRatio);
+       textLabel3->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
+       textLabel3->setFont(font);
+       textLabel3->setText(wightSignal);
+
+       mGraph5=customPlot1->addGraph();
+       mGraph5->setData(x,y);
+       mGraph5->setLineStyle((QCPGraph::LineStyle::lsNone));
+       mGraph5->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
+       mGraph5->setName(QString("Канал 1. Экстремумы"));
+       customPlot1->replot();
+  }
+    else if(ch==2){
+        textLabel4->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+        textLabel4->position->setType(QCPItemPosition::ptAxisRectRatio);
+        textLabel4->position->setCoords(0.3, 0.05); // place position at center/top of axis rect
+        textLabel4->setFont(font);
+        textLabel4->setText(periods1);
+
+        textLabel5->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+        textLabel5->position->setType(QCPItemPosition::ptAxisRectRatio);
+        textLabel5->position->setCoords(0.7, 0.05); // place position at center/top of axis rect
+        textLabel5->setFont(font);
+        textLabel5->setText(periods2);
+
+        textLabel6->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+        textLabel6->position->setType(QCPItemPosition::ptAxisRectRatio);
+        textLabel6->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
+        textLabel6->setFont(font);
+        textLabel6->setText(wightSignal);
+
+       mGraph6=customPlot2->addGraph();
+       mGraph6->setData(x,y);
+       mGraph6->setLineStyle((QCPGraph::LineStyle)0);
+       mGraph6->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
+       mGraph6->setName(QString("Канал 2. Экстремумы"));
+       customPlot2->replot();
+   }
 }
 
 void ShotViewer::titleDoubleClick1(QMouseEvent* event)
@@ -424,15 +491,15 @@ void ShotViewer::mouseWheel2(){
 
 void ShotViewer::graphDoubleClicked1(){
     if(!customPlot2->isHidden())
-        showGraphs(CH1_CH2);
+        showGraphs(CH1);
     else
-        showGraphs(Both);
+        showGraphs(CH1|CH2);
 }
 void ShotViewer::graphDoubleClicked2(){
     if(!customPlot1->isHidden())
-        showGraphs(CH3_CH4);
+        showGraphs(CH2);
     else
-        showGraphs(Both);
+        showGraphs(CH1 | CH2);
 
 }
 

@@ -8,6 +8,8 @@ public:
     firFilter();
     ~firFilter();
     QByteArray toFilter(QByteArray &in,int len);
+    QVector <QVector<double>> maximumFind(QByteArray &in,int len,int scale);
+    //double freqCalc(QList<double> dots,int len);
 
 private:
     QFile *file;

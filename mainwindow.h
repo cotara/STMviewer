@@ -70,7 +70,8 @@ private slots:
     void sendLazer2(int lazer2Par);
     void sendSaveEeprom();
     void setPacketSize(short n);
-    void incCountCh(bool);
+    void incCountCh1(bool);
+    void incCountCh2(bool);
     void manualGetShotButton();
     void getPacketFromMCU(short n);
     void autoGetCheckBoxChanged(int);
@@ -87,8 +88,10 @@ private slots:
     void handlerTranspError();
     void reSentInc();
     void handlerTimer();
-
     void sendChannelOrder();
+
+    //Запись в файл
+    void writeToLogfile(QString name);
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
@@ -118,13 +121,14 @@ private:
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
 
     //Переменные
-    QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4;
+    QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4,shotsCH5,shotsCH6;
     QByteArray currentShot;
     int chCountChecked=0,shotCountRecieved=0;                               //Текущее количество отмеченных каналов и текущее количество принятых шотов
     short packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
-    short countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
+    int countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     int shiftedCH2=0,shiftedCH4=0;
+    QVector <QVector<double>> dots1,dots2, dots1Shifted, dots2Shifted;
     //Работа с файлами
     QString dirname = "log";
     QString filename;

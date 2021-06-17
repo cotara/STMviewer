@@ -103,8 +103,10 @@ MainWindow::MainWindow(QWidget *parent) :
     lazer2Label = new QLabel("Лазер 2:");
     lazersSaveButton = new QPushButton("Сохранить в EEPROM");
 
-    lazer1Spinbox->setRange(0,255);
-    lazer2Spinbox->setRange(0,255);
+    lazer1Spinbox->setRange(20,50);
+    lazer2Spinbox->setRange(20,50);
+    lazer1Spinbox->setValue(40);
+    lazer2Spinbox->setValue(40);
     lazer1SettingLayout->addWidget(lazer1Label);
     lazer1SettingLayout->addWidget(lazer1Spinbox);
     lazer2SettingLayout->addWidget(lazer2Label);
@@ -150,10 +152,9 @@ MainWindow::MainWindow(QWidget *parent) :
             setPacketSize(i);});
     emit packetSizeSpinbox->valueChanged(packetSizeSpinbox->value());
 
-    connect(ch1CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh);
-    connect(ch2CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh);
-    connect(ch3CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh);
-    connect(ch4CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh);
+    connect(ch1CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh1);
+    connect(ch3CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh2);
+
 
     getButton->setEnabled(false);
     connect(getButton,&QPushButton::clicked,this, &MainWindow::manualGetShotButton);
@@ -223,6 +224,23 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Fir filter
     filter = new firFilter;
+
+    QFile *tempFile;
+    tempFile = new QFile();
+    filename = "2021_06_16__18_32_30_CH1";
+    tempFile->setFileName(dirname + "/" + filename);
+    if(!tempFile->open(QIODevice::ReadOnly)){
+        qDebug() << "tempFile can`t be open";
+        return;
+    }
+    QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
+    QList<QByteArray> list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
+    QByteArray tempBuf2 = list_temp.at(4);                                              //Валидные - четные 0,2,4...
+    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 1);
+    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
+    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
+    QVector <QVector<double>> dots = filter->maximumFind(tempBuf2,tempBuf2.size(),40); //!!!Не забывать менять SCALE  в зависимости от файла
+    viewer->addDots(dots,1);
 
 }
 
@@ -312,22 +330,30 @@ void MainWindow::on_disconnect_triggered(){
     lazer2Spinbox->setEnabled(false);
     lazersSaveButton->setEnabled(false);
 }
-
+//Управление лазером
 void MainWindow::sendLazer1(int lazer1Par){
     QByteArray data;
+    char msb,lsb;
     data.append(LAZER1_SET);
-    data.append(lazer1Par);
+    msb=(0&0xFF00)>>8;
+    lsb=lazer1Par&0x00FF;
+    data.append(msb);
+    data.append(lsb);
     m_console->putData("Set Lazer1 Setting: ");
     m_transp->sendPacket(data);
 }
 void MainWindow::sendLazer2(int lazer2Par){
     QByteArray data;
+    char msb,lsb;
     data.append(LAZER2_SET);
-    data.append(lazer2Par);
+    msb=(0&0xFF00)>>8;
+    lsb=lazer2Par&0x00FF;
+    data.append(msb);
+    data.append(lsb);
+
     m_console->putData("Set Lazer2 Setting: ");
     m_transp->sendPacket(data);
 }
-
 void MainWindow::sendSaveEeprom()
 {
     QByteArray data;
@@ -336,27 +362,32 @@ void MainWindow::sendSaveEeprom()
     m_transp->sendPacket(data);
 }
 //Подсчет количества отмеченных каналов
-void MainWindow::incCountCh(bool st){
-    if(st) chCountChecked++;
-    else   chCountChecked--;
-
-    if(chCountChecked){
+void MainWindow::incCountCh1(bool st){
+    if(st){
+        chCountChecked++;
+        channelsOrder|=0x01;
         autoGetCheckBox->setEnabled(true);
     }
-    else{
-        autoGetCheckBox->setEnabled(false);
+    else {
+        chCountChecked--;
+        channelsOrder&=~0x01;
+        if(!chCountChecked)
+            autoGetCheckBox->setEnabled(false);
     }
-    channelsOrder=0;
-
-    if(ch1CheckBox->isChecked())
-        channelsOrder|=0x01;
-    if(ch2CheckBox->isChecked())
-        channelsOrder|=0x02;
-    if(ch3CheckBox->isChecked())
+    sendChannelOrder();
+}
+void MainWindow::incCountCh2(bool st){
+    if(st){
+        chCountChecked++;
         channelsOrder|=0x04;
-    if(ch4CheckBox->isChecked())
-        channelsOrder|=0x08;
-
+        autoGetCheckBox->setEnabled(true);
+    }
+    else {
+        chCountChecked--;
+        channelsOrder&=~0x04;
+        if(!chCountChecked)
+           autoGetCheckBox->setEnabled(false);
+    }
     sendChannelOrder();
 }
 //Настройка разбиения данных на пакеты
@@ -394,7 +425,15 @@ void MainWindow::autoGetCheckBoxChanged(int st)
     }
 }
 
-//Запихиваем в очередь Х запросов в соответствии с разбивкой по пакетам, установленной в спинбоксе
+//Запрос канала, отмеченного в чекбоксах chXCheckBox
+//Метод вызывается в трех случаях:
+//1. Нажата кнопка "Получить точки".
+//2. Отмечено "Автополучение по готовноси"
+//3. Запрос следующего выбранного канала
+//Последовательность отправки знает плата. Клиент только отправляет однотипные зарпосы
+//В этом случае счетчик notYetFlag устанавливается по количеству отмеченных каналов (1 или 2)
+//отправляется первый запрос. Плата отвечает тем, что считает нужным.
+//После успешного приема первого канала, notYetFlag уменьшается на единицу и если отмечено 2 канала, то происходит повторный запрос
 void MainWindow::manualGetShotButton(){
     if(countAvaibleDots){
         if (!ch1CheckBox->isChecked() && !ch2CheckBox->isChecked()
@@ -405,8 +444,8 @@ void MainWindow::manualGetShotButton(){
         getButton->setEnabled(false);                                                   //Защита от двойного нажатия кнопки
         m_console->putData("REQUEST_POINTS: ");
         m_timer->stop();
-        countWaitingDots = countAvaibleDots;                                                                //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
-        statusBar->setDownloadBarRange(countAvaibleDots);                                //Сколько точек по всем каналам
+        countWaitingDots = countAvaibleDots;                                             //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
+        statusBar->setDownloadBarRange(countAvaibleDots);
         statusBar->setDownloadBarValue(0);
         if(notYetFlag == 0)
             notYetFlag = chCountChecked;
@@ -433,31 +472,37 @@ void MainWindow::consoleEnabledCheked(bool en){
 void MainWindow::autoSaveShotCheked(bool en)
 {
     if(en){
-        filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1";
-        file1->setFileName(dirname + "/" + filename);
-        file1->open(QIODevice::WriteOnly);
+        if(ch1CheckBox->isChecked()){
+            filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1";
+            file1->setFileName(dirname + "/" + filename);
+            file1->open(QIODevice::WriteOnly);
+        }
+        if(ch2CheckBox->isChecked()){
+            filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1F";
+            file2->setFileName(dirname + "/" + filename);
+            file2->open(QIODevice::WriteOnly);
+        }
 
-
-        filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1F";
-        file2->setFileName(dirname + "/" + filename);
-        file2->open(QIODevice::WriteOnly);
-
-
-        filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2";
-        file3->setFileName(dirname + "/" + filename);
-        file3->open(QIODevice::WriteOnly);
-
-
-        filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2F";
-        file4->setFileName(dirname + "/" + filename);
-        file4->open(QIODevice::WriteOnly);
-
+        if(ch3CheckBox->isChecked()){
+            filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2";
+            file3->setFileName(dirname + "/" + filename);
+            file3->open(QIODevice::WriteOnly);
+        }
+        if(ch4CheckBox->isChecked()){
+            filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2F";
+            file4->setFileName(dirname + "/" + filename);
+            file4->open(QIODevice::WriteOnly);
+        }
     }
     else{
-       file1->close();
-       file2->close();
-       file3->close();
-       file4->close();
+       if(file1->isOpen())
+        file1->close();
+       if(file2->isOpen())
+        file2->close();
+       if(file3->isOpen())
+        file3->close();
+       if(file4->isOpen())
+        file4->close();
     }
 }
 
@@ -466,7 +511,7 @@ void MainWindow::selectShot(int index){
     if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
         QByteArray ch;
 
-        viewer->clearGraphs(ShotViewer::Both);
+        viewer->clearGraphs(ShotViewer::AllCH);
         if(shotsCH1.contains(index)){
             ch = shotsCH1[index];
             viewer->addUserGraph(ch,ch.size(),1);
@@ -474,7 +519,6 @@ void MainWindow::selectShot(int index){
         if(shotsCH2.contains(index)){
             ch = shotsCH2[index];
             shiftCH2((shiftedCH2));
-            //viewer->addUserGraph(ch,ch.size(),2);
         }
         if(shotsCH3.contains(index)){
             ch = shotsCH3[index];
@@ -483,7 +527,7 @@ void MainWindow::selectShot(int index){
         if(shotsCH4.contains(index)){
             ch = shotsCH4[index];
             shiftCH4((shiftedCH4));
-            //viewer->addUserGraph(ch,ch.size(),4);
+
         }
     }
 }
@@ -495,7 +539,7 @@ void MainWindow::on_clearButton(){
     shotsCH3.clear();
     shotsCH4.clear();
     shotsComboBox->clear();
-    viewer->clearGraphs(ShotViewer::Both);
+    viewer->clearGraphs(ShotViewer::AllCH);
 }
 //Сдвиг графика путем перемещения слайдера
 void MainWindow::shiftCH2(int n){
@@ -504,12 +548,12 @@ void MainWindow::shiftCH2(int n){
     shiftedCH2Label->setText(str);
     shiftedCH2=n;
     QByteArray ch,chShifted;
-     index=shotsComboBox->currentIndex();               //Двигать будем текущие отрисованные графики
+    index=shotsComboBox->currentIndex();               //Двигать будем текущие отрисованные графики
 
      if(index!=-1){
         if(shotsCH2.contains(index)){
             ch = shotsCH2[index];
-            if(n>=0){
+            if(n>=0){                                   //Двигаем вправо
                 chShifted.fill(0,n);
                 ch.truncate(ch.size()-n);
                 chShifted.append(ch);
@@ -518,8 +562,14 @@ void MainWindow::shiftCH2(int n){
                 chShifted=ch.mid(-n);                   //Берем с позиции n (минус т.к. n - отрицательное)
                 chShifted.append(-n,0);
             }
-            viewer->clearGraphs(ShotViewer::CH2_Only);//Очищаем график
+            dots1Shifted=dots1;
+            for (int i=0;i<dots1.size();i++){
+                dots1Shifted[i][0]=dots1[i][0]+n;
+            }
+
+            viewer->clearGraphs(ShotViewer::CH2|ShotViewer::CH5);//Очищаем график
             viewer->addUserGraph(chShifted,chShifted.size(),2); //Строим сдвинутый график
+            viewer->addDots(dots1Shifted,1);
         }
      }
 }
@@ -543,8 +593,13 @@ void MainWindow::shiftCH4(int n){
                 chShifted=ch.mid(-n);
                 chShifted.append(-n,0);
             }
-            viewer->clearGraphs(ShotViewer::CH4_Only);
+            dots2Shifted=dots2;
+            for (int i=0;i<dots2.size();i++){
+                dots2Shifted[i][0]=dots2[i][0]+n;
+            }
+            viewer->clearGraphs(ShotViewer::CH4|ShotViewer::CH6);
             viewer->addUserGraph(chShifted,chShifted.size(),4);
+            viewer->addDots(dots2Shifted,2);
         }
      }
 }
@@ -588,91 +643,57 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
 
      case REQUEST_POINTS:
-        if ((value==CH1)||(value==CH2)||(value==CH3)||(value==CH4)){                    //Если пришли точки по одному из каналов, то обрабатываем
+        if ((value==CH1)||(value==CH3)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
             statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
             currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
-            if(countWaitingDots == countRecievedDots){                                  //Приняли канал целиком
+            if(countRecievedDots>=countWaitingDots){                                  //Приняли канал целиком
                 //Кладем принятый шот в соответствующий мап
-
                 if (value == CH1){
                      if(shotsCH1.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
-                        qDebug() << "Attantion! Dublicate CH1";
+                         shotCountRecieved++;                                           //Начинаем следующую пачку
+                         qDebug() << "Attantion! Dublicate CH1";
                      }
-                     else{
-                        chName="CH1_NF";
-                        shotsCH1.insert(shotCountRecieved,currentShot);                    //Добавили пришедший канал в мап с текущим индексом
-                        m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
-                     }
-                }
-                else if(value == CH2){
-                     if(shotsCH2.contains(shotCountRecieved)) {
-                        qDebug() << "Attantion! Dublicate CH2";
-                     }
-                     else{
-                         chName="CH1_F";
-                         shotsCH2.insert(shotCountRecieved,filter->toFilter(currentShot,currentShot.size()));
-                         m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
-                     }
+                    chName="CH1_NF";
+                    shotsCH1.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
+                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
+                    if(ch2CheckBox->isChecked()) {                                                      //Если нужна фильтрация
+                        QByteArray filtered = filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                        shotsCH2.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
+                        dots1 = filter->maximumFind(filtered,filtered.size(),lazer1Spinbox->value());                          //Получаем точки с экстремумами
+                    }
                 }
                 else if(value == CH3){
                      if(shotsCH3.contains(shotCountRecieved)) {
-                        qDebug() << "Attantion! Dublicate CH3";
+                         shotCountRecieved++;
+                         qDebug() << "Attantion! Dublicate CH3";
                      }
-                     else{
-                         chName="CH2_NF";
-                         shotsCH3.insert(shotCountRecieved,currentShot);
-                         m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
-                     }
-                }
-                else if(value == CH4){
-                     if(shotsCH4.contains(shotCountRecieved)) {
-                        qDebug() << "Attantion! Dublicate CH4";
-                     }
-                     else{
-                         chName="CH2_F";
-                         shotsCH4.insert(shotCountRecieved,filter->toFilter(currentShot,currentShot.size()));
-                         m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
+                     chName="CH2_NF";
+                     shotsCH3.insert(shotCountRecieved,currentShot);
+                     m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
+                     if(ch4CheckBox->isChecked()){                                                      //Если нужна фильтрация
+                        QByteArray filtered =filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                        shotsCH4.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
+                        dots2 = filter->maximumFind(filtered,filtered.size(),lazer2Spinbox->value());                          //Получаем точки с экстремумами
                      }
                 }
-                //Если включено автосохранение
-                if(autoSaveShotCheckBox->isChecked()){
-                    if (dirname.isEmpty()){
-                        QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
-                    }
-                    else{
-                        if(chName=="CH1_NF"){
-                            file1->write(currentShot,currentShot.size());
-                            file1->write(endShotLine,endShotLine.size());
-                            file1->flush();
-                        }
-                        else if(chName=="CH1_F"){
-                            file2->write(currentShot,currentShot.size());
-                            file2->write(endShotLine,endShotLine.size());
-                            file2->flush();
-                        }
-                        else if(chName=="CH2_NF"){
-                            file3->write(currentShot,currentShot.size());
-                            file3->write(endShotLine,endShotLine.size());
-                            file3->flush();
-                        }
-                        else if(chName=="CH2_F"){
-                            file4->write(currentShot,currentShot.size());
-                            file4->write(endShotLine,endShotLine.size());
-                            file4->flush();
-                        }
-                    }
-                }
-                countRecievedDots=0;                                                    //Обнуляем коилчество пришедших точек
+
+                //Если включено автосохранение в файл
+                if(autoSaveShotCheckBox->isChecked())
+                    writeToLogfile(chName);
+                //Обнуляем всякое
+                countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
-                statusBar->setInfo(m_transp->getQueueCount());
-                if (notYetFlag == 0){                                                       //Все точки всех отмеченных каналов приняты
+                statusBar->setInfo(m_transp->getQueueCount());                          //Обновляем статус бар
+
+                if (notYetFlag == 0){                                                   //Все точки всех отмеченных каналов приняты
                     m_console->putData("\n\n");
-                    shotCountRecieved++;                                                    //Увеличиваем счетчик пачек
+                    shotCountRecieved++;                                                //Увеличиваем счетчик пачек
                     shotsComboBox->addItem(QString::number(shotCountRecieved));
-                    shotsComboBox->setCurrentIndex(shotCountRecieved-1);
-                    if (!autoGetCheckBox->isChecked())
+                    //shotsComboBox->setCurrentIndex(shotCountRecieved-1);
+                    shotsComboBox->setCurrentIndex(shotsComboBox->count()-1);
+                    if (!autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
                         getButton->setEnabled(true);
                 }
                 m_timer->start();                                                       //Стартуем таймер опроса статуса
@@ -688,7 +709,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_console->putData("Warning: MCU has no data\n\n");
         }
         break;
-
    }
 }
 
@@ -731,6 +751,35 @@ void MainWindow::sendChannelOrder(){
     data.append(msb);
     data.append(lsb);
     m_transp->sendPacket(data);
+}
+
+void MainWindow::writeToLogfile(QString name)
+{
+    if (dirname.isEmpty()){
+        QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
+    }
+    else{
+        if(name=="CH1_NF"){
+            file1->write(currentShot,currentShot.size());
+            file1->write(endShotLine,endShotLine.size());   //Чтобы отличать шот друг от друга
+            file1->flush();
+        }
+        else if(name=="CH1_F"){
+            file2->write(currentShot,currentShot.size());
+            file2->write(endShotLine,endShotLine.size());
+            file2->flush();
+        }
+        else if(name=="CH2_NF"){
+            file3->write(currentShot,currentShot.size());
+            file3->write(endShotLine,endShotLine.size());
+            file3->flush();
+        }
+        else if(name=="CH2_F"){
+            file4->write(currentShot,currentShot.size());
+            file4->write(endShotLine,endShotLine.size());
+            file4->flush();
+        }
+    }
 }
 
 
