@@ -102,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
     lazer1Label = new QLabel("Лазер 1:");
     lazer2Label = new QLabel("Лазер 2:");
     lazersSaveButton = new QPushButton("Сохранить в EEPROM");
+    diametrLabel = new QLabel("Диаметр: ");
 
     lazer1Spinbox->setRange(20,50);
     lazer2Spinbox->setRange(20,50);
@@ -112,6 +113,7 @@ MainWindow::MainWindow(QWidget *parent) :
     lazer2SettingLayout->addWidget(lazer2Label);
     lazer2SettingLayout->addWidget(lazer2Spinbox);
     lazerLayout->addWidget(lazersSaveButton);
+    lazerLayout->addWidget(diametrLabel);
 
     lazer1Spinbox->setEnabled(false);
     lazer2Spinbox->setEnabled(false);
@@ -225,22 +227,22 @@ MainWindow::MainWindow(QWidget *parent) :
     //Fir filter
     filter = new firFilter;
 
-    QFile *tempFile;
-    tempFile = new QFile();
-    filename = "2021_06_16__18_32_30_CH1";
-    tempFile->setFileName(dirname + "/" + filename);
-    if(!tempFile->open(QIODevice::ReadOnly)){
-        qDebug() << "tempFile can`t be open";
-        return;
-    }
-    QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
-    QList<QByteArray> list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
-    QByteArray tempBuf2 = list_temp.at(4);                                              //Валидные - четные 0,2,4...
-    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 1);
-    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
-    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
-    QVector <QVector<double>> dots = filter->maximumFind(tempBuf2,tempBuf2.size(),40); //!!!Не забывать менять SCALE  в зависимости от файла
-    viewer->addDots(dots,1);
+//    QFile *tempFile;
+//    tempFile = new QFile();
+//    filename = "2021_06_16__18_32_30_CH1";
+//    tempFile->setFileName(dirname + "/" + filename);
+//    if(!tempFile->open(QIODevice::ReadOnly)){
+//        qDebug() << "tempFile can`t be open";
+//        return;
+//    }
+//    QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
+//    QList<QByteArray> list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
+//    QByteArray tempBuf2 = list_temp.at(4);                                              //Валидные - четные 0,2,4...
+//    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 1);
+//    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
+//    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
+//    QVector <QVector<double>> dots = filter->maximumFind(tempBuf2,tempBuf2.size(),40); //!!!Не забывать менять SCALE  в зависимости от файла
+//    viewer->addDots(dots,1);
 
 }
 
@@ -441,9 +443,9 @@ void MainWindow::manualGetShotButton(){
             statusBar->setMessageBar("ОШИБКА!, Не выбрано ни одного канала!");
             return;
         }
+        m_timer->stop();
         getButton->setEnabled(false);                                                   //Защита от двойного нажатия кнопки
         m_console->putData("REQUEST_POINTS: ");
-        m_timer->stop();
         countWaitingDots = countAvaibleDots;                                             //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
         statusBar->setDownloadBarRange(countAvaibleDots);
         statusBar->setDownloadBarValue(0);
@@ -658,6 +660,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     chName="CH1_NF";
                     shotsCH1.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
+                    chCountRecieved++;                                                  //Получили канал
                     if(ch2CheckBox->isChecked()) {                                                      //Если нужна фильтрация
                         QByteArray filtered = filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH2.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
@@ -672,6 +675,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                      chName="CH2_NF";
                      shotsCH3.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
+                     chCountRecieved++;                                                  //Получили канал
                      if(ch4CheckBox->isChecked()){                                                      //Если нужна фильтрация
                         QByteArray filtered =filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH4.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
@@ -687,14 +691,47 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
                 statusBar->setInfo(m_transp->getQueueCount());                          //Обновляем статус бар
 
-                if (notYetFlag == 0){                                                   //Все точки всех отмеченных каналов приняты
+                if (chCountRecieved == chCountChecked){                                 //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
                     m_console->putData("\n\n");
+                    chCountRecieved=0;
                     shotCountRecieved++;                                                //Увеличиваем счетчик пачек
                     shotsComboBox->addItem(QString::number(shotCountRecieved));
                     //shotsComboBox->setCurrentIndex(shotCountRecieved-1);
                     shotsComboBox->setCurrentIndex(shotsComboBox->count()-1);
                     if (!autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
                         getButton->setEnabled(true);
+                    if(!dots1.isEmpty() && !dots2.isEmpty()){
+                        double Front1 = dots1.at(0).at(0);
+                        double Spad1 = dots1.at(1).at(0);
+                        double Front2 = dots2.at(0).at(0);
+                        double Spad2 = dots2.at(1).at(0);
+
+                        const double Nx=5320;
+                        const double Ny=5320;
+                        const double Hx=207.4;
+                        const double Hy=207.4;
+                        const double Cx=73.4;
+                        const double Cy=73.4;
+                        const double res =  0.004;
+
+                        double  X11 = (-Front1 + shiftCH1NF_Slider->value()+ Nx)*res+Cx;
+                        double  X21 = (-Spad1 + shiftCH2NF_Slider->value() + Nx)*res+Cx;
+                        double  Y11 = (-Front2 + shiftCH1NF_Slider->value()+Ny)*res+Cy;
+                        double  Y21 = ( -Spad2+ shiftCH2NF_Slider->value() +Ny)*res+Cy;
+
+                        double  X01 =    Hx*tan(0.5*(atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)))+Cx ;
+                        double  Y01 =    Hy*tan(0.5*(atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)))+Cy ;
+
+                        double  Ex01 =(Cx*Hy*Y01 + Hx*Hy*X01 - Hy*X01*Y01)/(Hx*Hy - Cx*Cy - X01*Y01 + Cy*X01 + Cx*Y01);
+                        double  Ey01 =(Hx*Cy*X01 + Hx*Hy*Y01 - Hx*X01*Y01)/(Hx*Hy - Cx*Cy - X01*Y01 + Cy*X01 + Cx*Y01);
+
+                        double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(-atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)));
+                        double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(-atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)));
+
+                        diametrLabel->setText("Диаметр: " + QString::number(Rx1 + Ry1));
+                    }
+
+
                 }
                 m_timer->start();                                                       //Стартуем таймер опроса статуса
             }

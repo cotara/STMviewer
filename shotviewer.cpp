@@ -215,7 +215,10 @@ void ShotViewer::addDots(QVector<QVector<double>> dots, int ch){
     font.setPointSize(16);
     if(dotsSize!=0)
         wightSignal = QString::number(dots.at(1).at(0) - dots.at(0).at(0));     //Ширина фронта
+
+
     if(ch==1){
+
        //textLabel1->setText("");
        textLabel1->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
        textLabel1->position->setType(QCPItemPosition::ptAxisRectRatio);

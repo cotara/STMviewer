@@ -115,7 +115,7 @@ private:
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
-    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel, *shiftedCH2Label,*shiftedCH4Label;
+    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel, *shiftedCH2Label,*shiftedCH4Label, *diametrLabel;
     QSlider *shiftCH1NF_Slider, *shiftCH2NF_Slider;
     QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
@@ -123,7 +123,7 @@ private:
     //Переменные
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4,shotsCH5,shotsCH6;
     QByteArray currentShot;
-    int chCountChecked=0,shotCountRecieved=0;                               //Текущее количество отмеченных каналов и текущее количество принятых шотов
+    int chCountChecked=0,shotCountRecieved=0,chCountRecieved=0;                               //Текущее количество отмеченных каналов и текущее количество принятых шотов
     short packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
     int countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)

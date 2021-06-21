@@ -63,7 +63,7 @@ QVector <QVector<double>> firFilter::maximumFind(QByteArray &in,int len, int sca
     QVector <double> maxmin, x,tempVect;
     QVector <QVector<double>> result;
     bool firstFind=false;
-    double tempPeriod1, tempPeriod2, extrLimit=scale*0.5, frontLimit=scale/10;
+    double tempPeriod1, tempPeriod2, extrLimit=scale*0.5, frontLimit=scale/7;
     int cicleCount;
     chPrev=in.at(0);
     for(int j=1;j<len;j++){
