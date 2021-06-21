@@ -63,7 +63,7 @@ QVector <QVector<double>> firFilter::maximumFind(QByteArray &in,int len, int sca
     QVector <double> maxmin, x,tempVect;
     QVector <QVector<double>> result;
     bool firstFind=false;
-    double tempPeriod1, tempPeriod2, extrLimit=scale*0.5, frontLimit=scale/7;
+    double tempPeriod1, tempPeriod2, extrLimit=scale*0.5, frontLimit=scale/10;
     int cicleCount;
     chPrev=in.at(0);
     for(int j=1;j<len;j++){
@@ -136,6 +136,28 @@ QVector <QVector<double>> firFilter::maximumFind(QByteArray &in,int len, int sca
     }
     return result;
 }
+
+QVector<double> firFilter::shadowFind(double x1, double x2 ,double x3)
+{
+    QVector<double> x0;
+    double la = 905.0/1000000000.0;
+    double L = 207.4/1000;
+    double p1=2.51087470;
+    double p2=0.83484861;
+    double p3=0.45007122;
+    double y1=la*L*L*p1/(4*(x3-x1)*(x3-x1)*0.000004*0.000004 + la*L*p1);
+    double y2=la*L*L*p2/(4*(x2-x1)*(x2-x1)*0.000004*0.000004 + la*L*p2);
+    double y3=la*L*L*p3/(4*(x3-x2)*(x3-x2)*0.000004*0.000004 + la*L*p3);
+    double x01=x1-sqrt(la*L*(L-y1)*1.5/(2*y1))/0.000004;
+    double x02=x2-sqrt(la*L*(L-y2)*3.5/(2*y2))/0.000004;
+    double x03=x3-sqrt(la*L*(L-y3)*5.5/(2*y3))/0.000004;
+
+    x0.append(x01);
+    x0.append(x02);
+    x0.append(x03);
+    return x0;
+}
+
 
 /*
 double firFilter::freqCalc(QList<double> dots,int len){

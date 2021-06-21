@@ -103,7 +103,8 @@ MainWindow::MainWindow(QWidget *parent) :
     lazer2Label = new QLabel("Лазер 2:");
     lazersSaveButton = new QPushButton("Сохранить в EEPROM");
     diametrLabel = new QLabel("Диаметр: ");
-
+    leftShadow = new QLabel("Лев.тень: ");
+    rightShadow = new QLabel("Прав.тень: ");
     lazer1Spinbox->setRange(20,50);
     lazer2Spinbox->setRange(20,50);
     lazer1Spinbox->setValue(40);
@@ -227,22 +228,23 @@ MainWindow::MainWindow(QWidget *parent) :
     //Fir filter
     filter = new firFilter;
 
-//    QFile *tempFile;
-//    tempFile = new QFile();
-//    filename = "2021_06_16__18_32_30_CH1";
-//    tempFile->setFileName(dirname + "/" + filename);
-//    if(!tempFile->open(QIODevice::ReadOnly)){
-//        qDebug() << "tempFile can`t be open";
-//        return;
-//    }
-//    QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
-//    QList<QByteArray> list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
-//    QByteArray tempBuf2 = list_temp.at(4);                                              //Валидные - четные 0,2,4...
-//    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 1);
-//    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
-//    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
-//    QVector <QVector<double>> dots = filter->maximumFind(tempBuf2,tempBuf2.size(),40); //!!!Не забывать менять SCALE  в зависимости от файла
-//    viewer->addDots(dots,1);
+    QFile *tempFile;
+    tempFile = new QFile();
+    filename = "2021_06_16__18_35_00_CH1";
+    tempFile->setFileName(dirname + "/" + filename);
+    if(!tempFile->open(QIODevice::ReadOnly)){
+        qDebug() << "tempFile can`t be open";
+        return;
+    }
+    QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
+    QList<QByteArray> list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
+    QByteArray tempBuf2 = list_temp.at(0);                                              //Валидные - четные 0,2,4...
+    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 1);
+    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
+    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
+    QVector <QVector<double>> dots = filter->maximumFind(tempBuf2,tempBuf2.size(),30); //!!!Не забывать менять SCALE  в зависимости от файла
+    viewer->addDots(dots,1);
+    QVector<double> leftShadow = filter->shadowFind(dots.at(1).at(0),dots.at(3).at(0),dots.at(5).at(0));
 
 }
 

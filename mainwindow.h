@@ -115,7 +115,7 @@ private:
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
-    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel, *shiftedCH2Label,*shiftedCH4Label, *diametrLabel;
+    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel, *shiftedCH2Label,*shiftedCH4Label, *diametrLabel,*leftShadow,*rightShadow;
     QSlider *shiftCH1NF_Slider, *shiftCH2NF_Slider;
     QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
