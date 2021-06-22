@@ -9,7 +9,9 @@ public:
     ~firFilter();
     QByteArray toFilter(QByteArray &in,int len);
     QVector <QVector<double>> maximumFind(QByteArray &in,int len,int scale);
-    QVector<double> shadowFind(double x1, double x2, double x3);
+    QVector <QVector<double>> extrFind(QByteArray &in,int len);
+    QVector<double> shadowFind(QVector<double> dots);
+    QVector<double> diameterFind(QVector <QVector<double>> shadowsCh1, QVector <QVector<double>> shadowsCh2);
     //double freqCalc(QList<double> dots,int len);
 
 private:

@@ -35,7 +35,7 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
 
     customPlot1->xAxis->setRangeLower(0);
     customPlot1->xAxis->setRangeUpper(11000);
-    customPlot1->yAxis->setRangeLower(-1);
+    customPlot1->yAxis->setRangeLower(-5);
     customPlot1->yAxis->setRangeUpper(260);
     customPlot1->legend->setVisible(true);
     customPlot1->legend->setFont(legendFont);
@@ -44,7 +44,7 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
 
     customPlot2->xAxis->setRangeLower(0);
     customPlot2->xAxis->setRangeUpper(11000);
-    customPlot2->yAxis->setRangeLower(-1);
+    customPlot2->yAxis->setRangeLower(-5);
     customPlot2->yAxis->setRangeUpper(260);
     customPlot2->legend->setVisible(true);
     customPlot2->legend->setFont(legendFont);
@@ -104,47 +104,13 @@ void ShotViewer::showGraphs(int state){
 
 void ShotViewer::clearGraphs(int state){
     if(state & CH1){
-        if(customPlot1->hasPlottable(mGraph1)){
-            customPlot1->removeGraph(mGraph1);
-            mGraph1.clear();
+            customPlot1->clearGraphs();
             customPlot1->replot();
-        }
+
     }
     if(state & CH2){
-        if(customPlot1->hasPlottable(mGraph2)){
-            customPlot1->removeGraph(mGraph2);
-            mGraph2.clear();
+            customPlot2->clearGraphs();
             customPlot1->replot();
-        }
-    }
-    if(state & CH3){
-        if(customPlot2->hasPlottable(mGraph3)){
-            customPlot2->removeGraph(mGraph3);
-            mGraph3.clear();
-            customPlot2->replot();
-        }
-    }
-    if(state & CH4){
-        if(customPlot2->hasPlottable(mGraph4)){
-            customPlot2->removeGraph(mGraph4);
-            mGraph4.clear();
-            customPlot2->replot();
-        }
-    }
-    //точки экстремума
-    if(state & CH5){
-        if(customPlot1->hasPlottable(mGraph5)){
-            customPlot1->removeGraph(mGraph5);
-            mGraph5.clear();
-            customPlot1->replot();
-        }
-    }
-    if(state & CH6){
-        if(customPlot2->hasPlottable(mGraph6)){
-            customPlot2->removeGraph(mGraph6);
-            mGraph6.clear();
-            customPlot2->replot();
-        }
     }
 }
 
@@ -160,17 +126,16 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
       x[i] = i;
       y[i] = (unsigned char)buf.at(i);
     }
-    if (ch==1 || ch==2){      
+
+    if (ch==1 || ch==2){
+        customPlot1->addGraph();
+        customPlot1->graph()->setData(x, y);
         if (ch==1){
-            mGraph1=customPlot1->addGraph();
-            mGraph1->setData(x, y);
-            mGraph1->setName(QString("Канал 1. Нефильтрованный"));
+            customPlot1->graph()->setName(QString("Канал 1. Нефильтрованный"));
             color =  Qt::black;
         }
         else{
-            mGraph2=customPlot1->addGraph();
-            mGraph2->setData(x, y);
-            mGraph2->setName(QString("Канал 1. Фильтрованный"));
+            customPlot1->graph()->setName(QString("Канал 1. Фильтрованный"));
             color =  Qt::darkGreen;
         }
         graphPen.setColor(color);
@@ -178,16 +143,14 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         customPlot1->replot();
     }
     else if(ch==3 || ch==4){
+        customPlot2->addGraph();
+        customPlot2->graph()->setData(x, y);
         if (ch==3){
-            mGraph3=customPlot2->addGraph();
-            mGraph3->setData(x, y);
-            mGraph3->setName(QString("Канал 2. Нефильтрованный"));
+            customPlot2->graph()->setName(QString("Канал 2. Нефильтрованный"));
             color =  Qt::darkMagenta;
         }
         else{
-            mGraph4=customPlot2->addGraph();
-            mGraph4->setData(x, y);
-            mGraph4->setName(QString("Канал 2. Фильтрованный"));
+            customPlot2->graph()->setName(QString("Канал 2. Фильтрованный"));
             color =  Qt::red;
         }
         graphPen.setColor(color);
@@ -201,76 +164,109 @@ void ShotViewer::addDots(QVector<QVector<double>> dots, int ch){
     QColor color = Qt::red;
     QFont font;
     QString periods1,periods2, wightSignal;
-    for (int i=0; i<dotsSize; i+=2){
-      x[i] = dots.at(i).at(0);
-      y[i] = dots.at(i).at(1);
-      x[i+1] = dots.at(i+1).at(0);
-      y[i+1] = dots.at(i+1).at(1);
-      if(i!=0){
-          periods2+=QString::number(x.at(i+1)-x.at(i-1))+"/";
-          periods1.prepend( QString::number(x.at(i-2)-x.at(i))+"/");
+    if(!dots.isEmpty()){
+        for (int i=0; i<dotsSize; i+=2){
+          x[i] = dots.at(i).at(0);
+          y[i] = dots.at(i).at(1);
+          x[i+1] = dots.at(i+1).at(0);
+          y[i+1] = dots.at(i+1).at(1);
+          if(i!=0){
+              periods2+=QString::number(x.at(i+1)-x.at(i-1))+"/";
+              periods1.prepend( QString::number(x.at(i-2)-x.at(i))+"/");
+          }
+        }
+        font.setPointSize(16);
+        if(ch==1){
+           textLabel1->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+           textLabel1->position->setType(QCPItemPosition::ptAxisRectRatio);
+           textLabel1->position->setCoords(0.3, 0.05); // place position at center/top of axis rect
+           textLabel1->setFont(font);
+           textLabel1->setText(periods1);
+
+           textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+           textLabel2->position->setType(QCPItemPosition::ptAxisRectRatio);
+           textLabel2->position->setCoords(0.7, 0.05); // place position at center/top of axis rect
+           textLabel2->setFont(font);
+           textLabel2->setText(periods2);
+
+           customPlot1->addGraph();
+           customPlot1->graph()->setData(x,y);
+           customPlot1->graph()->setLineStyle((QCPGraph::LineStyle::lsNone));
+           customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
+           customPlot1->graph()->setName(QString("Канал 1. Экстремумы"));
+           customPlot1->replot();
+        }
+        else if(ch==2){
+            textLabel4->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+            textLabel4->position->setType(QCPItemPosition::ptAxisRectRatio);
+            textLabel4->position->setCoords(0.3, 0.05); // place position at center/top of axis rect
+            textLabel4->setFont(font);
+            textLabel4->setText(periods1);
+
+            textLabel5->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+            textLabel5->position->setType(QCPItemPosition::ptAxisRectRatio);
+            textLabel5->position->setCoords(0.7, 0.05); // place position at center/top of axis rect
+            textLabel5->setFont(font);
+            textLabel5->setText(periods2);
+
+           customPlot2->addGraph();
+           customPlot2->graph()->setData(x,y);
+           customPlot2->graph()->setLineStyle((QCPGraph::LineStyle)0);
+           customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
+           customPlot2->graph()->setName(QString("Канал 2. Экстремумы"));
+           customPlot2->replot();
+       }
+    }
+}
+void ShotViewer::addLines(QVector<double> dots, int ch){
+    QFont font;
+    QPen graphPen;
+    QColor color(Qt::darkRed);
+    QVector<double> x(2), y(2);
+    font.setPointSize(16);
+    if(ch==1){
+           textLabel3->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+           textLabel3->position->setType(QCPItemPosition::ptAxisRectRatio);
+           textLabel3->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
+           textLabel3->setFont(font);
+           textLabel3->setText(QString::number(dots.at(3)-dots.at(0)));
+        for(int i = 0; i<dots.size();i++){
+            x[0]=dots.at(i);
+            y[0]=0;
+            x[1]=dots.at(i);
+            y[1]=255;
+           customPlot1->addGraph();
+           customPlot1->graph()->setData(x,y);
+           customPlot1->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
+           customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
+           customPlot1->graph()->setName("Тень №" + QString::number(i));
+           graphPen.setColor(color);
+           customPlot1->graph()->setPen(graphPen);
+        }
+           customPlot1->replot();
+      }
+    else if(ch==2){
+           textLabel6->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+           textLabel6->position->setType(QCPItemPosition::ptAxisRectRatio);
+           textLabel6->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
+           textLabel6->setFont(font);
+           textLabel6->setText(QString::number(dots.at(3)-dots.at(0)));
+        for(int i = 0; i<dots.size();i++){
+            x[0]=dots.at(i);
+            y[0]=0;
+            x[1]=dots.at(i);
+            y[1]=255;
+           customPlot2->addGraph();
+           customPlot2->graph()->setData(x,y);
+           customPlot2->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
+           customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
+           customPlot2->graph()->setName("Тень №" + QString::number(i));
+           graphPen.setColor(color);
+           customPlot2->graph()->setPen(graphPen);
+        }
+           customPlot2->replot();
       }
 
-    }
-    font.setPointSize(16);
-    if(dotsSize!=0)
-        wightSignal = QString::number(dots.at(1).at(0) - dots.at(0).at(0));     //Ширина фронта
-
-
-    if(ch==1){
-
-       //textLabel1->setText("");
-       textLabel1->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-       textLabel1->position->setType(QCPItemPosition::ptAxisRectRatio);
-       textLabel1->position->setCoords(0.3, 0.05); // place position at center/top of axis rect
-       textLabel1->setFont(font);
-       textLabel1->setText(periods1);
-
-       textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-       textLabel2->position->setType(QCPItemPosition::ptAxisRectRatio);
-       textLabel2->position->setCoords(0.7, 0.05); // place position at center/top of axis rect
-       textLabel2->setFont(font);
-       textLabel2->setText(periods2);
-
-       textLabel3->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-       textLabel3->position->setType(QCPItemPosition::ptAxisRectRatio);
-       textLabel3->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
-       textLabel3->setFont(font);
-       textLabel3->setText(wightSignal);
-
-       mGraph5=customPlot1->addGraph();
-       mGraph5->setData(x,y);
-       mGraph5->setLineStyle((QCPGraph::LineStyle::lsNone));
-       mGraph5->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
-       mGraph5->setName(QString("Канал 1. Экстремумы"));
-       customPlot1->replot();
-  }
-    else if(ch==2){
-        textLabel4->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-        textLabel4->position->setType(QCPItemPosition::ptAxisRectRatio);
-        textLabel4->position->setCoords(0.3, 0.05); // place position at center/top of axis rect
-        textLabel4->setFont(font);
-        textLabel4->setText(periods1);
-
-        textLabel5->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-        textLabel5->position->setType(QCPItemPosition::ptAxisRectRatio);
-        textLabel5->position->setCoords(0.7, 0.05); // place position at center/top of axis rect
-        textLabel5->setFont(font);
-        textLabel5->setText(periods2);
-
-        textLabel6->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-        textLabel6->position->setType(QCPItemPosition::ptAxisRectRatio);
-        textLabel6->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
-        textLabel6->setFont(font);
-        textLabel6->setText(wightSignal);
-
-       mGraph6=customPlot2->addGraph();
-       mGraph6->setData(x,y);
-       mGraph6->setLineStyle((QCPGraph::LineStyle)0);
-       mGraph6->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
-       mGraph6->setName(QString("Канал 2. Экстремумы"));
-       customPlot2->replot();
-   }
 }
 
 void ShotViewer::titleDoubleClick1(QMouseEvent* event)
@@ -382,8 +378,8 @@ void ShotViewer::mousePress1(){
   }
   else if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
    customPlot1->axisRect()->setRangeDrag(customPlot1->yAxis->orientation());
-   if(customPlot1->yAxis->range().lower <-1)
-        customPlot1->yAxis->setRangeLower(-1);
+   if(customPlot1->yAxis->range().lower <-5)
+        customPlot1->yAxis->setRangeLower(-5);
    if(customPlot1->yAxis->range().upper >260)
         customPlot1->yAxis->setRangeUpper(260);
   }
@@ -393,8 +389,8 @@ void ShotViewer::mousePress1(){
          customPlot1->xAxis->setRangeLower(0);
     if(customPlot1->xAxis->range().upper > 11000)
          customPlot1->xAxis->setRangeUpper(11000);
-    if(customPlot1->yAxis->range().lower <-1)
-         customPlot1->yAxis->setRangeLower(-1);
+    if(customPlot1->yAxis->range().lower <-5)
+         customPlot1->yAxis->setRangeLower(-5);
     if(customPlot1->yAxis->range().upper >260)
          customPlot1->yAxis->setRangeUpper(260);
   }
@@ -412,8 +408,8 @@ void ShotViewer::mousePress2(){
   }
   else if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
    customPlot2->axisRect()->setRangeDrag(customPlot2->yAxis->orientation());
-   if(customPlot2->yAxis->range().lower <-1)
-        customPlot2->yAxis->setRangeLower(-1);
+   if(customPlot2->yAxis->range().lower <-5)
+        customPlot2->yAxis->setRangeLower(-5);
    if(customPlot2->yAxis->range().upper >260)
         customPlot2->yAxis->setRangeUpper(260);
   }
@@ -423,8 +419,8 @@ void ShotViewer::mousePress2(){
          customPlot2->xAxis->setRangeLower(0);
     if(customPlot2->xAxis->range().upper > 11000)
          customPlot2->xAxis->setRangeUpper(11000);
-    if(customPlot2->yAxis->range().lower <-1)
-         customPlot2->yAxis->setRangeLower(-1);
+    if(customPlot2->yAxis->range().lower <-5)
+         customPlot2->yAxis->setRangeLower(-5);
     if(customPlot2->yAxis->range().upper >260)
          customPlot2->yAxis->setRangeUpper(260);
   }
