@@ -47,6 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     layoutH = new QHBoxLayout;
     layoutV->addLayout(layoutH);
+
     layoutV->addWidget(m_console);
 
     controlLayout = new QVBoxLayout;
@@ -56,36 +57,36 @@ MainWindow::MainWindow(QWidget *parent) :
     layoutH->addLayout(controlLayout);
 
     lazerGroup = new QGroupBox("Настройка лазеров");
-    transmitGroup = new QGroupBox("Обмен данными");
-    signalProcessingGroup = new QGroupBox("Обработка сигнала");
+    transmitGroup = new QGroupBox("Обмен данными");    
+    resultGroup = new QGroupBox("Результаты расчетов");
     appSettingsGroup = new QGroupBox("Настройки интерфейса");
     logGroup = new QGroupBox("Логирование");
     historyGrouop = new QGroupBox("История");
 
     lazerGroup->setMaximumWidth(250);
     transmitGroup->setMaximumWidth(250);
-    signalProcessingGroup->setMaximumWidth(250);
+    resultGroup->setMaximumWidth(250);
     appSettingsGroup->setMaximumWidth(250);
     logGroup->setMaximumWidth(250);
     historyGrouop->setMaximumWidth(250);
 
     controlLayout->addWidget(lazerGroup);
     controlLayout->addWidget(transmitGroup);
-    controlLayout->addWidget(signalProcessingGroup);
+    controlLayout->addWidget(resultGroup);
     controlLayout->addWidget(appSettingsGroup);
     controlLayout->addWidget(logGroup);
     controlLayout->addWidget(historyGrouop);
 
     lazerLayout = new QVBoxLayout;
     transmitLayout = new QVBoxLayout;
-    signalProcessingLayout = new QVBoxLayout;
+    resultLayout = new QVBoxLayout;
     appSettingsLayout = new QVBoxLayout;
     logLayout = new QVBoxLayout;
     historyLayout = new QVBoxLayout;
 
     lazerGroup->setLayout(lazerLayout);
     transmitGroup->setLayout(transmitLayout);
-    signalProcessingGroup->setLayout(signalProcessingLayout);
+    resultGroup->setLayout(resultLayout);
     appSettingsGroup->setLayout(appSettingsLayout);
     logGroup->setLayout(logLayout);
     historyGrouop->setLayout(historyLayout);
@@ -102,9 +103,7 @@ MainWindow::MainWindow(QWidget *parent) :
     lazer1Label = new QLabel("Лазер 1:");
     lazer2Label = new QLabel("Лазер 2:");
     lazersSaveButton = new QPushButton("Сохранить в EEPROM");
-    diametrLabel = new QLabel("Диаметр: ");
-    leftShadow = new QLabel("Лев.тень: ");
-    rightShadow = new QLabel("Прав.тень: ");
+
     lazer1Spinbox->setRange(20,50);
     lazer2Spinbox->setRange(20,50);
     lazer1Spinbox->setValue(40);
@@ -114,7 +113,6 @@ MainWindow::MainWindow(QWidget *parent) :
     lazer2SettingLayout->addWidget(lazer2Label);
     lazer2SettingLayout->addWidget(lazer2Spinbox);
     lazerLayout->addWidget(lazersSaveButton);
-    lazerLayout->addWidget(diametrLabel);
 
     lazer1Spinbox->setEnabled(false);
     lazer2Spinbox->setEnabled(false);
@@ -165,25 +163,21 @@ MainWindow::MainWindow(QWidget *parent) :
     autoGetCheckBox->setEnabled(false);
     connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &MainWindow::autoGetCheckBoxChanged);
 
-    //Обработка сигнала
-    shiftCH1NF_Slider = new QSlider(Qt::Horizontal);
-    shiftCH2NF_Slider = new QSlider(Qt::Horizontal);
-    shiftedCH2Label = new QLabel("Смещение фильтрованного канала 1: 0");
-    shiftedCH4Label = new QLabel("Смещение фильтрованного канала 2: 0");
-    shiftCH1NF_Slider->setTickPosition(QSlider::TicksBothSides);
-    shiftCH2NF_Slider->setTickPosition(QSlider::TicksBothSides);
-    shiftCH1NF_Slider->setTickInterval(100);
-    shiftCH2NF_Slider->setTickInterval(100);
-    shiftCH1NF_Slider->setRange(-250,250);
-    shiftCH2NF_Slider->setRange(-250,250);
-    signalProcessingLayout->addWidget(shiftedCH2Label);
-    signalProcessingLayout->addWidget(shiftCH1NF_Slider);
-    signalProcessingLayout->addWidget(shiftedCH4Label);
-    signalProcessingLayout->addWidget(shiftCH2NF_Slider);
-
-    connect(shiftCH1NF_Slider, &QSlider::valueChanged,this,&MainWindow::shiftCH2);
-    connect(shiftCH2NF_Slider, &QSlider::valueChanged,this,&MainWindow::shiftCH4);
-
+    //Результат
+    diametrLabel = new QLabel("Диаметр: ");
+    leftShadow1Label = new QLabel("Лев.тень: ");
+    rightShadow1Label = new QLabel("Прав.тень: ");
+    leftShadow2Label = new QLabel("Лев.тень: ");
+    rightShadow2Label = new QLabel("Прав.тень: ");
+    ch1ShadowsLabel.setText("Канал 1: ");
+    ch2ShadowsLabel.setText("Канал 2: ");
+    resultLayout->addWidget(&ch1ShadowsLabel);
+    resultLayout->addWidget(leftShadow1Label);
+    resultLayout->addWidget(rightShadow1Label);
+    resultLayout->addWidget(&ch2ShadowsLabel);
+    resultLayout->addWidget(leftShadow2Label);
+    resultLayout->addWidget(rightShadow2Label);
+    resultLayout->addWidget(diametrLabel);
     //Настройки интерфейса
     consoleEnable = new QCheckBox("Вывод в консоль");
     appSettingsLayout->addWidget(consoleEnable);
@@ -228,24 +222,91 @@ MainWindow::MainWindow(QWidget *parent) :
     //Fir filter
     filter = new firFilter;
 
+    int shotNum=0;
     QFile *tempFile;
     tempFile = new QFile();
-    filename = "2021_06_16__18_35_00_CH1";
+    filename = "2021_06_23__15_07_56_CH2";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
         return;
     }
+
+
     QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
     QList<QByteArray> list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
-    QByteArray tempBuf2 = list_temp.at(0);                                              //Валидные - четные 0,2,4...
-    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 1);
-    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
-    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
-    QVector <QVector<double>> dots = filter->maximumFind(tempBuf2,tempBuf2.size(),30); //!!!Не забывать менять SCALE  в зависимости от файла
-    viewer->addDots(dots,1);
-    QVector<double> leftShadow = filter->shadowFind(dots.at(1).at(0),dots.at(3).at(0),dots.at(5).at(0));
+    QByteArray tempBuf2 = list_temp.at(shotNum*2);                                              //Валидные - четные 0,2,4...
 
+    viewer->addUserGraph(tempBuf2,tempBuf2.size(),1);
+    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size(),"Ckoeff.txt");
+    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
+
+    QVector<QVector<double>> dots = filter->extrFind(tempBuf2,tempBuf2.size());
+    viewer->addDots(dots,1);
+    if(dots.size()==6){
+        QVector <double> xDots;
+        for (int i = 0;i<6;i++){
+            xDots.append(dots.at(i).at(0));
+        }
+        QVector<double> shadows = filter->shadowFind(xDots);
+        viewer->addLines(shadows,1);
+        leftShadow1Label->setText("Лев. тень: " +QString::number(shadows.at(0)) + "/" + QString::number(shadows.at(1)) + "/" + QString::number(shadows.at(2)));
+        rightShadow1Label->setText("Прав. тень: " +QString::number(shadows.at(3)) + "/" + QString::number(shadows.at(4)) + "/" + QString::number(shadows.at(5)));
+        QVector <double> tempVect;
+        for(int i = 0;i<6;i++){
+            if(shadows.at(i)>0){
+                tempVect.append(shadows.at(i));
+                tempVect.append((unsigned char)tempBuf2.at((int)shadows.at(i)));
+                shadowsCh1.push_back(tempVect);
+                tempVect.clear();
+            }
+        }
+    }
+    tempFile->close();
+
+
+
+    filename = "2021_06_23__15_07_56_CH2";
+    tempFile->setFileName(dirname + "/" + filename);
+    if(!tempFile->open(QIODevice::ReadOnly)){
+        qDebug() << "tempFile can`t be open";
+        return;
+    }
+
+    tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
+    list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
+    tempBuf2 = list_temp.at(shotNum*2);                                              //Валидные - четные 0,2,4...
+
+    viewer->addUserGraph(tempBuf2,tempBuf2.size(),3);
+    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size(),"koeff.txt");
+    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 4);
+
+    dots = filter->extrFind(tempBuf2,tempBuf2.size());
+    viewer->addDots(dots,2);
+    if(dots.size()==6){
+        QVector <double> xDots;
+        for (int i = 0;i<6;i++){
+            xDots.append(dots.at(i).at(0));
+        }
+        QVector<double> shadows = filter->shadowFind(xDots);
+        viewer->addLines(shadows,2);
+        leftShadow2Label->setText("Лев. тень: " +QString::number(shadows.at(0)) + "/" + QString::number(shadows.at(1)) + "/" + QString::number(shadows.at(2)));
+        rightShadow2Label->setText("Прав. тень: " +QString::number(shadows.at(3)) + "/" + QString::number(shadows.at(4)) + "/" + QString::number(shadows.at(5)));
+        QVector <double> tempVect;
+        for(int i = 0;i<6;i++){
+            if(shadows.at(i)>0){
+                tempVect.append(shadows.at(i));
+                tempVect.append((unsigned char)tempBuf2.at((int)shadows.at(i)));
+                shadowsCh2.push_back(tempVect);
+                tempVect.clear();
+            }
+        }
+    }
+    tempFile->close();
+    if(shadowsCh1.size()>5 && shadowsCh2.size()>5){
+        diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
+        diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)) + "/" + QString::number(diameter.at(1)) + "/" + QString::number(diameter.at(2)));
+    }
 }
 
 MainWindow::~MainWindow(){
@@ -522,7 +583,30 @@ void MainWindow::selectShot(int index){
         }
         if(shotsCH2.contains(index)){
             ch = shotsCH2[index];
-            shiftCH2((shiftedCH2));
+            viewer->addUserGraph(ch,ch.size(),2);
+            QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());                                 //Размерность результата либо 6 либо 0
+            if(dots.size()==6){
+                viewer->addDots(dots,1);
+                QVector <double> xDots;
+                for (int i = 0;i<6;i++){
+                    xDots.append(dots.at(i).at(0));
+                }
+                QVector<double> shadows = filter->shadowFind(xDots);
+                viewer->addLines(shadows,1);
+                leftShadow1Label->setText("Лев. тень: " +QString::number(shadows.at(0)) + "/" + QString::number(shadows.at(1)) + "/" + QString::number(shadows.at(2)));
+                rightShadow1Label->setText("Прав. тень: " +QString::number(shadows.at(3)) + "/" + QString::number(shadows.at(4)) + "/" + QString::number(shadows.at(5)));
+                QVector <double> tempVect;
+                shadowsCh1.clear();
+                for(int i = 0;i<6;i++){
+                  if(shadows.at(i)>0){
+                    tempVect.append(shadows.at(i));
+                    tempVect.append(ch.at((int)shadows.at(i)));
+                    shadowsCh1.push_back(tempVect);
+                    tempVect.clear();
+                  }
+                }
+
+            }
         }
         if(shotsCH3.contains(index)){
             ch = shotsCH3[index];
@@ -530,8 +614,33 @@ void MainWindow::selectShot(int index){
         }
         if(shotsCH4.contains(index)){
             ch = shotsCH4[index];
-            shiftCH4((shiftedCH4));
-
+            viewer->addUserGraph(ch,ch.size(),4);
+            QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());
+            viewer->addDots(dots,2);
+            if(dots.size()==6){
+                QVector <double> xDots;
+                for (int i = 0;i<6;i++){
+                    xDots.append(dots.at(i).at(0));
+                }
+                QVector<double> shadows = filter->shadowFind(xDots);
+                viewer->addLines(shadows,2);
+                leftShadow2Label->setText("Лев. тень: " +QString::number(shadows.at(0)) + "/" + QString::number(shadows.at(1)) + "/" + QString::number(shadows.at(2)));
+                rightShadow2Label->setText("Прав. тень: " +QString::number(shadows.at(3)) + "/" + QString::number(shadows.at(4)) + "/" + QString::number(shadows.at(5)));
+                QVector <double> tempVect;
+                shadowsCh2.clear();
+                for(int i = 0;i<6;i++){
+                    if(shadows.at(i)>0){
+                        tempVect.append(shadows.at(i));
+                        tempVect.append(ch.at((int)shadows.at(i)));
+                        shadowsCh2.push_back(tempVect);
+                        tempVect.clear();
+                    }
+                }
+            }
+        }
+        if(shadowsCh1.size()>5 && shadowsCh2.size()>5){
+            diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
+            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)) + "/" + QString::number(diameter.at(1)) + "/" + QString::number(diameter.at(2)));
         }
     }
 }
@@ -545,68 +654,7 @@ void MainWindow::on_clearButton(){
     shotsComboBox->clear();
     viewer->clearGraphs(ShotViewer::AllCH);
 }
-//Сдвиг графика путем перемещения слайдера
-void MainWindow::shiftCH2(int n){
-    int index;
-    QString str = "Смещение фильтрованного канала 1: " + QString::number(n);
-    shiftedCH2Label->setText(str);
-    shiftedCH2=n;
-    QByteArray ch,chShifted;
-    index=shotsComboBox->currentIndex();               //Двигать будем текущие отрисованные графики
 
-     if(index!=-1){
-        if(shotsCH2.contains(index)){
-            ch = shotsCH2[index];
-            if(n>=0){                                   //Двигаем вправо
-                chShifted.fill(0,n);
-                ch.truncate(ch.size()-n);
-                chShifted.append(ch);
-            }
-            else{                                       //Если двигаем влево
-                chShifted=ch.mid(-n);                   //Берем с позиции n (минус т.к. n - отрицательное)
-                chShifted.append(-n,0);
-            }
-            dots1Shifted=dots1;
-            for (int i=0;i<dots1.size();i++){
-                dots1Shifted[i][0]=dots1[i][0]+n;
-            }
-
-            viewer->clearGraphs(ShotViewer::CH2|ShotViewer::CH5);//Очищаем график
-            viewer->addUserGraph(chShifted,chShifted.size(),2); //Строим сдвинутый график
-            viewer->addDots(dots1Shifted,1);
-        }
-     }
-}
-
-void MainWindow::shiftCH4(int n){
-    int index;
-    QString str = "Смещение фильтрованного канала 2: " + QString::number(n);
-    shiftedCH4Label->setText(str);
-    shiftedCH4=n;
-    QByteArray ch,chShifted;
-     index=shotsComboBox->currentIndex();
-     if(index!=-1){
-        if(shotsCH4.contains(index)){
-            ch = shotsCH4[index];
-            if(n>=0){
-                chShifted.fill(0,n);
-                ch.truncate(ch.size()-n);
-                chShifted.append(ch);
-            }
-            else{
-                chShifted=ch.mid(-n);
-                chShifted.append(-n,0);
-            }
-            dots2Shifted=dots2;
-            for (int i=0;i<dots2.size();i++){
-                dots2Shifted[i][0]=dots2[i][0]+n;
-            }
-            viewer->clearGraphs(ShotViewer::CH4|ShotViewer::CH6);
-            viewer->addUserGraph(chShifted,chShifted.size(),4);
-            viewer->addDots(dots2Shifted,2);
-        }
-     }
-}
 
 //Обработка входящих пакетов
 void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
@@ -664,9 +712,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
                     chCountRecieved++;                                                  //Получили канал
                     if(ch2CheckBox->isChecked()) {                                                      //Если нужна фильтрация
-                        QByteArray filtered = filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                        QByteArray filtered = filter->toFilter(currentShot,currentShot.size(),"Ckoeff.txt");          //Получаем фильтрованный массив
                         shotsCH2.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
-                        dots1 = filter->maximumFind(filtered,filtered.size(),lazer1Spinbox->value());                          //Получаем точки с экстремумами
                     }
                 }
                 else if(value == CH3){
@@ -679,9 +726,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
                      chCountRecieved++;                                                  //Получили канал
                      if(ch4CheckBox->isChecked()){                                                      //Если нужна фильтрация
-                        QByteArray filtered =filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                        QByteArray filtered =filter->toFilter(currentShot,currentShot.size(),"Ckoeff.txt");          //Получаем фильтрованный массив
                         shotsCH4.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
-                        dots2 = filter->maximumFind(filtered,filtered.size(),lazer2Spinbox->value());                          //Получаем точки с экстремумами
                      }
                 }
 
@@ -702,38 +748,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     shotsComboBox->setCurrentIndex(shotsComboBox->count()-1);
                     if (!autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
                         getButton->setEnabled(true);
-                    if(!dots1.isEmpty() && !dots2.isEmpty()){
-                        double Front1 = dots1.at(0).at(0);
-                        double Spad1 = dots1.at(1).at(0);
-                        double Front2 = dots2.at(0).at(0);
-                        double Spad2 = dots2.at(1).at(0);
-
-                        const double Nx=5320;
-                        const double Ny=5320;
-                        const double Hx=207.4;
-                        const double Hy=207.4;
-                        const double Cx=73.4;
-                        const double Cy=73.4;
-                        const double res =  0.004;
-
-                        double  X11 = (-Front1 + shiftCH1NF_Slider->value()+ Nx)*res+Cx;
-                        double  X21 = (-Spad1 + shiftCH2NF_Slider->value() + Nx)*res+Cx;
-                        double  Y11 = (-Front2 + shiftCH1NF_Slider->value()+Ny)*res+Cy;
-                        double  Y21 = ( -Spad2+ shiftCH2NF_Slider->value() +Ny)*res+Cy;
-
-                        double  X01 =    Hx*tan(0.5*(atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)))+Cx ;
-                        double  Y01 =    Hy*tan(0.5*(atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)))+Cy ;
-
-                        double  Ex01 =(Cx*Hy*Y01 + Hx*Hy*X01 - Hy*X01*Y01)/(Hx*Hy - Cx*Cy - X01*Y01 + Cy*X01 + Cx*Y01);
-                        double  Ey01 =(Hx*Cy*X01 + Hx*Hy*Y01 - Hx*X01*Y01)/(Hx*Hy - Cx*Cy - X01*Y01 + Cy*X01 + Cx*Y01);
-
-                        double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(-atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)));
-                        double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(-atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)));
-
-                        diametrLabel->setText("Диаметр: " + QString::number(Rx1 + Ry1));
-                    }
-
-
                 }
                 m_timer->start();                                                       //Стартуем таймер опроса статуса
             }

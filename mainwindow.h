@@ -80,9 +80,6 @@ private slots:
     void selectShot(int index);
     void on_clearButton();
 
-    void shiftCH2(int);
-    void shiftCH4(int);
-
     //Slip handlers
     void handlerTranspAnswerReceive(QByteArray &bytes);
     void handlerTranspError();
@@ -108,17 +105,20 @@ private:
     //Итерфейс
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *graphsLayout,*controlLayout,*lazerLayout,*transmitLayout,*signalProcessingLayout, *appSettingsLayout, *logLayout, *historyLayout;
+    QVBoxLayout *graphsLayout,*controlLayout,*lazerLayout,*transmitLayout,*resultLayout, *appSettingsLayout, *logLayout, *historyLayout;
     QHBoxLayout *lazersHorizontalLayout;
     QVBoxLayout *lazer1SettingLayout, *lazer2SettingLayout;
-    QGroupBox *lazerGroup, *transmitGroup, *signalProcessingGroup, *appSettingsGroup, *logGroup, *historyGrouop;
+    QGroupBox *lazerGroup, *transmitGroup,*resultGroup, *appSettingsGroup, *logGroup, *historyGrouop;
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
-    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel, *shiftedCH2Label,*shiftedCH4Label, *diametrLabel,*leftShadow,*rightShadow;
-    QSlider *shiftCH1NF_Slider, *shiftCH2NF_Slider;
+    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel;
+    QLabel *diametrLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label;
     QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
+
+    QLabel ch1ShadowsLabel;
+    QLabel ch2ShadowsLabel;
 
     //Переменные
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4,shotsCH5,shotsCH6;
@@ -127,8 +127,8 @@ private:
     short packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
     int countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
-    int shiftedCH2=0,shiftedCH4=0;
-    QVector <QVector<double>> dots1,dots2, dots1Shifted, dots2Shifted;
+    QVector<QVector<double>> shadowsCh1,shadowsCh2;
+    QVector<double> diameter;
     //Работа с файлами
     QString dirname = "log";
     QString filename;

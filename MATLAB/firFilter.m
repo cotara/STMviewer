@@ -1,5 +1,5 @@
 function y=firFilter
-fid = fopen('C:\qt_pr\STMviewer\STMviewer\MATLAB\CH3', 'rb');  % открытие файла на чтение 
+fid = fopen('C:\qt_pr\STMviewer\STMviewer\MATLAB\2021_06_23__15_07_56_CH2', 'rb');  % открытие файла на чтение 
 if fid == -1 
     error('File is not opened'); 
 end 
@@ -7,20 +7,41 @@ end
 B=0;                % инициализация переменной 
 cnt=1;              % инициализация счетчика 
  V = fread(fid,'uint8');  %считывание одного
-%  k=0;                     %счетчик шотов
-%  j=0;                     %счетчик байтов в шоте
-%  i=1;
-%  len=length(V)-3;
-% while(i<=len)
-%     if(V(i)==255 && V(i+1)==0 && V(i+2)==255 && V(i+3)==0)
-%         k=k+1;
-%         i=i+4;
-%         j=0;
-%     else
-%         j=j+1;
-%         shots(k+1,j)=V(i);
-%     end
-%     i=i+1;
+ k=0;                     %счетчик шотов
+ j=0;                     %счетчик байтов в шоте
+ i=1;
+ len=length(V)-3;
+while(i<=len)
+    if(V(i)==255 && V(i+1)==0 && V(i+2)==255 && V(i+3)==0)
+       
+        k=k+1;
+        i=i+4;
+        j=0;
+        temp = shots(k,:);
+        
+    else
+        j=j+1;
+        shots(k+1,j)=V(i);
+    end
+    i=i+1;
+end
+n=length(shots(1,:));
+for j=1:n
+    matozh(j)=mean(shots(:,j));
+    dispersia(j)=var(shots(:,j));
+end
+verh = matozh+dispersia;
+niz = matozh-dispersia;
+plot(matozh);
+hold on;
+plot(verh);  
+plot(niz);  
+
+fid = fopen('C:\qt_pr\STMviewer\STMviewer\MATLAB\2021_06_23__15_07_56_CH2_mean', 'wb');  % открытие файла на чтение 
+fwrite(fid,matozh);
+% for i=1:k 
+%    plot(shots(i,:));
+%    hold on;
 % end
 %surf(shots);
 fclose('all')
