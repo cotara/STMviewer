@@ -83,13 +83,8 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     connect(customPlot2, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showPointToolTip(QMouseEvent*)));
 
     textLabel1 = new QCPItemText(customPlot1);
-    textLabel2 = new QCPItemText(customPlot1);
-    textLabel3 = new QCPItemText(customPlot1);
-    textLabel4 = new QCPItemText(customPlot2);
-    textLabel5 = new QCPItemText(customPlot2);
-    textLabel6 = new QCPItemText(customPlot2);
-    tracer1 = new QCPItemTracer(customPlot1);
-    tracer2 = new QCPItemTracer(customPlot2);
+    textLabel2 = new QCPItemText(customPlot2);
+
 
 }
 
@@ -166,32 +161,13 @@ void ShotViewer::addDots(QVector<QVector<double>> dots, int ch){
     QVector<double> x(dotsSize), y(dotsSize);
     QColor color = Qt::red;
     QFont font;
-    QString periods1,periods2, wightSignal;
+    for(int i=0;i<dotsSize;i++){
+        x[i] = dots.at(i).at(0);
+        y[i] = dots.at(i).at(1);
+    }
     if(!dots.isEmpty()){
-        for (int i=0; i<dotsSize; i+=2){
-          x[i] = dots.at(i).at(0);
-          y[i] = dots.at(i).at(1);
-          x[i+1] = dots.at(i+1).at(0);
-          y[i+1] = dots.at(i+1).at(1);
-          if(i!=0){
-              periods2+=QString::number(x.at(i+1)-x.at(i-1))+"/";
-              periods1.prepend( QString::number(x.at(i-2)-x.at(i))+"/");
-          }
-        }
         font.setPointSize(16);
         if(ch==1){
-           textLabel1->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-           textLabel1->position->setType(QCPItemPosition::ptAxisRectRatio);
-           textLabel1->position->setCoords(0.3, 0.05); // place position at center/top of axis rect
-           textLabel1->setFont(font);
-           textLabel1->setText(periods1);
-
-           textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-           textLabel2->position->setType(QCPItemPosition::ptAxisRectRatio);
-           textLabel2->position->setCoords(0.7, 0.05); // place position at center/top of axis rect
-           textLabel2->setFont(font);
-           textLabel2->setText(periods2);
-
            customPlot1->addGraph();
            customPlot1->graph()->setData(x,y);
            customPlot1->graph()->setLineStyle((QCPGraph::LineStyle::lsNone));
@@ -200,18 +176,6 @@ void ShotViewer::addDots(QVector<QVector<double>> dots, int ch){
            customPlot1->replot();
         }
         else if(ch==2){
-            textLabel4->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-            textLabel4->position->setType(QCPItemPosition::ptAxisRectRatio);
-            textLabel4->position->setCoords(0.3, 0.05); // place position at center/top of axis rect
-            textLabel4->setFont(font);
-            textLabel4->setText(periods1);
-
-            textLabel5->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-            textLabel5->position->setType(QCPItemPosition::ptAxisRectRatio);
-            textLabel5->position->setCoords(0.7, 0.05); // place position at center/top of axis rect
-            textLabel5->setFont(font);
-            textLabel5->setText(periods2);
-
            customPlot2->addGraph();
            customPlot2->graph()->setData(x,y);
            customPlot2->graph()->setLineStyle((QCPGraph::LineStyle)0);
@@ -228,12 +192,13 @@ void ShotViewer::addLines(QVector<double> dots, int ch){
     QVector<double> x(2), y(2);
 
     font.setPointSize(16);
+    graphPen.setColor(color);
     if(ch==1){
-           textLabel3->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-           textLabel3->position->setType(QCPItemPosition::ptAxisRectRatio);
-           textLabel3->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
-           textLabel3->setFont(font);
-           textLabel3->setText(QString::number(dots.at(3)-dots.at(0)));
+           textLabel1->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+           textLabel1->position->setType(QCPItemPosition::ptAxisRectRatio);
+           textLabel1->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
+           textLabel1->setFont(font);
+           textLabel1->setText(QString::number(dots.at(1)-dots.at(0)));
         for(int i = 0; i<dots.size();i++){
             x[0]=dots.at(i);
             y[0]=0;
@@ -243,18 +208,17 @@ void ShotViewer::addLines(QVector<double> dots, int ch){
            customPlot1->graph()->setData(x,y);
            customPlot1->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
            customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
-           customPlot1->graph()->setName("Тень №" + QString::number(i));
-           graphPen.setColor(color);
+           customPlot1->graph()->setName("Тень №" + QString::number(i));           
            customPlot1->graph()->setPen(graphPen);
         }
            customPlot1->replot();
       }
     else if(ch==2){
-           textLabel6->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-           textLabel6->position->setType(QCPItemPosition::ptAxisRectRatio);
-           textLabel6->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
-           textLabel6->setFont(font);
-           textLabel6->setText(QString::number(dots.at(3)-dots.at(0)));
+           textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+           textLabel2->position->setType(QCPItemPosition::ptAxisRectRatio);
+           textLabel2->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
+           textLabel2->setFont(font);
+           textLabel2->setText(QString::number(dots.at(1)-dots.at(0)));
         for(int i = 0; i<dots.size();i++){
             x[0]=dots.at(i);
             y[0]=0;
@@ -264,8 +228,7 @@ void ShotViewer::addLines(QVector<double> dots, int ch){
            customPlot2->graph()->setData(x,y);
            customPlot2->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
            customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
-           customPlot2->graph()->setName("Тень №" + QString::number(i));
-           graphPen.setColor(color);
+           customPlot2->graph()->setName("Тень №" + QString::number(i));          
            customPlot2->graph()->setPen(graphPen);
         }
            customPlot2->replot();
@@ -373,7 +336,6 @@ void ShotViewer::mousePress1(QMouseEvent* event){
   // if an axis is selected, only allow the direction of that axis to be dragged
   // if no axis is selected, both directions may be dragged
    double coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
-   tracer1->setGraphKey(coordX);
 
   if (customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
     customPlot1->axisRect()->setRangeDrag(customPlot1->xAxis->orientation());

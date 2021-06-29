@@ -17,6 +17,7 @@
 #include "QGroupBox"
 #include "shotviewer.h"
 #include "firfilter.h"
+#include "centerviewer.h"
 
 // answer status
 const unsigned short FAIL             = 0x0000;
@@ -93,6 +94,8 @@ private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
 
+    void constructorTest();
+
     Console *m_console;
     QSerialPort *serial;
     Slip *m_slip;
@@ -101,6 +104,7 @@ private:
     StatusBar *statusBar;
     ShotViewer *viewer;
     firFilter *filter;
+    centerViewer *m_centerViewer;
     QDir *dir;
     //Итерфейс
     QHBoxLayout *layoutH;
@@ -113,7 +117,7 @@ private:
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
     QComboBox *shotsComboBox;
     QLabel *lazer1Label, *lazer2Label,*packetSizeLabel;
-    QLabel *diametrLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label;
+    QLabel *diametrLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label,*centerPositionLabel;
     QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
 

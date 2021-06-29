@@ -47,7 +47,7 @@ private:
         QVBoxLayout *layoutV;
         QCustomPlot *customPlot1, *customPlot2;
         QPoint currentMousePosition;
-        QCPItemText *textLabel1,*textLabel2,*textLabel3,*textLabel4,*textLabel5,*textLabel6;
+        QCPItemText *textLabel1,*textLabel2;
         QCPItemTracer *tracer1,*tracer2;
 };
 #endif // SHOTVIEWER_H

@@ -165,10 +165,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Результат
     diametrLabel = new QLabel("Диаметр: ");
-    leftShadow1Label = new QLabel("Лев.тень: ");
-    rightShadow1Label = new QLabel("Прав.тень: ");
-    leftShadow2Label = new QLabel("Лев.тень: ");
-    rightShadow2Label = new QLabel("Прав.тень: ");
+    leftShadow1Label = new QLabel("   Лев.тень: ");
+    rightShadow1Label = new QLabel("   Прав.тень: ");
+    leftShadow2Label = new QLabel("   Лев.тень: ");
+    rightShadow2Label = new QLabel("   Прав.тень: ");
+    m_centerViewer = new centerViewer;
+    centerPositionLabel = new QLabel("Смещение: ");
     ch1ShadowsLabel.setText("Канал 1: ");
     ch2ShadowsLabel.setText("Канал 2: ");
     resultLayout->addWidget(&ch1ShadowsLabel);
@@ -178,6 +180,9 @@ MainWindow::MainWindow(QWidget *parent) :
     resultLayout->addWidget(leftShadow2Label);
     resultLayout->addWidget(rightShadow2Label);
     resultLayout->addWidget(diametrLabel);
+    resultLayout->addWidget(m_centerViewer);
+    m_centerViewer->setMinimumHeight(105);
+    resultLayout->addWidget(centerPositionLabel);
     //Настройки интерфейса
     consoleEnable = new QCheckBox("Вывод в консоль");
     appSettingsLayout->addWidget(consoleEnable);
@@ -222,23 +227,67 @@ MainWindow::MainWindow(QWidget *parent) :
     //Fir filter
     filter = new firFilter;
 
-    int shotNum=0;
-    QFile *tempFile;
+
+    constructorTest();
+}
+
+MainWindow::~MainWindow(){
+    delete ui;
+    delete settings_ptr;
+    delete serial;
+    delete m_transp;
+    delete m_timer;
+    delete viewer;
+}
+void MainWindow::constructorTest(){
+
+
+    //int shotNum=47;                                                             //Номер кадра в логе
+    QFile *tempFile;                                                            //Файл лога
     tempFile = new QFile();
-    filename = "2021_06_23__15_07_56_CH2";
+
+    filename = "2021_06_23__15_05_26_CH1";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
         return;
     }
-
-
     QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
-    QList<QByteArray> list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
-    QByteArray tempBuf2 = list_temp.at(shotNum*2);                                              //Валидные - четные 0,2,4...
+    QList<QByteArray> list_tempCH1=tempBuf.split(0xFF);                                    //разделяем кадры
+    tempFile->close();
+
+    filename = "2021_06_23__15_05_26_CH2";
+    tempFile->setFileName(dirname + "/" + filename);
+    if(!tempFile->open(QIODevice::ReadOnly)){
+        qDebug() << "tempFile can`t be open";
+        return;
+    }
+    tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
+    QList<QByteArray> list_tempCH2=tempBuf.split(0xFF);                                    //разделяем кадры
+    tempFile->close();
+
+    QByteArray tempBuf2;
+    QByteArray filtered;
+    int k=0;
+    for(int i=0;i<list_tempCH2.size();i+=2){
+        tempBuf2 = list_tempCH1.at(i);
+        if(tempBuf2.size()>10){
+            shotsCH1.insert(k,tempBuf2);
+            shotsCH2.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
+        }
+        tempBuf2 = list_tempCH2.at(i);
+        if(tempBuf2.size()>10){
+            shotsCH3.insert(k,tempBuf2);
+            shotsCH4.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
+        }
+        k++;
+        shotsComboBox->addItem(QString::number(i));
+    }
+
+/*
 
     viewer->addUserGraph(tempBuf2,tempBuf2.size(),1);
-    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size(),"Ckoeff.txt");
+    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
     viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
 
     QVector<QVector<double>> dots = filter->extrFind(tempBuf2,tempBuf2.size());
@@ -250,10 +299,10 @@ MainWindow::MainWindow(QWidget *parent) :
         }
         QVector<double> shadows = filter->shadowFind(xDots);
         viewer->addLines(shadows,1);
-        leftShadow1Label->setText("Лев. тень: " +QString::number(shadows.at(0)) + "/" + QString::number(shadows.at(1)) + "/" + QString::number(shadows.at(2)));
-        rightShadow1Label->setText("Прав. тень: " +QString::number(shadows.at(3)) + "/" + QString::number(shadows.at(4)) + "/" + QString::number(shadows.at(5)));
+        leftShadow1Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
+        rightShadow1Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
         QVector <double> tempVect;
-        for(int i = 0;i<6;i++){
+        for(int i = 0;i<2;i++){
             if(shadows.at(i)>0){
                 tempVect.append(shadows.at(i));
                 tempVect.append((unsigned char)tempBuf2.at((int)shadows.at(i)));
@@ -263,7 +312,6 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
     tempFile->close();
-
 
 
     filename = "2021_06_23__15_07_56_CH2";
@@ -278,7 +326,7 @@ MainWindow::MainWindow(QWidget *parent) :
     tempBuf2 = list_temp.at(shotNum*2);                                              //Валидные - четные 0,2,4...
 
     viewer->addUserGraph(tempBuf2,tempBuf2.size(),3);
-    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size(),"koeff.txt");
+    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
     viewer->addUserGraph(tempBuf2, tempBuf2.size(), 4);
 
     dots = filter->extrFind(tempBuf2,tempBuf2.size());
@@ -290,10 +338,10 @@ MainWindow::MainWindow(QWidget *parent) :
         }
         QVector<double> shadows = filter->shadowFind(xDots);
         viewer->addLines(shadows,2);
-        leftShadow2Label->setText("Лев. тень: " +QString::number(shadows.at(0)) + "/" + QString::number(shadows.at(1)) + "/" + QString::number(shadows.at(2)));
-        rightShadow2Label->setText("Прав. тень: " +QString::number(shadows.at(3)) + "/" + QString::number(shadows.at(4)) + "/" + QString::number(shadows.at(5)));
+        leftShadow2Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
+        rightShadow2Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
         QVector <double> tempVect;
-        for(int i = 0;i<6;i++){
+        for(int i = 0;i<2;i++){
             if(shadows.at(i)>0){
                 tempVect.append(shadows.at(i));
                 tempVect.append((unsigned char)tempBuf2.at((int)shadows.at(i)));
@@ -302,20 +350,14 @@ MainWindow::MainWindow(QWidget *parent) :
             }
         }
     }
-    tempFile->close();
-    if(shadowsCh1.size()>5 && shadowsCh2.size()>5){
-        diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-        diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)) + "/" + QString::number(diameter.at(1)) + "/" + QString::number(diameter.at(2)));
-    }
-}
 
-MainWindow::~MainWindow(){
-    delete ui;
-    delete settings_ptr;
-    delete serial;
-    delete m_transp;
-    delete m_timer;
-    delete viewer;
+    tempFile->close();
+
+    if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
+        diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
+        diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
+    }
+    */
 }
 //Настройки, коннекты
 void MainWindow::on_settings_triggered(){
@@ -593,11 +635,11 @@ void MainWindow::selectShot(int index){
                 }
                 QVector<double> shadows = filter->shadowFind(xDots);
                 viewer->addLines(shadows,1);
-                leftShadow1Label->setText("Лев. тень: " +QString::number(shadows.at(0)) + "/" + QString::number(shadows.at(1)) + "/" + QString::number(shadows.at(2)));
-                rightShadow1Label->setText("Прав. тень: " +QString::number(shadows.at(3)) + "/" + QString::number(shadows.at(4)) + "/" + QString::number(shadows.at(5)));
+                leftShadow1Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
+                rightShadow1Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
                 QVector <double> tempVect;
                 shadowsCh1.clear();
-                for(int i = 0;i<6;i++){
+                for(int i = 0;i<2;i++){
                   if(shadows.at(i)>0){
                     tempVect.append(shadows.at(i));
                     tempVect.append(ch.at((int)shadows.at(i)));
@@ -624,11 +666,11 @@ void MainWindow::selectShot(int index){
                 }
                 QVector<double> shadows = filter->shadowFind(xDots);
                 viewer->addLines(shadows,2);
-                leftShadow2Label->setText("Лев. тень: " +QString::number(shadows.at(0)) + "/" + QString::number(shadows.at(1)) + "/" + QString::number(shadows.at(2)));
-                rightShadow2Label->setText("Прав. тень: " +QString::number(shadows.at(3)) + "/" + QString::number(shadows.at(4)) + "/" + QString::number(shadows.at(5)));
+                leftShadow2Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
+                rightShadow2Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
                 QVector <double> tempVect;
                 shadowsCh2.clear();
-                for(int i = 0;i<6;i++){
+                for(int i = 0;i<2;i++){
                     if(shadows.at(i)>0){
                         tempVect.append(shadows.at(i));
                         tempVect.append(ch.at((int)shadows.at(i)));
@@ -638,10 +680,13 @@ void MainWindow::selectShot(int index){
                 }
             }
         }
-        if(shadowsCh1.size()>5 && shadowsCh2.size()>5){
+        if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)) + "/" + QString::number(diameter.at(1)) + "/" + QString::number(diameter.at(2)));
+            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
+            m_centerViewer->setCoord(diameter.at(1),diameter.at(2));
+            centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
         }
+
     }
 }
 //Очистить список
@@ -712,7 +757,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
                     chCountRecieved++;                                                  //Получили канал
                     if(ch2CheckBox->isChecked()) {                                                      //Если нужна фильтрация
-                        QByteArray filtered = filter->toFilter(currentShot,currentShot.size(),"Ckoeff.txt");          //Получаем фильтрованный массив
+                        QByteArray filtered = filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH2.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
                     }
                 }
@@ -726,7 +771,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
                      chCountRecieved++;                                                  //Получили канал
                      if(ch4CheckBox->isChecked()){                                                      //Если нужна фильтрация
-                        QByteArray filtered =filter->toFilter(currentShot,currentShot.size(),"Ckoeff.txt");          //Получаем фильтрованный массив
+                        QByteArray filtered =filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH4.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
                      }
                 }

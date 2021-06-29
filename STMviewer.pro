@@ -25,6 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+    centerviewer.cpp \
     console.cpp \
     firfilter.cpp \
         main.cpp \
@@ -37,6 +38,7 @@ SOURCES += \
 	slip.cpp \
 
 HEADERS += \
+    centerviewer.h \
     console.h \
     firfilter.h \
         mainwindow.h \
