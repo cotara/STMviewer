@@ -17,13 +17,13 @@ MainWindow::MainWindow(QWidget *parent) :
     settings_ptr = new SerialSettings();
     serial = new QSerialPort();
 
-    m_timer = new QTimer();
+    m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
 
-    viewer = new ShotViewer();
+    viewer = new ShotViewer(this);
 
     //Консоль
-    m_console = new Console;
+    m_console = new Console(this);
     m_console->setMaximumHeight(150);
     m_console->hide();
     //Транспортный уровень SLIP протокола
@@ -42,26 +42,26 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
 
     //Интерфейс
-    layoutV = new QVBoxLayout;
+    layoutV = new QVBoxLayout(this);
     centralWidget()->setLayout(layoutV);
 
-    layoutH = new QHBoxLayout;
+    layoutH = new QHBoxLayout(this);
     layoutV->addLayout(layoutH);
 
     layoutV->addWidget(m_console);
 
-    controlLayout = new QVBoxLayout;
-    graphsLayout = new QVBoxLayout;
+    controlLayout = new QVBoxLayout(this);
+    graphsLayout = new QVBoxLayout(this);
 
     layoutH->addWidget(viewer);
     layoutH->addLayout(controlLayout);
 
-    lazerGroup = new QGroupBox("Настройка лазеров");
-    transmitGroup = new QGroupBox("Обмен данными");    
-    resultGroup = new QGroupBox("Результаты расчетов");
-    appSettingsGroup = new QGroupBox("Настройки интерфейса");
-    logGroup = new QGroupBox("Логирование");
-    historyGrouop = new QGroupBox("История");
+    lazerGroup = new QGroupBox("Настройка лазеров",this);
+    transmitGroup = new QGroupBox("Обмен данными",this);
+    resultGroup = new QGroupBox("Результаты расчетов",this);
+    appSettingsGroup = new QGroupBox("Настройки интерфейса",this);
+    logGroup = new QGroupBox("Логирование",this);
+    historyGrouop = new QGroupBox("История",this);
 
     lazerGroup->setMaximumWidth(250);
     transmitGroup->setMaximumWidth(250);
@@ -77,12 +77,12 @@ MainWindow::MainWindow(QWidget *parent) :
     controlLayout->addWidget(logGroup);
     controlLayout->addWidget(historyGrouop);
 
-    lazerLayout = new QVBoxLayout;
-    transmitLayout = new QVBoxLayout;
-    resultLayout = new QVBoxLayout;
-    appSettingsLayout = new QVBoxLayout;
-    logLayout = new QVBoxLayout;
-    historyLayout = new QVBoxLayout;
+    lazerLayout = new QVBoxLayout(this);
+    transmitLayout = new QVBoxLayout(this);
+    resultLayout = new QVBoxLayout(this);
+    appSettingsLayout = new QVBoxLayout(this);
+    logLayout = new QVBoxLayout(this);
+    historyLayout = new QVBoxLayout(this);
 
     lazerGroup->setLayout(lazerLayout);
     transmitGroup->setLayout(transmitLayout);
@@ -92,17 +92,17 @@ MainWindow::MainWindow(QWidget *parent) :
     historyGrouop->setLayout(historyLayout);
 
     //Настройки лазера
-    lazersHorizontalLayout = new QHBoxLayout;
+    lazersHorizontalLayout = new QHBoxLayout(this);
     lazerLayout->addLayout(lazersHorizontalLayout);
-    lazer1SettingLayout = new QVBoxLayout;
-    lazer2SettingLayout = new QVBoxLayout;
+    lazer1SettingLayout = new QVBoxLayout(this);
+    lazer2SettingLayout = new QVBoxLayout(this);
     lazersHorizontalLayout->addLayout(lazer1SettingLayout);
     lazersHorizontalLayout->addLayout(lazer2SettingLayout);
-    lazer1Spinbox = new QSpinBox();
-    lazer2Spinbox = new QSpinBox();
-    lazer1Label = new QLabel("Лазер 1:");
-    lazer2Label = new QLabel("Лазер 2:");
-    lazersSaveButton = new QPushButton("Сохранить в EEPROM");
+    lazer1Spinbox = new QSpinBox(this);
+    lazer2Spinbox = new QSpinBox(this);
+    lazer1Label = new QLabel("Лазер 1:",this);
+    lazer2Label = new QLabel("Лазер 2:",this);
+    lazersSaveButton = new QPushButton("Сохранить в EEPROM",this);
 
     lazer1Spinbox->setRange(20,50);
     lazer2Spinbox->setRange(20,50);
@@ -124,14 +124,14 @@ MainWindow::MainWindow(QWidget *parent) :
           [=](int i){MainWindow::sendLazer2(i);});
     connect(lazersSaveButton,&QPushButton::clicked,this,&MainWindow::sendSaveEeprom);
     //Настройки передачи
-    packetSizeLabel = new QLabel("Размер пакета:");
-    packetSizeSpinbox = new QSpinBox;
-    ch1CheckBox = new QCheckBox("Канал 1. Нефильтрованный");
-    ch2CheckBox = new QCheckBox("Канал 1. Фильтрованный");
-    ch3CheckBox = new QCheckBox("Канал 2. Нефильтрованный");
-    ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный");
-    getButton = new QPushButton("Получить снимок");
-    autoGetCheckBox = new QCheckBox("Авто-получение по готовности");
+    packetSizeLabel = new QLabel("Размер пакета:",this);
+    packetSizeSpinbox = new QSpinBox(this);
+    ch1CheckBox = new QCheckBox("Канал 1. Нефильтрованный",this);
+    ch2CheckBox = new QCheckBox("Канал 1. Фильтрованный",this);
+    ch3CheckBox = new QCheckBox("Канал 2. Нефильтрованный",this);
+    ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный",this);
+    getButton = new QPushButton("Получить снимок",this);
+    autoGetCheckBox = new QCheckBox("Авто-получение по готовности",this);
 
     transmitLayout->addWidget(packetSizeLabel);
     transmitLayout->addWidget(packetSizeSpinbox);
@@ -164,13 +164,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &MainWindow::autoGetCheckBoxChanged);
 
     //Результат
-    diametrLabel = new QLabel("Диаметр: ");
-    leftShadow1Label = new QLabel("   Лев.тень: ");
-    rightShadow1Label = new QLabel("   Прав.тень: ");
-    leftShadow2Label = new QLabel("   Лев.тень: ");
-    rightShadow2Label = new QLabel("   Прав.тень: ");
-    m_centerViewer = new centerViewer;
-    centerPositionLabel = new QLabel("Смещение: ");
+    diametrLabel = new QLabel("Диаметр: ",this);
+    leftShadow1Label = new QLabel("   Лев.тень: ",this);
+    rightShadow1Label = new QLabel("   Прав.тень: ",this);
+    leftShadow2Label = new QLabel("   Лев.тень: ",this);
+    rightShadow2Label = new QLabel("   Прав.тень: ",this);
+    m_centerViewer = new centerViewer(this);
+    centerPositionLabel = new QLabel("Смещение: ",this);
     ch1ShadowsLabel.setText("Канал 1: ");
     ch2ShadowsLabel.setText("Канал 2: ");
     resultLayout->addWidget(&ch1ShadowsLabel);
@@ -184,17 +184,17 @@ MainWindow::MainWindow(QWidget *parent) :
     m_centerViewer->setMinimumHeight(105);
     resultLayout->addWidget(centerPositionLabel);
     //Настройки интерфейса
-    consoleEnable = new QCheckBox("Вывод в консоль");
+    consoleEnable = new QCheckBox("Вывод в консоль",this);
     appSettingsLayout->addWidget(consoleEnable);
     consoleEnable->setChecked(false);
     connect(consoleEnable,&QCheckBox::stateChanged,this,&MainWindow::consoleEnabledCheked);
 
-    autoRangeGraph = new QPushButton("Автомасштаб");
+    autoRangeGraph = new QPushButton("Автомасштаб",this);
     appSettingsLayout->addWidget(autoRangeGraph);
     connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
 
     //Настройки логирования
-    autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка");
+    autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка",this);
     logLayout->addWidget(autoSaveShotCheckBox);
     connect(autoSaveShotCheckBox,&QCheckBox::stateChanged,this,&MainWindow::autoSaveShotCheked);
     autoSaveShotCheckBox->setEnabled(false);
@@ -206,10 +206,10 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     dir->setFilter( QDir::NoDotAndDotDot);
 
-    file1 = new QFile();
-    file2 = new QFile();
-    file3 = new QFile();
-    file4 = new QFile();
+    file1 = new QFile(this);
+    file2 = new QFile(this);
+    file3 = new QFile(this);
+    file4 = new QFile(this);
 
     //История
     shotsComboBox = new QComboBox;
@@ -246,7 +246,7 @@ void MainWindow::constructorTest(){
     QFile *tempFile;                                                            //Файл лога
     tempFile = new QFile();
 
-    filename = "2021_06_23__15_05_26_CH1";
+    filename = "2021_06_23__15_07_56_CH1";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
@@ -256,7 +256,7 @@ void MainWindow::constructorTest(){
     QList<QByteArray> list_tempCH1=tempBuf.split(0xFF);                                    //разделяем кадры
     tempFile->close();
 
-    filename = "2021_06_23__15_05_26_CH2";
+    filename = "2021_06_23__15_07_56_CH2";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
@@ -273,12 +273,14 @@ void MainWindow::constructorTest(){
         tempBuf2 = list_tempCH1.at(i);
         if(tempBuf2.size()>10){
             shotsCH1.insert(k,tempBuf2);
-            shotsCH2.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
+            //shotsCH2.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
+            shotsCH2.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
         }
         tempBuf2 = list_tempCH2.at(i);
         if(tempBuf2.size()>10){
             shotsCH3.insert(k,tempBuf2);
-            shotsCH4.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
+            //shotsCH4.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
+            shotsCH4.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
         }
         k++;
         shotsComboBox->addItem(QString::number(i));
