@@ -71,6 +71,7 @@ private slots:
     void sendLazer2(int lazer2Par);
     void sendSaveEeprom();
     void setPacketSize(short n);
+    void incCountCh(int);
     void incCountCh1(bool);
     void incCountCh2(bool);
     void manualGetShotButton();
@@ -133,6 +134,7 @@ private:
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     QVector<QVector<double>> shadowsCh1,shadowsCh2;
     QVector<double> diameter;
+    QSignalMapper *signalMapper;
     //Работа с файлами
     QString dirname = "log";
     QString filename;

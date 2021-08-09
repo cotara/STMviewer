@@ -58,18 +58,19 @@ QByteArray firFilter::toFilter(QByteArray &in,int len){
 
 QByteArray firFilter::toButterFilter(QByteArray &in,int len){
     QByteArray out,outShifted;
-   /* const double x00=(unsigned char)in.at(0);
+   const double x00=(unsigned char)in.at(0);
     const double x01=(unsigned char)in.at(1);
     const double x02=(unsigned char)in.at(2);
     const double x03=(unsigned char)in.at(3);
-    */
+    /*
     const short x00=(unsigned char)in.at(0);
     const short x01=(unsigned char)in.at(1);
     const short x02=(unsigned char)in.at(2);
     const short x03=(unsigned char)in.at(3);
+    */
     double x0,x1,x2,x3,x4,y1,y2,y3,y4;
-    //QVector<double>yOut={x00,x01,x02,x03};
-    QVector<short>yOut={x00,x01,x02,x03};
+    QVector<double>yOut={x00,x01,x02,x03};
+    //QVector<short>yOut={x00,x01,x02,x03};
     double Yx =0;
     for(int j=4;j<len;j++){
           x0=  (unsigned char)in.at(j);

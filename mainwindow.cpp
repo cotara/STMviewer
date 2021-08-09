@@ -42,26 +42,32 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
 
     //Интерфейс
-    layoutV = new QVBoxLayout(this);
+    //Здесь нужно создавать виджет(главный), устанавливать его, как центральный и передавать в конструктор лайонута уже его..
+    //widget = QWidget(self)
+    //self.setCentralWidget(widget)
+    //hbox = QHBoxLayout(widget)
+    // hbox.setSpacing(10)
+
+    layoutV = new QVBoxLayout();
     centralWidget()->setLayout(layoutV);
 
-    layoutH = new QHBoxLayout(this);
+    layoutH = new QHBoxLayout();
     layoutV->addLayout(layoutH);
 
     layoutV->addWidget(m_console);
 
-    controlLayout = new QVBoxLayout(this);
-    graphsLayout = new QVBoxLayout(this);
+    controlLayout = new QVBoxLayout();
+    graphsLayout = new QVBoxLayout();
 
     layoutH->addWidget(viewer);
     layoutH->addLayout(controlLayout);
 
-    lazerGroup = new QGroupBox("Настройка лазеров",this);
-    transmitGroup = new QGroupBox("Обмен данными",this);
-    resultGroup = new QGroupBox("Результаты расчетов",this);
-    appSettingsGroup = new QGroupBox("Настройки интерфейса",this);
-    logGroup = new QGroupBox("Логирование",this);
-    historyGrouop = new QGroupBox("История",this);
+    lazerGroup = new QGroupBox("Настройка лазеров");
+    transmitGroup = new QGroupBox("Обмен данными");
+    resultGroup = new QGroupBox("Результаты расчетов");
+    appSettingsGroup = new QGroupBox("Настройки интерфейса");
+    logGroup = new QGroupBox("Логирование");
+    historyGrouop = new QGroupBox("История");
 
     lazerGroup->setMaximumWidth(250);
     transmitGroup->setMaximumWidth(250);
@@ -77,12 +83,12 @@ MainWindow::MainWindow(QWidget *parent) :
     controlLayout->addWidget(logGroup);
     controlLayout->addWidget(historyGrouop);
 
-    lazerLayout = new QVBoxLayout(this);
-    transmitLayout = new QVBoxLayout(this);
-    resultLayout = new QVBoxLayout(this);
-    appSettingsLayout = new QVBoxLayout(this);
-    logLayout = new QVBoxLayout(this);
-    historyLayout = new QVBoxLayout(this);
+    lazerLayout = new QVBoxLayout();
+    transmitLayout = new QVBoxLayout();
+    resultLayout = new QVBoxLayout();
+    appSettingsLayout = new QVBoxLayout();
+    logLayout = new QVBoxLayout();
+    historyLayout = new QVBoxLayout();
 
     lazerGroup->setLayout(lazerLayout);
     transmitGroup->setLayout(transmitLayout);
@@ -92,17 +98,17 @@ MainWindow::MainWindow(QWidget *parent) :
     historyGrouop->setLayout(historyLayout);
 
     //Настройки лазера
-    lazersHorizontalLayout = new QHBoxLayout(this);
+    lazersHorizontalLayout = new QHBoxLayout();
     lazerLayout->addLayout(lazersHorizontalLayout);
-    lazer1SettingLayout = new QVBoxLayout(this);
-    lazer2SettingLayout = new QVBoxLayout(this);
+    lazer1SettingLayout = new QVBoxLayout();
+    lazer2SettingLayout = new QVBoxLayout();
     lazersHorizontalLayout->addLayout(lazer1SettingLayout);
     lazersHorizontalLayout->addLayout(lazer2SettingLayout);
-    lazer1Spinbox = new QSpinBox(this);
-    lazer2Spinbox = new QSpinBox(this);
-    lazer1Label = new QLabel("Лазер 1:",this);
-    lazer2Label = new QLabel("Лазер 2:",this);
-    lazersSaveButton = new QPushButton("Сохранить в EEPROM",this);
+    lazer1Spinbox = new QSpinBox();
+    lazer2Spinbox = new QSpinBox();
+    lazer1Label = new QLabel("Лазер 1:");
+    lazer2Label = new QLabel("Лазер 2:");
+    lazersSaveButton = new QPushButton("Сохранить в EEPROM");
 
     lazer1Spinbox->setRange(20,50);
     lazer2Spinbox->setRange(20,50);
@@ -126,12 +132,12 @@ MainWindow::MainWindow(QWidget *parent) :
     //Настройки передачи
     packetSizeLabel = new QLabel("Размер пакета:",this);
     packetSizeSpinbox = new QSpinBox(this);
-    ch1CheckBox = new QCheckBox("Канал 1. Нефильтрованный",this);
-    ch2CheckBox = new QCheckBox("Канал 1. Фильтрованный",this);
-    ch3CheckBox = new QCheckBox("Канал 2. Нефильтрованный",this);
-    ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный",this);
-    getButton = new QPushButton("Получить снимок",this);
-    autoGetCheckBox = new QCheckBox("Авто-получение по готовности",this);
+    ch1CheckBox = new QCheckBox("Канал 1. Нефильтрованный");
+    ch2CheckBox = new QCheckBox("Канал 1. Фильтрованный");
+    ch3CheckBox = new QCheckBox("Канал 2. Нефильтрованный");
+    ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный");
+    getButton = new QPushButton("Получить снимок");
+    autoGetCheckBox = new QCheckBox("Авто-получение по готовности");
 
     transmitLayout->addWidget(packetSizeLabel);
     transmitLayout->addWidget(packetSizeSpinbox);
@@ -139,10 +145,10 @@ MainWindow::MainWindow(QWidget *parent) :
     transmitLayout->addWidget(ch2CheckBox);
     transmitLayout->addWidget(ch3CheckBox);
     transmitLayout->addWidget(ch4CheckBox);
-    ch1CheckBox->setEnabled(false);
-    ch2CheckBox->setEnabled(false);
-    ch3CheckBox->setEnabled(false);
-    ch4CheckBox->setEnabled(false);
+    //ch1CheckBox->setEnabled(false);
+    //ch2CheckBox->setEnabled(false);
+    //ch3CheckBox->setEnabled(false);
+    //ch4CheckBox->setEnabled(false);
     transmitLayout->addWidget(getButton);
     transmitLayout->addWidget(autoGetCheckBox);
 
@@ -153,8 +159,17 @@ MainWindow::MainWindow(QWidget *parent) :
             setPacketSize(i);});
     emit packetSizeSpinbox->valueChanged(packetSizeSpinbox->value());
 
-    connect(ch1CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh1);
-    connect(ch3CheckBox,&QCheckBox::stateChanged,this,&MainWindow::incCountCh2);
+    signalMapper = new QSignalMapper(this);
+    connect(signalMapper, QOverload<int>::of(&QSignalMapper::mapped), [=](int i){ incCountCh(i); });
+         signalMapper->setMapping(ch1CheckBox, 1);
+         signalMapper->setMapping(ch2CheckBox, 2);
+         signalMapper->setMapping(ch3CheckBox, 3);
+         signalMapper->setMapping(ch4CheckBox, 4);
+
+         connect(ch1CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
+         connect(ch2CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
+         connect(ch3CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
+         connect(ch4CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
 
 
     getButton->setEnabled(false);
@@ -164,13 +179,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &MainWindow::autoGetCheckBoxChanged);
 
     //Результат
-    diametrLabel = new QLabel("Диаметр: ",this);
-    leftShadow1Label = new QLabel("   Лев.тень: ",this);
-    rightShadow1Label = new QLabel("   Прав.тень: ",this);
-    leftShadow2Label = new QLabel("   Лев.тень: ",this);
-    rightShadow2Label = new QLabel("   Прав.тень: ",this);
-    m_centerViewer = new centerViewer(this);
-    centerPositionLabel = new QLabel("Смещение: ",this);
+    diametrLabel = new QLabel("Диаметр: ");
+    leftShadow1Label = new QLabel("   Лев.тень: ");
+    rightShadow1Label = new QLabel("   Прав.тень: ");
+    leftShadow2Label = new QLabel("   Лев.тень: ");
+    rightShadow2Label = new QLabel("   Прав.тень: ");
+    m_centerViewer = new centerViewer();
+    centerPositionLabel = new QLabel("Смещение: ");
     ch1ShadowsLabel.setText("Канал 1: ");
     ch2ShadowsLabel.setText("Канал 2: ");
     resultLayout->addWidget(&ch1ShadowsLabel);
@@ -184,17 +199,17 @@ MainWindow::MainWindow(QWidget *parent) :
     m_centerViewer->setMinimumHeight(105);
     resultLayout->addWidget(centerPositionLabel);
     //Настройки интерфейса
-    consoleEnable = new QCheckBox("Вывод в консоль",this);
+    consoleEnable = new QCheckBox("Вывод в консоль");
     appSettingsLayout->addWidget(consoleEnable);
     consoleEnable->setChecked(false);
     connect(consoleEnable,&QCheckBox::stateChanged,this,&MainWindow::consoleEnabledCheked);
 
-    autoRangeGraph = new QPushButton("Автомасштаб",this);
+    autoRangeGraph = new QPushButton("Автомасштаб");
     appSettingsLayout->addWidget(autoRangeGraph);
     connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
 
     //Настройки логирования
-    autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка",this);
+    autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка");
     logLayout->addWidget(autoSaveShotCheckBox);
     connect(autoSaveShotCheckBox,&QCheckBox::stateChanged,this,&MainWindow::autoSaveShotCheked);
     autoSaveShotCheckBox->setEnabled(false);
@@ -206,10 +221,10 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     dir->setFilter( QDir::NoDotAndDotDot);
 
-    file1 = new QFile(this);
-    file2 = new QFile(this);
-    file3 = new QFile(this);
-    file4 = new QFile(this);
+    file1 = new QFile();
+    file2 = new QFile();
+    file3 = new QFile();
+    file4 = new QFile();
 
     //История
     shotsComboBox = new QComboBox;
@@ -228,7 +243,7 @@ MainWindow::MainWindow(QWidget *parent) :
     filter = new firFilter;
 
 
-    constructorTest();
+    //constructorTest();
 }
 
 MainWindow::~MainWindow(){
@@ -471,6 +486,42 @@ void MainWindow::sendSaveEeprom()
     m_transp->sendPacket(data);
 }
 //Подсчет количества отмеченных каналов
+void MainWindow::incCountCh(int ch)
+{
+    chCountChecked++;
+    switch (ch){
+    case 1:
+       if(ch1CheckBox->isChecked())
+           channelsOrder|=0x01;
+       else
+          channelsOrder&=~0x01;
+        break;
+    case 2:
+       if(ch2CheckBox->isChecked())
+           channelsOrder|=0x02;
+       else
+          channelsOrder&=~0x02;
+        break;
+    case 3:
+       if(ch3CheckBox->isChecked())
+           channelsOrder|=0x04;
+       else
+          channelsOrder&=~0x04;
+        break;
+    case 4:
+       if(ch4CheckBox->isChecked())
+           channelsOrder|=0x08;
+       else
+          channelsOrder&=~0x08;
+        break;
+    }
+    if(chCountChecked)
+         autoGetCheckBox->setEnabled(true);
+    else
+        autoGetCheckBox->setEnabled(false);
+
+}
+
 void MainWindow::incCountCh1(bool st){
     if(st){
         chCountChecked++;
@@ -503,6 +554,8 @@ void MainWindow::incCountCh2(bool st){
 void MainWindow::setPacketSize(short n){
     packetSize=n;
 }
+
+
 //Запрость у MCU пакет длины n с канала ch
 void MainWindow::getPacketFromMCU(short n)
 {
