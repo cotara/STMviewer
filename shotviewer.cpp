@@ -156,7 +156,7 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         customPlot2->replot();
     }
 }
-void ShotViewer::addDots(QVector<QVector<double>> dots, int ch){
+void ShotViewer::addDots(QVector<QVector<double> > dots, int ch){
     int dotsSize = dots.size();
     QVector<double> x(dotsSize), y(dotsSize);
     QColor color = Qt::red;
@@ -185,6 +185,40 @@ void ShotViewer::addDots(QVector<QVector<double>> dots, int ch){
        }
     }
 }
+
+
+void ShotViewer::addDots(QVector<QVector<unsigned int> > dots, int ch){
+    int dotsSize = dots.size();
+    QVector<double> x(dotsSize), y(dotsSize);
+    QColor color = Qt::red;
+    QFont font;
+    for(int i=0;i<dotsSize;i++){
+        x[i] = dots.at(i).at(0);
+        y[i] = dots.at(i).at(1);
+    }
+    if(!dots.isEmpty()){
+        font.setPointSize(16);
+        if(ch==1){
+           customPlot1->addGraph();
+           customPlot1->graph()->setData(x,y);
+           customPlot1->graph()->setLineStyle((QCPGraph::LineStyle::lsNone));
+           customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
+           customPlot1->graph()->setName(QString("Канал 1. Экстремумы"));
+           customPlot1->replot();
+        }
+        else if(ch==2){
+           customPlot2->addGraph();
+           customPlot2->graph()->setData(x,y);
+           customPlot2->graph()->setLineStyle((QCPGraph::LineStyle)0);
+           customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
+           customPlot2->graph()->setName(QString("Канал 2. Экстремумы"));
+           customPlot2->replot();
+       }
+    }
+}
+
+
+
 void ShotViewer::addLines(QVector<double> dots, int ch){
     QFont font;
     QPen graphPen;

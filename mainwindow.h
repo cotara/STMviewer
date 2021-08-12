@@ -72,8 +72,6 @@ private slots:
     void sendSaveEeprom();
     void setPacketSize(short n);
     void incCountCh(int);
-    void incCountCh1(bool);
-    void incCountCh2(bool);
     void manualGetShotButton();
     void getPacketFromMCU(short n);
     void autoGetCheckBoxChanged(int);

@@ -92,10 +92,93 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
               Yx=255;
           out.append((unsigned char)Yx);
    }
-          outShifted=out.mid(1);
-          outShifted.append(1,0);
+          outShifted=out.mid(15);
+          outShifted.append(15,0);
    return outShifted;
 }
+
+QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
+    const unsigned int start= 100, stop = len-100;                          //Начало и конец поиска экстремумов
+    int  leftMinsIndex=0;                                                   //индекс левого первого минимума
+    unsigned char yMin11=0,yMin12=0,yMin21=0,yMin22=0,yCheckPoint;          //Искомые 4 точки (Y) и промежуточные экстремумы
+    unsigned int xMin11=start,xMin12=start,xMin21=start,xMin22=start;       //Искомые 4 точки (X)
+    unsigned int  xStartStraight=0;                                         //Начало прямого участка (X)
+    unsigned char yFront=100;                                               //фронт (Y)
+    unsigned char ch,chPrev;                                                //Текущее и предыдущее значение сигнала
+    QVector <unsigned int> xMin,yMin,tempVect;                              //все минимумы и временный вектор
+    QVector <QVector<unsigned int>> result;                                 //Результирующий вектор пар X,Y
+    unsigned int state = 1;                                                 //0- straight, 1 = falling; 2 - rising;
+
+    chPrev=in.at(start);                                                    // Запоминаем первую точку
+    yCheckPoint=chPrev;                                                     //Запоминаем первый псевдоэкстемум
+    for(int j=start+1;j<stop;j++){                                          //Идем по всем точкам
+       ch=in.at(j);                                                         //Берем новую точку
+       if(ch==chPrev) {                                                     //Если сигнал не изменился
+           if(state!=0)                                                     //Если это впервые после роста или спада
+                xStartStraight=j-1;                                         //запоминаем начало прямого участка
+           state=0;                                                         //сейчс прямой участок
+       }
+       else if(ch>chPrev){                                                  //Если текущее значение больше предыдущего, это значит, что график пошел вверх
+            if((state!=2) && (yCheckPoint - chPrev > 7)){                   //Если состояние невозрастания и оно достаточно (7), то Нашли минимум
+                yCheckPoint=chPrev;                                         //Запоминаем экстремум
+                yMin.append(yCheckPoint);                                   //Добавляем его в массив
+                if(state==0)                                                //Если экстремум найден после прямого участка
+                    xMin.append((j-1+xStartStraight)/2);                    //Берем середину прямого участка
+                else                                                        //Иначе
+                    xMin.append(j-1);                                       //саму точку
+            }
+            state=2;                                                        //Сейчас возрастание
+       }
+       else if(ch<chPrev){                                                  //Если текущее значение меньше предыдущего, это значит, что график пошел вниз
+           if((state!=1) && (chPrev-yCheckPoint > 7)){                      //Если состояние непадения и оно достаточно (7), то нашли максимум
+                yCheckPoint=chPrev;                                         //Запоминаем экстремум
+           }
+           state=1;                                                         //Сейчас убывание
+           if(yCheckPoint>yFront){                                          //Если найденный максимум больше последнего, то запоминаем, как потенциальный фронт
+               yFront=yCheckPoint;
+               if(xMin.size()>1){                                           //Обновляем актуальные два минимума слева от фронта
+                   xMin11=xMin.at(xMin.size()-2);
+                   yMin11=yMin.at(xMin.size()-2);
+                   xMin12=xMin.at(xMin.size()-1);
+                   yMin12=yMin.at(xMin.size()-1);
+                   leftMinsIndex = xMin.size();                             //Запомнили, где взяли минимумы
+               }
+           }
+       }
+       chPrev=ch;                                                           //Сохраняем текущее значение сигнала в предыдущее
+    }
+    //После прохода понятно, где фронт, а значит и где правые минимумы
+    if(xMin.size() > leftMinsIndex+4){                                      //Проверяем, что после левых нашли еще минимумы (4??)
+        xMin21=xMin.at(leftMinsIndex);
+        yMin21=yMin.at(leftMinsIndex);
+        xMin22=xMin.at(leftMinsIndex+1);
+        yMin22=yMin.at(leftMinsIndex+1);
+        if(yFront - yMin21 < 20){                                           //Значит это не тот минимум (Сбой/вылет на плато)
+          xMin21=xMin22;                                                    //берем следующие два минимума
+          yMin21=yMin22;
+          xMin22=xMin.at(leftMinsIndex+2);
+          yMin22=yMin.at(leftMinsIndex+2);
+        }
+    }
+    //Собираем 4 точки по векторам
+    tempVect.append(xMin11);
+    tempVect.append(yMin11);
+    result.push_back(tempVect);
+    tempVect.clear();
+    tempVect.append(xMin12);
+    tempVect.append(yMin12);
+    result.push_back(tempVect);
+    tempVect.clear();
+    tempVect.append(xMin21);
+    tempVect.append(yMin21);
+    result.push_back(tempVect);
+    tempVect.clear();
+    tempVect.append(xMin22);
+    tempVect.append(yMin22);
+    result.push_back(tempVect);
+    return result;
+}
+
 
 
 QVector <QVector<double>> firFilter::extrFind(QByteArray &in,int len){
@@ -219,6 +302,25 @@ QVector<double> firFilter::shadowFind(QVector<double> dots)
     //x0.append(x03);
     //x0.append(x05);
     //x0.append(x06);
+    return x0;
+}
+
+QVector<double> firFilter::shadowFind(QVector<unsigned int> dots)
+{
+    QVector<double> x0;
+
+    double delta1 = dots.at(1)-dots.at(0);
+    double delta4 = dots.at(3)-dots.at(2);
+
+    double y1=la*L*L*p1/(4*delta1*delta1*res*res + la*L*p1);
+    double y4=la*L*L*p1/(4*delta4*delta4*res*res + la*L*p1);
+
+    double x01=dots.at(1)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
+    double x04=dots.at(2)-sqrt(la*L*(L-y4)*1.5/(2*y4))/res;
+
+    x0.append(x01);
+    x0.append(x04);
+
     return x0;
 }
 

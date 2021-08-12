@@ -145,10 +145,10 @@ MainWindow::MainWindow(QWidget *parent) :
     transmitLayout->addWidget(ch2CheckBox);
     transmitLayout->addWidget(ch3CheckBox);
     transmitLayout->addWidget(ch4CheckBox);
-    //ch1CheckBox->setEnabled(false);
-    //ch2CheckBox->setEnabled(false);
-    //ch3CheckBox->setEnabled(false);
-    //ch4CheckBox->setEnabled(false);
+    ch1CheckBox->setEnabled(false);
+    ch2CheckBox->setEnabled(false);
+    ch3CheckBox->setEnabled(false);
+    ch4CheckBox->setEnabled(false);
     transmitLayout->addWidget(getButton);
     transmitLayout->addWidget(autoGetCheckBox);
 
@@ -243,7 +243,7 @@ MainWindow::MainWindow(QWidget *parent) :
     filter = new firFilter;
 
 
-    //constructorTest();
+    constructorTest();
 }
 
 MainWindow::~MainWindow(){
@@ -255,13 +255,10 @@ MainWindow::~MainWindow(){
     delete viewer;
 }
 void MainWindow::constructorTest(){
-
-
-    //int shotNum=47;                                                             //Номер кадра в логе
     QFile *tempFile;                                                            //Файл лога
     tempFile = new QFile();
 
-    filename = "2021_06_23__15_07_56_CH1";
+    filename = "2021_06_23__15_05_26_CH1";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
@@ -271,7 +268,7 @@ void MainWindow::constructorTest(){
     QList<QByteArray> list_tempCH1=tempBuf.split(0xFF);                                    //разделяем кадры
     tempFile->close();
 
-    filename = "2021_06_23__15_07_56_CH2";
+    filename = "2021_06_23__15_05_26_CH2";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
@@ -300,81 +297,6 @@ void MainWindow::constructorTest(){
         k++;
         shotsComboBox->addItem(QString::number(i));
     }
-
-/*
-
-    viewer->addUserGraph(tempBuf2,tempBuf2.size(),1);
-    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
-    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 2);
-
-    QVector<QVector<double>> dots = filter->extrFind(tempBuf2,tempBuf2.size());
-    viewer->addDots(dots,1);
-    if(dots.size()==6){
-        QVector <double> xDots;
-        for (int i = 0;i<6;i++){
-            xDots.append(dots.at(i).at(0));
-        }
-        QVector<double> shadows = filter->shadowFind(xDots);
-        viewer->addLines(shadows,1);
-        leftShadow1Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
-        rightShadow1Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
-        QVector <double> tempVect;
-        for(int i = 0;i<2;i++){
-            if(shadows.at(i)>0){
-                tempVect.append(shadows.at(i));
-                tempVect.append((unsigned char)tempBuf2.at((int)shadows.at(i)));
-                shadowsCh1.push_back(tempVect);
-                tempVect.clear();
-            }
-        }
-    }
-    tempFile->close();
-
-
-    filename = "2021_06_23__15_07_56_CH2";
-    tempFile->setFileName(dirname + "/" + filename);
-    if(!tempFile->open(QIODevice::ReadOnly)){
-        qDebug() << "tempFile can`t be open";
-        return;
-    }
-
-    tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
-    list_temp=tempBuf.split(0xFF);                                    //разделяем кадры
-    tempBuf2 = list_temp.at(shotNum*2);                                              //Валидные - четные 0,2,4...
-
-    viewer->addUserGraph(tempBuf2,tempBuf2.size(),3);
-    tempBuf2 = filter->toFilter(tempBuf2,tempBuf2.size());
-    viewer->addUserGraph(tempBuf2, tempBuf2.size(), 4);
-
-    dots = filter->extrFind(tempBuf2,tempBuf2.size());
-    viewer->addDots(dots,2);
-    if(dots.size()==6){
-        QVector <double> xDots;
-        for (int i = 0;i<6;i++){
-            xDots.append(dots.at(i).at(0));
-        }
-        QVector<double> shadows = filter->shadowFind(xDots);
-        viewer->addLines(shadows,2);
-        leftShadow2Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
-        rightShadow2Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
-        QVector <double> tempVect;
-        for(int i = 0;i<2;i++){
-            if(shadows.at(i)>0){
-                tempVect.append(shadows.at(i));
-                tempVect.append((unsigned char)tempBuf2.at((int)shadows.at(i)));
-                shadowsCh2.push_back(tempVect);
-                tempVect.clear();
-            }
-        }
-    }
-
-    tempFile->close();
-
-    if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
-        diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-        diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
-    }
-    */
 }
 //Настройки, коннекты
 void MainWindow::on_settings_triggered(){
@@ -519,37 +441,9 @@ void MainWindow::incCountCh(int ch)
          autoGetCheckBox->setEnabled(true);
     else
         autoGetCheckBox->setEnabled(false);
-
-}
-
-void MainWindow::incCountCh1(bool st){
-    if(st){
-        chCountChecked++;
-        channelsOrder|=0x01;
-        autoGetCheckBox->setEnabled(true);
-    }
-    else {
-        chCountChecked--;
-        channelsOrder&=~0x01;
-        if(!chCountChecked)
-            autoGetCheckBox->setEnabled(false);
-    }
     sendChannelOrder();
 }
-void MainWindow::incCountCh2(bool st){
-    if(st){
-        chCountChecked++;
-        channelsOrder|=0x04;
-        autoGetCheckBox->setEnabled(true);
-    }
-    else {
-        chCountChecked--;
-        channelsOrder&=~0x04;
-        if(!chCountChecked)
-           autoGetCheckBox->setEnabled(false);
-    }
-    sendChannelOrder();
-}
+
 //Настройка разбиения данных на пакеты
 void MainWindow::setPacketSize(short n){
     packetSize=n;
@@ -681,11 +575,14 @@ void MainWindow::selectShot(int index){
         if(shotsCH2.contains(index)){
             ch = shotsCH2[index];
             viewer->addUserGraph(ch,ch.size(),2);
-            QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());                                 //Размерность результата либо 6 либо 0
-            if(dots.size()==6){
+            //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());                                 //Размерность результата либо 6 либо 0
+            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
+            //if(dots.size()==6){
                 viewer->addDots(dots,1);
-                QVector <double> xDots;
-                for (int i = 0;i<6;i++){
+                //QVector <double> xDots;
+                QVector <unsigned int> xDots;
+                //for (int i = 0;i<6;i++){
+                for (int i = 0;i<4;i++){
                     xDots.append(dots.at(i).at(0));
                 }
                 QVector<double> shadows = filter->shadowFind(xDots);
@@ -703,7 +600,7 @@ void MainWindow::selectShot(int index){
                   }
                 }
 
-            }
+            //}
         }
         if(shotsCH3.contains(index)){
             ch = shotsCH3[index];
@@ -712,11 +609,14 @@ void MainWindow::selectShot(int index){
         if(shotsCH4.contains(index)){
             ch = shotsCH4[index];
             viewer->addUserGraph(ch,ch.size(),4);
-            QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());
+            //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());
+            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
             viewer->addDots(dots,2);
-            if(dots.size()==6){
-                QVector <double> xDots;
-                for (int i = 0;i<6;i++){
+            //if(dots.size()==6){
+                //QVector <double> xDots;
+                QVector <unsigned int> xDots;
+                //for (int i = 0;i<6;i++){
+                for (int i = 0;i<4;i++){
                     xDots.append(dots.at(i).at(0));
                 }
                 QVector<double> shadows = filter->shadowFind(xDots);
@@ -733,7 +633,7 @@ void MainWindow::selectShot(int index){
                         tempVect.clear();
                     }
                 }
-            }
+            //}
         }
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
