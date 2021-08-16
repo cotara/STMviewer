@@ -108,7 +108,7 @@ void ShotViewer::clearGraphs(int state){
     }
     if(state & CH2){
             customPlot2->clearGraphs();
-            customPlot1->replot();
+            customPlot2->replot();
     }
 }
 
@@ -128,6 +128,7 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
     if (ch==1 || ch==2){
         customPlot1->addGraph();
         customPlot1->graph()->setData(x, y);
+
         if (ch==1){
             customPlot1->graph()->setName(QString("Канал 1. Нефильтрованный"));
             color =  Qt::black;
@@ -520,6 +521,21 @@ void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QM
         int coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
         int coordY = customPlot1->yAxis->pixelToCoord(event->pos().y());
         QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
+        emit graph_selected(plottable->name());
+        const QSharedPointer<QCPGraphDataContainer> dataMap=customPlot1->selectedGraphs().first()->data();
+        const QCPRange range = customPlot1->xAxis->range();
+
+        //dataMap.data->removeBefore(range.lower);
+        //dataMap.data->removeAfter(range.upper);
+//Использование трейсера
+//        QCPItemTracer *tracer = new QCPItemTracer;
+//        tracer->setGraph(graph);
+
+//        double getValueByKey(double key)
+//        {
+//            tracer->setGraphKey(key);
+//            return tracer->position->value();
+//        }
 }
 void ShotViewer::graphClicked2(QCPAbstractPlottable *plottable, int dataIndex,QMouseEvent* event){
         //int y = plottable->interface1D()->dataMainValue(dataIndex);

@@ -26,6 +26,7 @@ public:
     void addDots(QVector<QVector<unsigned int>> dots, int ch);
     void addLines(QVector<double> dots, int ch);
 signals:
+    void graph_selected(QString graphName);
 
 private slots:
     void titleDoubleClick1(QMouseEvent *event);

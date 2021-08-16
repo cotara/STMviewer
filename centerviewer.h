@@ -17,8 +17,8 @@ class centerViewer : public QWidget
     void paintEvent(QPaintEvent *event);
     void addCircle(QPainter *qp);
     void paintPosition(QPainter *qp,int x, int y);
-    int xPos=0,yPos=0;
-    int xDiam=0,yDiam=0;
+    double xPos=0,yPos=0;
+    double xDiam=0,yDiam=0;
 };
 
 #endif // CENTERVIEWER_H

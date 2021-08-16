@@ -65,7 +65,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="connect">
    <property name="icon">
-    <iconset resource="res.qrc">
+    <iconset>
      <normaloff>:/1/Resources/connect.png</normaloff>:/1/Resources/connect.png</iconset>
    </property>
    <property name="text">
@@ -74,7 +74,7 @@
   </action>
   <action name="disconnect">
    <property name="icon">
-    <iconset resource="res.qrc">
+    <iconset>
      <normaloff>:/1/Resources/disconnect.png</normaloff>:/1/Resources/disconnect.png</iconset>
    </property>
    <property name="text">
@@ -83,7 +83,7 @@
   </action>
   <action name="settings">
    <property name="icon">
-    <iconset resource="res.qrc">
+    <iconset>
      <normaloff>:/1/Resources/settings.png</normaloff>:/1/Resources/settings.png</iconset>
    </property>
    <property name="text">
@@ -92,8 +92,6 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="res.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

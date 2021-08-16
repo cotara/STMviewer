@@ -22,9 +22,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
     viewer = new ShotViewer(this);
 
+    table = new QTableWidget(this);
+    table->setColumnCount(1);
+    table->setRowCount(20);
+    table->setShowGrid(true); // Включаем сетку
+    table->setHorizontalHeaderLabels(QStringList{"Y"});
+//    table->setItem(0,0,new QTableWidgetItem("1"));
+//    table->setItem(0,1,new QTableWidgetItem("2"));
+//    table->setItem(0,2,new QTableWidgetItem("3"));
+
     //Консоль
     m_console = new Console(this);
-    m_console->setMaximumHeight(150);
+    m_console->setMaximumHeight(300);
     m_console->hide();
     //Транспортный уровень SLIP протокола
     m_slip = new Slip(serial,m_console);
@@ -60,6 +69,9 @@ MainWindow::MainWindow(QWidget *parent) :
     graphsLayout = new QVBoxLayout();
 
     layoutH->addWidget(viewer);
+    layoutH->addWidget(table);
+    table->setMaximumWidth(100);
+
     layoutH->addLayout(controlLayout);
 
     lazerGroup = new QGroupBox("Настройка лазеров");
@@ -82,6 +94,7 @@ MainWindow::MainWindow(QWidget *parent) :
     controlLayout->addWidget(appSettingsGroup);
     controlLayout->addWidget(logGroup);
     controlLayout->addWidget(historyGrouop);
+
 
     lazerLayout = new QVBoxLayout();
     transmitLayout = new QVBoxLayout();
@@ -134,8 +147,11 @@ MainWindow::MainWindow(QWidget *parent) :
     packetSizeSpinbox = new QSpinBox(this);
     ch1CheckBox = new QCheckBox("Канал 1. Нефильтрованный");
     ch2CheckBox = new QCheckBox("Канал 1. Фильтрованный");
+    ch2InCheckBox = new QCheckBox("Канал 1. Фильтрованный*");
     ch3CheckBox = new QCheckBox("Канал 2. Нефильтрованный");
     ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный");
+    ch4InCheckBox = new QCheckBox("Канал 2. Фильтрованный*");
+
     getButton = new QPushButton("Получить снимок");
     autoGetCheckBox = new QCheckBox("Авто-получение по готовности");
 
@@ -143,19 +159,23 @@ MainWindow::MainWindow(QWidget *parent) :
     transmitLayout->addWidget(packetSizeSpinbox);
     transmitLayout->addWidget(ch1CheckBox);
     transmitLayout->addWidget(ch2CheckBox);
+    transmitLayout->addWidget(ch2InCheckBox);
     transmitLayout->addWidget(ch3CheckBox);
     transmitLayout->addWidget(ch4CheckBox);
+    transmitLayout->addWidget(ch4InCheckBox);
     ch1CheckBox->setEnabled(false);
     ch2CheckBox->setEnabled(false);
+    ch2InCheckBox->setEnabled(false);
     ch3CheckBox->setEnabled(false);
     ch4CheckBox->setEnabled(false);
+    ch4InCheckBox->setEnabled(false);
     transmitLayout->addWidget(getButton);
     transmitLayout->addWidget(autoGetCheckBox);
 
     packetSizeSpinbox->setRange(50,15000);
     packetSizeSpinbox->setValue(11000);
     connect(packetSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-         [=](short i){
+         [=](unsigned short i){
             setPacketSize(i);});
     emit packetSizeSpinbox->valueChanged(packetSizeSpinbox->value());
 
@@ -165,6 +185,7 @@ MainWindow::MainWindow(QWidget *parent) :
          signalMapper->setMapping(ch2CheckBox, 2);
          signalMapper->setMapping(ch3CheckBox, 3);
          signalMapper->setMapping(ch4CheckBox, 4);
+
 
          connect(ch1CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
          connect(ch2CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
@@ -198,6 +219,7 @@ MainWindow::MainWindow(QWidget *parent) :
     resultLayout->addWidget(m_centerViewer);
     m_centerViewer->setMinimumHeight(105);
     resultLayout->addWidget(centerPositionLabel);
+
     //Настройки интерфейса
     consoleEnable = new QCheckBox("Вывод в консоль");
     appSettingsLayout->addWidget(consoleEnable);
@@ -243,6 +265,7 @@ MainWindow::MainWindow(QWidget *parent) :
     filter = new firFilter;
 
 
+
     constructorTest();
 }
 
@@ -286,18 +309,19 @@ void MainWindow::constructorTest(){
         if(tempBuf2.size()>10){
             shotsCH1.insert(k,tempBuf2);
             //shotsCH2.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
-            shotsCH2.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
+            shotsCH2In.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
         }
         tempBuf2 = list_tempCH2.at(i);
         if(tempBuf2.size()>10){
             shotsCH3.insert(k,tempBuf2);
             //shotsCH4.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
-            shotsCH4.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
+            shotsCH4In.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
         }
         k++;
         shotsComboBox->addItem(QString::number(i));
     }
 }
+
 //Настройки, коннекты
 void MainWindow::on_settings_triggered(){
     settings_ptr->show();
@@ -324,8 +348,10 @@ void MainWindow::on_connect_triggered()
         serial->readAll();
         ch1CheckBox->setEnabled(true);
         ch2CheckBox->setEnabled(true);
+        ch2InCheckBox->setEnabled(true);
         ch3CheckBox->setEnabled(true);
         ch4CheckBox->setEnabled(true);
+        ch4InCheckBox->setEnabled(true);
         autoSaveShotCheckBox->setEnabled(true);
         if(channelsOrder!=0){
             sendChannelOrder();
@@ -333,6 +359,13 @@ void MainWindow::on_connect_triggered()
         lazer1Spinbox->setEnabled(true);
         lazer2Spinbox->setEnabled(true);
         lazersSaveButton->setEnabled(true);
+
+        ch1CheckBox->setChecked(false);
+        ch2CheckBox->setChecked(false);
+        ch2InCheckBox->setChecked(false);
+        ch3CheckBox->setChecked(false);
+        ch4CheckBox->setChecked(false);
+        ch4InCheckBox->setChecked(false);
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
@@ -366,23 +399,28 @@ void MainWindow::on_disconnect_triggered(){
     currentShot.clear();
 
     autoGetCheckBox->setCheckState(Qt::Unchecked);          //Вырубаем автополучение на всякий
+
     ch1CheckBox->setEnabled(false);
     ch2CheckBox->setEnabled(false);
+    ch2InCheckBox->setEnabled(false);
     ch3CheckBox->setEnabled(false);
     ch4CheckBox->setEnabled(false);
+    ch4InCheckBox->setEnabled(false);
+
     autoSaveShotCheckBox->setEnabled(false);
     autoSaveShotCheckBox->setCheckState(Qt::Unchecked);
     lazer1Spinbox->setEnabled(false);
     lazer2Spinbox->setEnabled(false);
     lazersSaveButton->setEnabled(false);
 }
+
 //Управление лазером
 void MainWindow::sendLazer1(int lazer1Par){
     QByteArray data;
     char msb,lsb;
     data.append(LAZER1_SET);
     msb=(0&0xFF00)>>8;
-    lsb=lazer1Par&0x00FF;
+    lsb=static_cast<char> (lazer1Par&0x00FF);
     data.append(msb);
     data.append(lsb);
     m_console->putData("Set Lazer1 Setting: ");
@@ -393,7 +431,7 @@ void MainWindow::sendLazer2(int lazer2Par){
     char msb,lsb;
     data.append(LAZER2_SET);
     msb=(0&0xFF00)>>8;
-    lsb=lazer2Par&0x00FF;
+    lsb=static_cast<char> (lazer2Par&0x00FF);
     data.append(msb);
     data.append(lsb);
 
@@ -407,10 +445,11 @@ void MainWindow::sendSaveEeprom()
     m_console->putData("Save lazer's parameters to EEPROM: ");
     m_transp->sendPacket(data);
 }
+
 //Подсчет количества отмеченных каналов
 void MainWindow::incCountCh(int ch)
 {
-    chCountChecked++;
+
     switch (ch){
     case 1:
        if(ch1CheckBox->isChecked())
@@ -437,6 +476,11 @@ void MainWindow::incCountCh(int ch)
           channelsOrder&=~0x08;
         break;
     }
+    chCountChecked=0;
+    for (int i=0;i<4;i++){
+        if(channelsOrder&(1<<i))
+            chCountChecked++;
+    }
     if(chCountChecked)
          autoGetCheckBox->setEnabled(true);
     else
@@ -445,24 +489,22 @@ void MainWindow::incCountCh(int ch)
 }
 
 //Настройка разбиения данных на пакеты
-void MainWindow::setPacketSize(short n){
+void MainWindow::setPacketSize(unsigned short n){
     packetSize=n;
 }
 
-
 //Запрость у MCU пакет длины n с канала ch
-void MainWindow::getPacketFromMCU(short n)
+void MainWindow::getPacketFromMCU(unsigned short n)
 {
     QByteArray data;
     char msb,lsb;
     data.append(REQUEST_POINTS);
-    msb=(n&0xFF00)>>8;
-    lsb=n&0x00FF;
+    msb=static_cast<char> ((n&0xFF00)>>8);
+    lsb=static_cast<char> (n&0x00FF);
     data.append(msb);
     data.append(lsb);
     m_transp->sendPacket(data);
 }
-
 void MainWindow::autoGetCheckBoxChanged(int st)
 {
     if(st){
@@ -481,6 +523,7 @@ void MainWindow::autoGetCheckBoxChanged(int st)
     }
 }
 
+/////////////////////////////////////////////////////ОСНОВНЫЕ МЕТОДЫ///////////////////////////////////////////////////////////
 //Запрос канала, отмеченного в чекбоксах chXCheckBox
 //Метод вызывается в трех случаях:
 //1. Нажата кнопка "Получить точки".
@@ -491,6 +534,7 @@ void MainWindow::autoGetCheckBoxChanged(int st)
 //отправляется первый запрос. Плата отвечает тем, что считает нужным.
 //После успешного приема первого канала, notYetFlag уменьшается на единицу и если отмечено 2 канала, то происходит повторный запрос
 void MainWindow::manualGetShotButton(){
+    statusBar->setMessageBar("");
     if(countAvaibleDots){
         if (!ch1CheckBox->isChecked() && !ch2CheckBox->isChecked()
             && !ch3CheckBox->isChecked() && !ch4CheckBox->isChecked()){
@@ -514,6 +558,237 @@ void MainWindow::manualGetShotButton(){
     else
          statusBar->setMessageBar("ОШИБКА!, Данные не готовы для получения!");
 }
+
+//Обработка входящих пакетов
+void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
+    unsigned char cmd = static_cast<unsigned char>(bytes[0]);
+    unsigned short value = static_cast<unsigned short>(bytes[1])*256+static_cast<unsigned short>(bytes[2]);
+    int dataReady=-1;
+    QString chName;
+    switch(cmd){
+    case ASK_MCU:                                                           //Пришел ответ, mcu жив
+        if (value == OK) {
+            m_online = true;
+            m_console->putData(" :RECIEVED ANSWER_MCU\n\n");
+            emit statusUpdate(m_online);
+        }
+        else{
+            statusBar->setMessageBar("Error: Wrong ASK_MCU ansver message!");
+            m_console->putData("Error: Wrong ASK_MCU ansver message!\n\n");
+        }
+        break;
+
+
+    case REQUEST_STATUS:                                                                //Пришло количество точек
+        m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
+        countAvaibleDots=value;
+        if (value != NO_DATA_READY) {
+            dataReady = value;
+            if(autoGetCheckBox->isChecked() || notYetFlag){                       //Если включен автозапрос данных или не вычитали все пачку каналов
+                manualGetShotButton();                                                  //Запрашиваем шот
+            }
+        }
+        else {
+            dataReady = 0;
+            m_console->putData("Warning: MCU has no data\n\n");
+        }
+        emit dataReadyUpdate(dataReady);
+        m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
+        break;
+
+
+     case REQUEST_POINTS:
+        if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
+            bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
+            countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
+            statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
+            currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
+            if(countRecievedDots>=countWaitingDots){                                  //Приняли канал целиком
+                //Кладем принятый шот в соответствующий мап
+                if (value == CH1){
+                     if(shotsCH1.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
+                         shotCountRecieved++;                                           //Начинаем следующую пачку
+                         qDebug() << "Attantion! Dublicate CH1";
+                     }
+                    chName="CH1_NF";
+                    shotsCH1.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
+                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
+                    chCountRecieved++;                                                  //Получили канал
+
+                    if(ch2InCheckBox->isChecked()) {                                                      //Если нужна фильтрация
+                        QByteArray filtered = filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                        shotsCH2In.insert(shotCountRecieved,filtered);
+                    }
+                }
+                else if(value == CH2){
+                    if(shotsCH2.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
+                        shotCountRecieved++;                                           //Начинаем следующую пачку
+                        qDebug() << "Attantion! Dublicate CH2";
+                    }
+                   chName="CH2_NF";
+                   currentShot=currentShot.mid(15);                                 //Смещение отфильтрованного сигнала из плисы
+                   currentShot.append(15,0);
+                   shotsCH2.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
+                   m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
+                   chCountRecieved++;
+                }
+                else if(value == CH3){
+                     if(shotsCH3.contains(shotCountRecieved)) {
+                         shotCountRecieved++;
+                         qDebug() << "Attantion! Dublicate CH3";
+                     }
+                     chName="CH2_NF";
+                     shotsCH3.insert(shotCountRecieved,currentShot);
+                     m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
+                     chCountRecieved++;                                                  //Получили канал
+                     if(ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
+                        QByteArray filtered =filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                        shotsCH4In.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
+                     }
+                }
+                else if(value == CH4){
+                     if(shotsCH4.contains(shotCountRecieved)) {
+                         shotCountRecieved++;
+                         qDebug() << "Attantion! Dublicate CH4";
+                     }
+                     chName="CH2_F";
+                     currentShot=currentShot.mid(15);                                 //Смещение отфильтрованного сигнала из плисы
+                     currentShot.append(15,0);
+                     shotsCH4.insert(shotCountRecieved,currentShot);
+                     m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
+                     chCountRecieved++;                                                  //Получили канал
+                }
+
+                //Если включено автосохранение в файл
+                if(autoSaveShotCheckBox->isChecked())
+                    writeToLogfile(chName);
+                //Обнуляем всякое
+                countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
+                currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
+                statusBar->setInfo(m_transp->getQueueCount());                          //Обновляем статус бар
+
+                if (chCountRecieved == chCountChecked){                                 //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
+                    m_console->putData("\n\n");
+                    chCountRecieved=0;
+                    shotCountRecieved++;                                                //Увеличиваем счетчик пачек
+                    shotsComboBox->addItem(QString::number(shotCountRecieved));
+                    //shotsComboBox->setCurrentIndex(shotCountRecieved-1);
+                    shotsComboBox->setCurrentIndex(shotsComboBox->count()-1);
+                    if (!autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
+                        getButton->setEnabled(true);
+                }
+                m_timer->start();                                                       //Стартуем таймер опроса статуса
+            }
+        }
+
+        else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
+            QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
+            m_console->putData("Warning: MCU has no data\n\n");
+            getButton->setEnabled(true);
+        }
+        else{
+            statusBar->setMessageBar("Error: Wrong REQUEST_POINTS ansver message!");
+            m_console->putData("Warning: MCU has no data\n\n");
+            getButton->setEnabled(true);
+        }
+        break;
+   }
+}
+
+//Выбрать шот из списка
+void MainWindow::selectShot(int index){
+    if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
+        QByteArray ch;
+
+        viewer->clearGraphs(ShotViewer::AllCH);
+
+        if(shotsCH1.contains(index)){
+            ch = shotsCH1[index];
+            viewer->addUserGraph(ch,ch.size(),1);
+        }
+        if(shotsCH2.contains(index)){
+            ch = shotsCH2[index];
+            viewer->addUserGraph(ch,ch.size(),2);
+        }
+        if(shotsCH2In.contains(index)){
+            ch = shotsCH2In[index];
+            viewer->addUserGraph(ch,ch.size(),2);
+            //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());                                 //Размерность результата либо 6 либо 0
+            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
+            //if(dots.size()==6){
+                viewer->addDots(dots,1);
+                //QVector <double> xDots;
+                QVector <unsigned int> xDots;
+                //for (int i = 0;i<6;i++){
+                for (int i = 0;i<4;i++){
+                    xDots.append(dots.at(i).at(0));
+                }
+                QVector<double> shadows = filter->shadowFind(xDots);
+                viewer->addLines(shadows,1);
+                leftShadow1Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
+                rightShadow1Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
+                QVector <double> tempVect;
+                shadowsCh1.clear();
+                for(int i = 0;i<2;i++){
+                  if(shadows.at(i)>0){
+                    tempVect.append(shadows.at(i));
+                    tempVect.append(ch.at(static_cast <int>(shadows.at(i))));
+                    shadowsCh1.push_back(tempVect);
+                    tempVect.clear();
+                  }
+                }
+
+            //}
+        }
+        if(shotsCH3.contains(index)){
+            ch = shotsCH3[index];
+            viewer->addUserGraph(ch,ch.size(),3);
+        }
+        if(shotsCH4.contains(index)){
+            ch = shotsCH4[index];
+            viewer->addUserGraph(ch,ch.size(),4);
+        }
+        if(shotsCH4In.contains(index)){
+            ch = shotsCH4In[index];
+            viewer->addUserGraph(ch,ch.size(),4);
+            //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());
+            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
+            viewer->addDots(dots,2);
+            //if(dots.size()==6){
+                //QVector <double> xDots;
+                QVector <unsigned int> xDots;
+                //for (int i = 0;i<6;i++){
+                for (int i = 0;i<4;i++){
+                    xDots.append(dots.at(i).at(0));
+                }
+                QVector<double> shadows = filter->shadowFind(xDots);
+                viewer->addLines(shadows,2);
+                leftShadow2Label->setText("   Лев. тень: " + QString::number(shadows.at(0)));
+                rightShadow2Label->setText("   Прав. тень: " + QString::number(shadows.at(1)));
+                QVector <double> tempVect;
+                shadowsCh2.clear();
+                for(int i = 0;i<2;i++){
+                    if(shadows.at(i)>0){
+                        tempVect.append(shadows.at(i));
+                        tempVect.append(ch.at(static_cast <int>(shadows.at(i))));
+                        shadowsCh2.push_back(tempVect);
+                        tempVect.clear();
+                    }
+                }
+            //}
+        }
+        if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
+            diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
+            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
+            m_centerViewer->setCoord(static_cast<int>(diameter.at(1)),static_cast<int>(diameter.at(2)));
+            centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
+
+        }
+
+    }
+}
+
+
 //Показать консоль
 void MainWindow::consoleEnabledCheked(bool en){
     if(en){
@@ -525,6 +800,7 @@ void MainWindow::consoleEnabledCheked(bool en){
     }
 }
 
+//Автосохранение
 void MainWindow::autoSaveShotCheked(bool en)
 {
     if(en){
@@ -562,88 +838,6 @@ void MainWindow::autoSaveShotCheked(bool en)
     }
 }
 
-//Выбрать шот из списка
-void MainWindow::selectShot(int index){
-    if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
-        QByteArray ch;
-
-        viewer->clearGraphs(ShotViewer::AllCH);
-        if(shotsCH1.contains(index)){
-            ch = shotsCH1[index];
-            viewer->addUserGraph(ch,ch.size(),1);
-        }
-        if(shotsCH2.contains(index)){
-            ch = shotsCH2[index];
-            viewer->addUserGraph(ch,ch.size(),2);
-            //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());                                 //Размерность результата либо 6 либо 0
-            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
-            //if(dots.size()==6){
-                viewer->addDots(dots,1);
-                //QVector <double> xDots;
-                QVector <unsigned int> xDots;
-                //for (int i = 0;i<6;i++){
-                for (int i = 0;i<4;i++){
-                    xDots.append(dots.at(i).at(0));
-                }
-                QVector<double> shadows = filter->shadowFind(xDots);
-                viewer->addLines(shadows,1);
-                leftShadow1Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
-                rightShadow1Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
-                QVector <double> tempVect;
-                shadowsCh1.clear();
-                for(int i = 0;i<2;i++){
-                  if(shadows.at(i)>0){
-                    tempVect.append(shadows.at(i));
-                    tempVect.append(ch.at((int)shadows.at(i)));
-                    shadowsCh1.push_back(tempVect);
-                    tempVect.clear();
-                  }
-                }
-
-            //}
-        }
-        if(shotsCH3.contains(index)){
-            ch = shotsCH3[index];
-            viewer->addUserGraph(ch,ch.size(),3);
-        }
-        if(shotsCH4.contains(index)){
-            ch = shotsCH4[index];
-            viewer->addUserGraph(ch,ch.size(),4);
-            //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());
-            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
-            viewer->addDots(dots,2);
-            //if(dots.size()==6){
-                //QVector <double> xDots;
-                QVector <unsigned int> xDots;
-                //for (int i = 0;i<6;i++){
-                for (int i = 0;i<4;i++){
-                    xDots.append(dots.at(i).at(0));
-                }
-                QVector<double> shadows = filter->shadowFind(xDots);
-                viewer->addLines(shadows,2);
-                leftShadow2Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
-                rightShadow2Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
-                QVector <double> tempVect;
-                shadowsCh2.clear();
-                for(int i = 0;i<2;i++){
-                    if(shadows.at(i)>0){
-                        tempVect.append(shadows.at(i));
-                        tempVect.append(ch.at((int)shadows.at(i)));
-                        shadowsCh2.push_back(tempVect);
-                        tempVect.clear();
-                    }
-                }
-            //}
-        }
-        if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
-            diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
-            m_centerViewer->setCoord(diameter.at(1),diameter.at(2));
-            centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
-        }
-
-    }
-}
 //Очистить список
 void MainWindow::on_clearButton(){
     shotCountRecieved=0;
@@ -653,116 +847,6 @@ void MainWindow::on_clearButton(){
     shotsCH4.clear();
     shotsComboBox->clear();
     viewer->clearGraphs(ShotViewer::AllCH);
-}
-
-
-//Обработка входящих пакетов
-void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
-    unsigned char cmd = bytes[0];
-    unsigned short value = (unsigned char)bytes[1]*256+(unsigned char)bytes[2];
-    int dataReady=-1;
-    QString chName;
-    switch(cmd){
-    case ASK_MCU:                                                           //Пришел ответ, mcu жив
-        if (value == OK) {
-            m_online = true;
-            m_console->putData(" :RECIEVED ANSWER_MCU\n\n");
-            emit statusUpdate(m_online);
-        }
-        else{
-            statusBar->setMessageBar("Error: Wrong ASK_MCU ansver message!");
-            m_console->putData("Error: Wrong ASK_MCU ansver message!\n\n");
-        }
-        break;
-
-
-    case REQUEST_STATUS:                                                                //Пришло количество точек
-        m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
-        countAvaibleDots=value;
-        if (value != NO_DATA_READY) {
-            dataReady = value;
-            if(autoGetCheckBox->isChecked() || notYetFlag){                       //Если включен автозапрос данных или не вычитали все пачку каналов
-                manualGetShotButton();                                                  //Запрашиваем шот
-            }
-        }
-        else {
-            dataReady = 0;
-            m_console->putData("Warning: MCU has no data\n\n");
-        }
-        emit dataReadyUpdate(dataReady);
-        m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
-        break;
-
-
-     case REQUEST_POINTS:
-        if ((value==CH1)||(value==CH3)){                                                //Если пришли точки по одному из каналов, то обрабатываем
-            bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
-            countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
-            statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
-            currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
-            if(countRecievedDots>=countWaitingDots){                                  //Приняли канал целиком
-                //Кладем принятый шот в соответствующий мап
-                if (value == CH1){
-                     if(shotsCH1.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
-                         shotCountRecieved++;                                           //Начинаем следующую пачку
-                         qDebug() << "Attantion! Dublicate CH1";
-                     }
-                    chName="CH1_NF";
-                    shotsCH1.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
-                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
-                    chCountRecieved++;                                                  //Получили канал
-                    if(ch2CheckBox->isChecked()) {                                                      //Если нужна фильтрация
-                        QByteArray filtered = filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
-                        shotsCH2.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
-                    }
-                }
-                else if(value == CH3){
-                     if(shotsCH3.contains(shotCountRecieved)) {
-                         shotCountRecieved++;
-                         qDebug() << "Attantion! Dublicate CH3";
-                     }
-                     chName="CH2_NF";
-                     shotsCH3.insert(shotCountRecieved,currentShot);
-                     m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
-                     chCountRecieved++;                                                  //Получили канал
-                     if(ch4CheckBox->isChecked()){                                                      //Если нужна фильтрация
-                        QByteArray filtered =filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
-                        shotsCH4.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
-                     }
-                }
-
-                //Если включено автосохранение в файл
-                if(autoSaveShotCheckBox->isChecked())
-                    writeToLogfile(chName);
-                //Обнуляем всякое
-                countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
-                currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
-                statusBar->setInfo(m_transp->getQueueCount());                          //Обновляем статус бар
-
-                if (chCountRecieved == chCountChecked){                                 //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
-                    m_console->putData("\n\n");
-                    chCountRecieved=0;
-                    shotCountRecieved++;                                                //Увеличиваем счетчик пачек
-                    shotsComboBox->addItem(QString::number(shotCountRecieved));
-                    //shotsComboBox->setCurrentIndex(shotCountRecieved-1);
-                    shotsComboBox->setCurrentIndex(shotsComboBox->count()-1);
-                    if (!autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
-                        getButton->setEnabled(true);
-                }
-                m_timer->start();                                                       //Стартуем таймер опроса статуса
-            }
-        }
-
-        else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
-            QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
-            m_console->putData("Warning: MCU has no data\n\n");
-        }
-        else{
-            statusBar->setMessageBar("Error: Wrong REQUEST_POINTS ansver message!");
-            m_console->putData("Warning: MCU has no data\n\n");
-        }
-        break;
-   }
 }
 
 //Обработка ошибок SLIP
@@ -796,11 +880,11 @@ void MainWindow::sendChannelOrder(){
     //Отправка последовательности байт в плату
     QByteArray data;
     char msb,lsb;
-    data.append(CH_ORDER);
+    data.append(static_cast<char> (CH_ORDER));
     m_console->putData("SEND CH_ORDER: ");
 
-    msb=(channelsOrder&0xFF00)>>8;
-    lsb=channelsOrder&0x00FF;
+    msb=static_cast<char> ((channelsOrder&0xFF00)>>8);
+    lsb=static_cast<char> (channelsOrder&0x00FF);
     data.append(msb);
     data.append(lsb);
     m_transp->sendPacket(data);

@@ -70,10 +70,10 @@ private slots:
     void sendLazer1(int lazer1Par);
     void sendLazer2(int lazer2Par);
     void sendSaveEeprom();
-    void setPacketSize(short n);
+    void setPacketSize(unsigned short n);
     void incCountCh(int);
     void manualGetShotButton();
-    void getPacketFromMCU(short n);
+    void getPacketFromMCU(unsigned short n);
     void autoGetCheckBoxChanged(int);
     void consoleEnabledCheked(bool);
     void autoSaveShotCheked(bool);
@@ -113,18 +113,18 @@ private:
     QVBoxLayout *lazer1SettingLayout, *lazer2SettingLayout;
     QGroupBox *lazerGroup, *transmitGroup,*resultGroup, *appSettingsGroup, *logGroup, *historyGrouop;
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
-    QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox;
+    QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox,*ch2InCheckBox, *ch4InCheckBox;
     QComboBox *shotsComboBox;
     QLabel *lazer1Label, *lazer2Label,*packetSizeLabel;
     QLabel *diametrLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label,*centerPositionLabel;
     QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
-
+    QTableWidget *table;
     QLabel ch1ShadowsLabel;
     QLabel ch2ShadowsLabel;
 
     //Переменные
-    QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH3,shotsCH4,shotsCH5,shotsCH6;
+    QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH2In,shotsCH3,shotsCH4,shotsCH4In;
     QByteArray currentShot;
     int chCountChecked=0,shotCountRecieved=0,chCountRecieved=0;                               //Текущее количество отмеченных каналов и текущее количество принятых шотов
     short packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы

@@ -99,12 +99,12 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
 
 QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
     const unsigned int start= 100, stop = len-100;                          //Начало и конец поиска экстремумов
-    int  leftMinsIndex=0;                                                   //индекс левого первого минимума
+    int  backMinsIndex=0;                                                   //индекс спада в векторе минимумов
     unsigned char yMin11=0,yMin12=0,yMin21=0,yMin22=0,yCheckPoint;          //Искомые 4 точки (Y) и промежуточные экстремумы
     unsigned int xMin11=start,xMin12=start,xMin21=start,xMin22=start;       //Искомые 4 точки (X)
     unsigned int  xStartStraight=0;                                         //Начало прямого участка (X)
-    unsigned char yFront=100;                                               //фронт (Y)
-    unsigned char ch,chPrev;                                                //Текущее и предыдущее значение сигнала
+    unsigned char yFront=30, yBack=30;                                               //фронт (Y)
+    unsigned char ch,chPrev,up=0,down=0;                                                //Текущее и предыдущее значение сигнала
     QVector <unsigned int> xMin,yMin,tempVect;                              //все минимумы и временный вектор
     QVector <QVector<unsigned int>> result;                                 //Результирующий вектор пар X,Y
     unsigned int state = 1;                                                 //0- straight, 1 = falling; 2 - rising;
@@ -119,46 +119,51 @@ QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
            state=0;                                                         //сейчс прямой участок
        }
        else if(ch>chPrev){                                                  //Если текущее значение больше предыдущего, это значит, что график пошел вверх
-            if((state!=2) && (yCheckPoint - chPrev > 7)){                   //Если состояние невозрастания и оно достаточно (7), то Нашли минимум
-                yCheckPoint=chPrev;                                         //Запоминаем экстремум
-                yMin.append(yCheckPoint);                                   //Добавляем его в массив
+            if((state!=2) && (down > 3)){                                   //Если состояние невозрастания и оно достаточно (7), то Нашли минимум
+                yMin.append(chPrev);                                        //Добавляем его в массив
                 if(state==0)                                                //Если экстремум найден после прямого участка
                     xMin.append((j-1+xStartStraight)/2);                    //Берем середину прямого участка
                 else                                                        //Иначе
                     xMin.append(j-1);                                       //саму точку
+                if(down>=yBack){                                            //Если найденный минимум меньше последнего, то запоминаем, как потенциальный спад
+                    yBack=xMin.last();
+                    backMinsIndex=xMin.size()-1;
+                }
             }
+            up+=ch-chPrev;                                                  //Считаем на сколько вырасло
+            down=0;
             state=2;                                                        //Сейчас возрастание
+
        }
        else if(ch<chPrev){                                                  //Если текущее значение меньше предыдущего, это значит, что график пошел вниз
-           if((state!=1) && (chPrev-yCheckPoint > 7)){                      //Если состояние непадения и оно достаточно (7), то нашли максимум
-                yCheckPoint=chPrev;                                         //Запоминаем экстремум
-           }
-           state=1;                                                         //Сейчас убывание
-           if(yCheckPoint>yFront){                                          //Если найденный максимум больше последнего, то запоминаем, как потенциальный фронт
-               yFront=yCheckPoint;
-               if(xMin.size()>1){                                           //Обновляем актуальные два минимума слева от фронта
-                   xMin11=xMin.at(xMin.size()-2);
-                   yMin11=yMin.at(xMin.size()-2);
-                   xMin12=xMin.at(xMin.size()-1);
-                   yMin12=yMin.at(xMin.size()-1);
-                   leftMinsIndex = xMin.size();                             //Запомнили, где взяли минимумы
+           if((state!=1) && (up > 3)){                                      //Если состояние непадения и оно достаточно (7), то нашли максимум
+               if(up>yFront){                                                   //Если найденный максимум больше последнего, то запоминаем, как потенциальный фронт
+                   yFront=chPrev;
+                   if(xMin.size()>1){                                           //Обновляем актуальные два минимума слева от фронта
+                       xMin11=xMin.at(xMin.size()-2);
+                       yMin11=yMin.at(xMin.size()-2);
+                       xMin12=xMin.at(xMin.size()-1);
+                       yMin12=yMin.at(xMin.size()-1);
+                   }
                }
            }
+           down+=chPrev-ch;                                                   //Считаем на сколько упало
+           up=0;
+           state=1;                                                         //Сейчас убывание
+
        }
        chPrev=ch;                                                           //Сохраняем текущее значение сигнала в предыдущее
     }
     //После прохода понятно, где фронт, а значит и где правые минимумы
-    if(xMin.size() > leftMinsIndex+4){                                      //Проверяем, что после левых нашли еще минимумы (4??)
-        xMin21=xMin.at(leftMinsIndex);
-        yMin21=yMin.at(leftMinsIndex);
-        xMin22=xMin.at(leftMinsIndex+1);
-        yMin22=yMin.at(leftMinsIndex+1);
-        if(yFront - yMin21 < 20){                                           //Значит это не тот минимум (Сбой/вылет на плато)
-          xMin21=xMin22;                                                    //берем следующие два минимума
-          yMin21=yMin22;
-          xMin22=xMin.at(leftMinsIndex+2);
-          yMin22=yMin.at(leftMinsIndex+2);
-        }
+
+
+
+    if(xMin.size() > backMinsIndex+2){                                      //Проверяем, что после левых нашли еще минимумы (4??)
+        xMin21=xMin.at(backMinsIndex);
+        yMin21=yMin.at(backMinsIndex);
+        xMin22=xMin.at(backMinsIndex+1);
+        yMin22=yMin.at(backMinsIndex+1);
+
     }
     //Собираем 4 точки по векторам
     tempVect.append(xMin11);
@@ -270,8 +275,7 @@ QVector <QVector<double>> firFilter::extrFind(QByteArray &in,int len){
 }
 
 //находит левую и правую тень для одного канала
-QVector<double> firFilter::shadowFind(QVector<double> dots)
-{
+QVector<double> firFilter::shadowFind(QVector<double> dots){
     QVector<double> x0;
 
     double delta1 = dots.at(0)-dots.at(4);
@@ -346,8 +350,8 @@ QVector<double> firFilter::diameterFind(QVector<QVector<double>> shadowsCh1, QVe
             double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(-atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)));
             double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(-atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)));
             result.append(Rx1 + Ry1);
-            result.append(Ex01);
-            result.append(Ey01);
+            result.append(Ex01-Cx);
+            result.append(Ey01-Cy);
     }
     return result;
 }
