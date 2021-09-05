@@ -30,7 +30,7 @@ void centerViewer::paintEvent(QPaintEvent *e) {
 }
 void centerViewer::addCircle(QPainter *qp)
 {
-    qp->translate(width() / 2, height() / 2);
+    //qp->translate(width() / 2, height() / 2);
     qp->setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::FlatCap));
 
     qp->drawEllipse(0, 0, 100, 100);
@@ -42,5 +42,5 @@ void centerViewer::paintPosition(QPainter *qp,int x, int y)
     qp->setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap));
     QBrush brush(Qt::red,Qt::SolidPattern);
     qp->setBrush(brush);
-    qp->drawEllipse(50+x*10, 50+y*10, 20, 20);
+    qp->drawEllipse(50+x*5, 50+y*5, 5, 5);
 }
