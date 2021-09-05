@@ -26,7 +26,7 @@ public:
     void addDots(QVector<QVector<unsigned int>> dots, int ch);
     void addLines(QVector<double> dots, int ch);
 signals:
-    void graph_selected(QString graphName);
+    void graph_selected(QCPGraphDataContainer &dataMap);
 
 private slots:
     void titleDoubleClick1(QMouseEvent *event);
@@ -43,7 +43,8 @@ private slots:
     void graphDoubleClicked1();
     void graphDoubleClicked2();
     void showPointToolTip(QMouseEvent*);
-
+    void graphRangeChanged1();
+    void graphRangeChanged2();
 
 private:
         QVBoxLayout *layoutV;

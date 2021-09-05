@@ -89,6 +89,9 @@ private slots:
 
     //Запись в файл
     void writeToLogfile(QString name);
+
+    //отрисовка таблицы
+    void fillTable(QCPGraphDataContainer &dataMap);
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
@@ -119,7 +122,7 @@ private:
     QLabel *diametrLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label,*centerPositionLabel;
     QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
-    QTableWidget *table;
+    QTableWidget *m_table;
     QLabel ch1ShadowsLabel;
     QLabel ch2ShadowsLabel;
 
@@ -137,7 +140,7 @@ private:
     QString dirname = "log";
     QString filename;
     QFile *file1,*file2,*file3,*file4;
-
+    QVector<double> tempPLISextremums1,tempPLISextremums2;
     bool m_online = false;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
 };

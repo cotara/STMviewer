@@ -21,15 +21,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
 
     viewer = new ShotViewer(this);
+    connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
 
-    table = new QTableWidget(this);
-    table->setColumnCount(1);
-    table->setRowCount(20);
-    table->setShowGrid(true); // Включаем сетку
-    table->setHorizontalHeaderLabels(QStringList{"Y"});
-//    table->setItem(0,0,new QTableWidgetItem("1"));
-//    table->setItem(0,1,new QTableWidgetItem("2"));
-//    table->setItem(0,2,new QTableWidgetItem("3"));
+
+    m_table = new QTableWidget(this);
+    m_table->setColumnCount(2);
+    m_table->setRowCount(1);
+    m_table->setShowGrid(true); // Включаем сетку
+    m_table->setHorizontalHeaderLabels(QStringList{"X","Y"});
+    m_table->horizontalHeader()->resizeSection(0, 50);//ширина
+    m_table->horizontalHeader()->resizeSection(1, 50);
 
     //Консоль
     m_console = new Console(this);
@@ -69,8 +70,8 @@ MainWindow::MainWindow(QWidget *parent) :
     graphsLayout = new QVBoxLayout();
 
     layoutH->addWidget(viewer);
-    layoutH->addWidget(table);
-    table->setMaximumWidth(100);
+    layoutH->addWidget(m_table);
+    m_table->setMaximumWidth(200);
 
     layoutH->addLayout(controlLayout);
 
@@ -265,8 +266,7 @@ MainWindow::MainWindow(QWidget *parent) :
     filter = new firFilter;
 
 
-
-    constructorTest();
+   constructorTest();
 }
 
 MainWindow::~MainWindow(){
@@ -600,6 +600,15 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
      case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
+            //Забираем 16 байт метаданных
+            tempPLISextremums2.clear();
+            tempPLISextremums1.clear();
+            for(int i=0;i<8;i+=2){
+                tempPLISextremums2.append(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+20);
+                tempPLISextremums1.append(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+20);
+            }
+            bytes.remove(0, 16);
+
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
             statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
             currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
@@ -626,8 +635,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         qDebug() << "Attantion! Dublicate CH2";
                     }
                    chName="CH2_NF";
-                   currentShot=currentShot.mid(15);                                 //Смещение отфильтрованного сигнала из плисы
-                   currentShot.append(15,0);
+                   currentShot=currentShot.mid(20);                                 //Смещение отфильтрованного сигнала из плисы
+                   currentShot.append(20,0);
                    shotsCH2.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
                    chCountRecieved++;
@@ -652,8 +661,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH4";
                      }
                      chName="CH2_F";
-                     currentShot=currentShot.mid(15);                                 //Смещение отфильтрованного сигнала из плисы
-                     currentShot.append(15,0);
+                     currentShot=currentShot.mid(20);                                 //Смещение отфильтрованного сигнала из плисы
+                     currentShot.append(20,0);
                      shotsCH4.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
                      chCountRecieved++;                                                  //Получили канал
@@ -671,7 +680,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     m_console->putData("\n\n");
                     chCountRecieved=0;
                     shotCountRecieved++;                                                //Увеличиваем счетчик пачек
-                    shotsComboBox->addItem(QString::number(shotCountRecieved));
+                    shotsComboBox->addItem(QString::number(shotCountRecieved-1));
                     //shotsComboBox->setCurrentIndex(shotCountRecieved-1);
                     shotsComboBox->setCurrentIndex(shotsComboBox->count()-1);
                     if (!autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
@@ -699,19 +708,20 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 void MainWindow::selectShot(int index){
     if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
         QByteArray ch;
-
+        int shotNum = shotsComboBox->currentText().toInt();
         viewer->clearGraphs(ShotViewer::AllCH);
 
-        if(shotsCH1.contains(index)){
-            ch = shotsCH1[index];
+        if(shotsCH1.contains(shotNum)){
+            ch = shotsCH1[shotNum];
             viewer->addUserGraph(ch,ch.size(),1);
         }
-        if(shotsCH2.contains(index)){
-            ch = shotsCH2[index];
+        if(shotsCH2.contains(shotNum)){
+            ch = shotsCH2[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
+            viewer->addLines(tempPLISextremums1,1);
         }
-        if(shotsCH2In.contains(index)){
-            ch = shotsCH2In[index];
+        if(shotsCH2In.contains(shotNum)){
+            ch = shotsCH2In[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
             //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());                                 //Размерность результата либо 6 либо 0
             QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
@@ -740,16 +750,17 @@ void MainWindow::selectShot(int index){
 
             //}
         }
-        if(shotsCH3.contains(index)){
-            ch = shotsCH3[index];
+        if(shotsCH3.contains(shotNum)){
+            ch = shotsCH3[shotNum];
             viewer->addUserGraph(ch,ch.size(),3);
         }
-        if(shotsCH4.contains(index)){
-            ch = shotsCH4[index];
+        if(shotsCH4.contains(shotNum)){
+            ch = shotsCH4[shotNum];
             viewer->addUserGraph(ch,ch.size(),4);
+            viewer->addLines(tempPLISextremums2,2);
         }
-        if(shotsCH4In.contains(index)){
-            ch = shotsCH4In[index];
+        if(shotsCH4In.contains(shotNum)){
+            ch = shotsCH4In[shotNum];
             viewer->addUserGraph(ch,ch.size(),4);
             //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());
             QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
@@ -916,6 +927,20 @@ void MainWindow::writeToLogfile(QString name)
             file4->write(endShotLine,endShotLine.size());
             file4->flush();
         }
+    }
+}
+
+void MainWindow::fillTable(QCPGraphDataContainer &dataMap)
+{
+    QCPGraphDataContainer::const_iterator begin = dataMap.begin();
+    QCPGraphDataContainer::const_iterator end = dataMap.end();
+    m_table->setRowCount(0);
+    for (QCPGraphDataContainer::const_iterator it=begin; it!=end; ++it)
+    {
+        m_table->setRowCount(m_table->rowCount()+1);
+        m_table->setItem(m_table->rowCount() - 1, 0, new QTableWidgetItem(QString("%1").arg(it->key)));
+        m_table->setItem(m_table->rowCount() - 1, 1, new QTableWidgetItem(QString("%1").arg(it->value)));
+
     }
 }
 

@@ -100,11 +100,10 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
 QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
     const unsigned int start= 100, stop = len-100;                          //Начало и конец поиска экстремумов
     int  backMinsIndex=0;                                                   //индекс спада в векторе минимумов
-    unsigned char yMin11=0,yMin12=0,yMin21=0,yMin22=0,yCheckPoint;          //Искомые 4 точки (Y) и промежуточные экстремумы
-    unsigned int xMin11=start,xMin12=start,xMin21=start,xMin22=start;       //Искомые 4 точки (X)
+    unsigned char yMin11=255,yMin12=255,yMin21=255,yMin22=255,yCheckPoint,yCurrentMin, yLastMin1, yLastMin2;          //Искомые 4 точки (Y) и промежуточные экстремумы
+    unsigned int xMin11=start,xMin12=start,xMin21=start,xMin22=start,xCurrentMin,xLastMin1, xLastMin2;       //Искомые 4 точки (X)
     unsigned int  xStartStraight=0;                                         //Начало прямого участка (X)
-    unsigned char yFront=30, yBack=30;                                               //фронт (Y)
-    unsigned char ch,chPrev,up=0,down=0;                                                //Текущее и предыдущее значение сигнала
+    unsigned char ch,chPrev,up=0,down=0,upMax=0,downMax=0;                  //Текущее и предыдущее значение сигнала
     QVector <unsigned int> xMin,yMin,tempVect;                              //все минимумы и временный вектор
     QVector <QVector<unsigned int>> result;                                 //Результирующий вектор пар X,Y
     unsigned int state = 1;                                                 //0- straight, 1 = falling; 2 - rising;
@@ -119,16 +118,32 @@ QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
            state=0;                                                         //сейчс прямой участок
        }
        else if(ch>chPrev){                                                  //Если текущее значение больше предыдущего, это значит, что график пошел вверх
-            if((state!=2) && (down > 3)){                                   //Если состояние невозрастания и оно достаточно (7), то Нашли минимум
-                yMin.append(chPrev);                                        //Добавляем его в массив
+            if(down > 1){                                                   //Если состояние невозрастания и оно достаточно (4), то Нашли минимум
+                yCurrentMin = chPrev;
                 if(state==0)                                                //Если экстремум найден после прямого участка
-                    xMin.append((j-1+xStartStraight)/2);                    //Берем середину прямого участка
+                    xCurrentMin = (j-1+xStartStraight)/2;                   //Берем середину прямого участка
                 else                                                        //Иначе
-                    xMin.append(j-1);                                       //саму точку
-                if(down>=yBack){                                            //Если найденный минимум меньше последнего, то запоминаем, как потенциальный спад
-                    yBack=xMin.last();
-                    backMinsIndex=xMin.size()-1;
+                    xCurrentMin=j-1;
+
+                //Отдельный алгоритм поиска спада
+                if(down>=downMax){                                          //Претендент на спад
+                    downMax=down;                                           //обновили размер спада
+                    yMin21 = yCurrentMin;                                   //Сохранили Y минимума
+                    xMin21=xCurrentMin;                                     //Сохранили X минимума
+                    yMin22=255;                                             //Обнулили Y следующего минимума (теперь мы его не знаем)
                 }
+                else{                                                       //Если найденный спад меньше максимального, возможно это вротой минимум после спада?
+                    if(yMin22 == 255){                                      //Если после спада мы еще не находили минимумов,
+                        yMin22 = yCurrentMin;                               //Сохраняем Y второго минимума после спада
+                        xMin22 = xCurrentMin;                               //Сохранили X минимума
+                    }
+                }
+
+                //Храним два последних минимума всю дорогу
+                yLastMin1=yLastMin2;
+                xLastMin1=xLastMin2;
+                yLastMin2=yCurrentMin;
+                xLastMin2=xCurrentMin;
             }
             up+=ch-chPrev;                                                  //Считаем на сколько вырасло
             down=0;
@@ -136,15 +151,14 @@ QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
 
        }
        else if(ch<chPrev){                                                  //Если текущее значение меньше предыдущего, это значит, что график пошел вниз
-           if((state!=1) && (up > 3)){                                      //Если состояние непадения и оно достаточно (7), то нашли максимум
-               if(up>yFront){                                                   //Если найденный максимум больше последнего, то запоминаем, как потенциальный фронт
-                   yFront=chPrev;
-                   if(xMin.size()>1){                                           //Обновляем актуальные два минимума слева от фронта
-                       xMin11=xMin.at(xMin.size()-2);
-                       yMin11=yMin.at(xMin.size()-2);
-                       xMin12=xMin.at(xMin.size()-1);
-                       yMin12=yMin.at(xMin.size()-1);
-                   }
+           if((up > 1)){                                                    //нашли максимум
+               if(up>upMax){                                                //Нашли потенциальный фронот
+                   upMax=up;
+                   //Обновляем актуальные два минимума слева от фронта
+                   xMin11=xLastMin1;
+                   yMin11=yLastMin1;
+                   xMin12=xLastMin2;
+                   yMin12=yLastMin2;
                }
            }
            down+=chPrev-ch;                                                   //Считаем на сколько упало
@@ -154,17 +168,8 @@ QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
        }
        chPrev=ch;                                                           //Сохраняем текущее значение сигнала в предыдущее
     }
-    //После прохода понятно, где фронт, а значит и где правые минимумы
 
 
-
-    if(xMin.size() > backMinsIndex+2){                                      //Проверяем, что после левых нашли еще минимумы (4??)
-        xMin21=xMin.at(backMinsIndex);
-        yMin21=yMin.at(backMinsIndex);
-        xMin22=xMin.at(backMinsIndex+1);
-        yMin22=yMin.at(backMinsIndex+1);
-
-    }
     //Собираем 4 точки по векторам
     tempVect.append(xMin11);
     tempVect.append(yMin11);

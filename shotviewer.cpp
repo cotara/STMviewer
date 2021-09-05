@@ -82,6 +82,11 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     connect(customPlot1, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showPointToolTip(QMouseEvent*)));
     connect(customPlot2, SIGNAL(mouseMove(QMouseEvent*)), this,SLOT(showPointToolTip(QMouseEvent*)));
 
+    //Отображаемый диапазон изменился
+    connect(customPlot1->xAxis, SIGNAL(rangeChanged(const QCPRange &)), this,SLOT(graphRangeChanged1()));
+    connect(customPlot2->xAxis, SIGNAL(rangeChanged(const QCPRange &)), this,SLOT(graphRangeChanged2()));
+
+
     textLabel1 = new QCPItemText(customPlot1);
     textLabel2 = new QCPItemText(customPlot2);
 
@@ -458,6 +463,7 @@ void ShotViewer::mouseWheel1(){
     if(customPlot1->yAxis->range().upper >260)
          customPlot1->yAxis->setRangeUpper(260);
    }
+
 }
 void ShotViewer::mouseWheel2(){
   // if an axis is selected, only allow the direction of that axis to be zoomed
@@ -521,12 +527,29 @@ void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QM
         int coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
         int coordY = customPlot1->yAxis->pixelToCoord(event->pos().y());
         QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
-        emit graph_selected(plottable->name());
-        const QSharedPointer<QCPGraphDataContainer> dataMap=customPlot1->selectedGraphs().first()->data();
-        const QCPRange range = customPlot1->xAxis->range();
 
-        //dataMap.data->removeBefore(range.lower);
-        //dataMap.data->removeAfter(range.upper);
+        //QString name = plottable->name();
+        //QSharedPointer<QCPGraphDataContainer> dataMap = customPlot1->selectedGraphs().first()->data();
+        QCPGraphDataContainer dataMap2 = *(customPlot1->selectedGraphs().first()->data());
+        //const QCPRange range = customPlot1->xAxis->range();
+
+        //QCPDataContainer <QCPGraphData> *graphData = dataMap.data();
+
+
+        //QCPGraph *mGraph = customPlot1->selectedGraphs().first();
+        //QCPGraphDataContainer::const_iterator begin = dataMap->at(customPlot1->xAxis->range().lower);
+        //QCPGraphDataContainer::const_iterator end = dataMap->at(customPlot1->xAxis->range().upper);
+        dataMap2.removeBefore(customPlot1->xAxis->range().lower);
+        dataMap2.removeAfter(customPlot1->xAxis->range().upper);
+        //QCPGraphDataContainer::const_iterator begin = dataMap->begin();
+        //QCPGraphDataContainer::const_iterator end = dataMap->end();
+        //for (QCPGraphDataContainer::const_iterator it=begin; it!=end; ++it)
+        //{
+          // iterator "it" will go through all selected data points, as an example, we calculate the value average
+           //val =  it->value;
+        //}
+
+        emit graph_selected(dataMap2);
 //Использование трейсера
 //        QCPItemTracer *tracer = new QCPItemTracer;
 //        tracer->setGraph(graph);
@@ -543,6 +566,11 @@ void ShotViewer::graphClicked2(QCPAbstractPlottable *plottable, int dataIndex,QM
         int coordX = customPlot2->xAxis->pixelToCoord(event->pos().x());
         int coordY = customPlot2->yAxis->pixelToCoord(event->pos().y());
         QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
+
+        QCPGraphDataContainer dataMap2 = *(customPlot2->selectedGraphs().first()->data());
+        dataMap2.removeBefore(customPlot2->xAxis->range().lower);
+        dataMap2.removeAfter(customPlot2->xAxis->range().upper);
+        emit graph_selected(dataMap2);
 }
 void ShotViewer::autoScale(){
         customPlot1->rescaleAxes();
@@ -556,6 +584,26 @@ void ShotViewer::autoScale(){
 }
 
 void ShotViewer::showPointToolTip(QMouseEvent *event){
-     currentMousePosition = event->globalPos();
+    currentMousePosition = event->globalPos();
+}
+
+void ShotViewer::graphRangeChanged1()
+{
+    if(!customPlot1->selectedGraphs().isEmpty()){
+         QCPGraphDataContainer dataMap2 = *(customPlot1->selectedGraphs().first()->data());
+         dataMap2.removeBefore(customPlot1->xAxis->range().lower);
+         dataMap2.removeAfter(customPlot1->xAxis->range().upper);
+         emit graph_selected(dataMap2);
+    }
+}
+
+void ShotViewer::graphRangeChanged2()
+{
+    if(!customPlot2->selectedGraphs().isEmpty()){
+         QCPGraphDataContainer dataMap2 = *(customPlot2->selectedGraphs().first()->data());
+         dataMap2.removeBefore(customPlot2->xAxis->range().lower);
+         dataMap2.removeAfter(customPlot2->xAxis->range().upper);
+         emit graph_selected(dataMap2);
+    }
 }
 
