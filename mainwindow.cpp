@@ -266,7 +266,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
-    constructorTest();
+   constructorTest();
 }
 
 MainWindow::~MainWindow(){
@@ -281,7 +281,7 @@ void MainWindow::constructorTest(){
     QFile *tempFile;                                                            //Файл лога
     tempFile = new QFile();
 
-    filename = "2021_06_23__15_05_26_CH1";
+    filename = "2021_08_16__20_05_22_CH1";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
@@ -291,7 +291,7 @@ void MainWindow::constructorTest(){
     QList<QByteArray> list_tempCH1=tempBuf.split(0xFF);                                    //разделяем кадры
     tempFile->close();
 
-    filename = "2021_06_23__15_05_26_CH2";
+    filename = "2021_08_16__20_05_22_CH2";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";

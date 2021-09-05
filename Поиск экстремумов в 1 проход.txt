@@ -1,0 +1,91 @@
+QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
+    const unsigned int start= 100, stop = len-100;                          //Начало и конец поиска экстремумов
+    int  backMinsIndex=0;                                                   //индекс спада в векторе минимумов
+    unsigned char yMin11=255,yMin12=255,yMin21=255,yMin22=255,yCheckPoint,yCurrentMin, yLastMin1, yLastMin2;          //Искомые 4 точки (Y) и промежуточные экстремумы
+    unsigned int xMin11=start,xMin12=start,xMin21=start,xMin22=start,xCurrentMin,xLastMin1, xLastMin2;       //Искомые 4 точки (X)
+    unsigned int  xStartStraight=0;                                         //Начало прямого участка (X)
+    unsigned char ch,chPrev,up=0,down=0,upMax=0,downMax=0;                  //Текущее и предыдущее значение сигнала
+    QVector <unsigned int> xMin,yMin,tempVect;                              //все минимумы и временный вектор
+    QVector <QVector<unsigned int>> result;                                 //Результирующий вектор пар X,Y
+    unsigned int state = 1;                                                 //0- straight, 1 = falling; 2 - rising;
+
+    chPrev=in.at(start);                                                    // Запоминаем первую точку
+    yCheckPoint=chPrev;                                                     //Запоминаем первый псевдоэкстемум
+    for(int j=start+1;j<stop;j++){                                          //Идем по всем точкам
+       ch=in.at(j);                                                         //Берем новую точку
+       if(ch==chPrev) {                                                     //Если сигнал не изменился
+           if(state!=0)                                                     //Если это впервые после роста или спада
+                xStartStraight=j-1;                                         //запоминаем начало прямого участка
+           state=0;                                                         //сейчс прямой участок
+       }
+       else if(ch>chPrev){                                                  //Если текущее значение больше предыдущего, это значит, что график пошел вверх
+            if(down > 1){                                                   //Если состояние невозрастания и оно достаточно (4), то Нашли минимум
+                yCurrentMin = chPrev;
+                if(state==0)                                                //Если экстремум найден после прямого участка
+                    xCurrentMin = (j-1+xStartStraight)/2;                   //Берем середину прямого участка
+                else                                                        //Иначе
+                    xCurrentMin=j-1;
+
+                //Отдельный алгоритм поиска спада
+                if(down>=downMax){                                          //Претендент на спад
+                    downMax=down;                                           //обновили размер спада
+                    yMin21 = yCurrentMin;                                   //Сохранили Y минимума
+                    xMin21=xCurrentMin;                                     //Сохранили X минимума
+                    yMin22=255;                                             //Обнулили Y следующего минимума (теперь мы его не знаем)
+                }
+                else{                                                       //Если найденный спад меньше максимального, возможно это вротой минимум после спада?
+                    if(yMin22 == 255){                                      //Если после спада мы еще не находили минимумов,
+                        yMin22 = yCurrentMin;                               //Сохраняем Y второго минимума после спада
+                        xMin22 = xCurrentMin;                               //Сохранили X минимума
+                    }
+                }
+
+                //Храним два последних минимума всю дорогу
+                yLastMin1=yLastMin2;
+                xLastMin1=xLastMin2;
+                yLastMin2=yCurrentMin;
+                xLastMin2=xCurrentMin;
+            }
+            up+=ch-chPrev;                                                  //Считаем на сколько вырасло
+            down=0;
+            state=2;                                                        //Сейчас возрастание
+
+       }
+       else if(ch<chPrev){                                                  //Если текущее значение меньше предыдущего, это значит, что график пошел вниз
+           if((up > 1)){                                                    //нашли максимум
+               if(up>upMax){                                                //Нашли потенциальный фронот
+                   upMax=up;
+                   //Обновляем актуальные два минимума слева от фронта
+                   xMin11=xLastMin1;
+                   yMin11=yLastMin1;
+                   xMin12=xLastMin2;
+                   yMin12=yLastMin2;
+               }
+           }
+           down+=chPrev-ch;                                                   //Считаем на сколько упало
+           up=0;
+           state=1;                                                         //Сейчас убывание
+
+       }
+       chPrev=ch;                                                           //Сохраняем текущее значение сигнала в предыдущее
+    }
+
+
+    //Собираем 4 точки по векторам
+    tempVect.append(xMin11);
+    tempVect.append(yMin11);
+    result.push_back(tempVect);
+    tempVect.clear();
+    tempVect.append(xMin12);
+    tempVect.append(yMin12);
+    result.push_back(tempVect);
+    tempVect.clear();
+    tempVect.append(xMin21);
+    tempVect.append(yMin21);
+    result.push_back(tempVect);
+    tempVect.clear();
+    tempVect.append(xMin22);
+    tempVect.append(yMin22);
+    result.push_back(tempVect);
+    return result;
+}
