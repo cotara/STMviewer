@@ -51,6 +51,19 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     customPlot2->legend->setSelectedFont(legendFont);
     customPlot2->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
 
+    tracer1 = new QCPItemTracer(customPlot1);
+    tracer1->setStyle(QCPItemTracer::tsCircle);
+    tracer1->setPen(QPen(Qt::black));
+    tracer1->setBrush(Qt::black);
+    tracer1->setSize(7);
+
+    tracer2 = new QCPItemTracer(customPlot2);
+    tracer2->setStyle(QCPItemTracer::tsCircle);
+    tracer2->setPen(QPen(Qt::black));
+    tracer2->setBrush(Qt::black);
+    tracer2->setSize(7);
+
+
     // Выделение одной оси, ведет к выделению противоположной
     connect(customPlot1, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged1()));
     connect(customPlot2, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged2()));
@@ -402,6 +415,7 @@ void ShotViewer::mousePress1(QMouseEvent* event){
     if(customPlot1->yAxis->range().upper >260)
          customPlot1->yAxis->setRangeUpper(260);
   }
+
 }
 void ShotViewer::mousePress2(QMouseEvent* event){
   // if an axis is selected, only allow the direction of that axis to be dragged
@@ -520,13 +534,14 @@ void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QM
   mTag1->updatePosition(dataValue);
   mTag1->setText(QString::number(dataValue));*/
 
-    //tracer1->setGraph(customPlot1->graph(0));
+        tracer1->setGraph(customPlot1->selectedGraphs().first());
 
         //int y = plottable->interface1D()->dataMainValue(dataIndex);
         //QToolTip::showText(currentMousePosition,QString("%1 , %2").arg(dataIndex).arg(y));
         int coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
-        int coordY = customPlot1->yAxis->pixelToCoord(event->pos().y());
-        QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
+        tracer1->setGraphKey(coordX);
+        //int coordY = customPlot1->yAxis->pixelToCoord(event->pos().y());
+        QToolTip::showText(currentMousePosition,QString::number(tracer1->position->key()) + "," + QString::number(tracer1->position->value()));
 
         //QString name = plottable->name();
         //QSharedPointer<QCPGraphDataContainer> dataMap = customPlot1->selectedGraphs().first()->data();
@@ -563,9 +578,14 @@ void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QM
 void ShotViewer::graphClicked2(QCPAbstractPlottable *plottable, int dataIndex,QMouseEvent* event){
         //int y = plottable->interface1D()->dataMainValue(dataIndex);
         //QToolTip::showText(currentMousePosition,QString("%1 , %2").arg(dataIndex).arg(y));
+        tracer2->setGraph(customPlot2->selectedGraphs().first());
+
         int coordX = customPlot2->xAxis->pixelToCoord(event->pos().x());
-        int coordY = customPlot2->yAxis->pixelToCoord(event->pos().y());
-        QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
+        tracer2->setGraphKey(coordX);
+        QToolTip::showText(currentMousePosition,QString::number(tracer2->position->key()) + "," + QString::number(tracer2->position->value()));
+
+        //int coordY = customPlot2->yAxis->pixelToCoord(event->pos().y());
+        //QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
 
         QCPGraphDataContainer dataMap2 = *(customPlot2->selectedGraphs().first()->data());
         dataMap2.removeBefore(customPlot2->xAxis->range().lower);

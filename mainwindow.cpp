@@ -266,10 +266,6 @@ MainWindow::MainWindow(QWidget *parent) :
     filter = new firFilter;
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 7c01d2f0194a40e9ab46f5e52ebe15892cc019a9
    constructorTest();
 }
 
