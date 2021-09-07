@@ -282,9 +282,10 @@ QVector <QVector<double>> firFilter::extrFind(QByteArray &in,int len){
 //находит левую и правую тень для одного канала
 QVector<double> firFilter::shadowFind(QVector<double> dots){
     QVector<double> x0;
-
-    double delta1 = dots.at(0)-dots.at(4);
-    double delta4 = dots.at(5)-dots.at(1);
+    double delta1 = dots.at(1)-dots.at(0);
+    double delta4 = dots.at(3)-dots.at(2);
+    //double delta1 = dots.at(0)-dots.at(4);
+    //double delta4 = dots.at(5)-dots.at(1);
     //double delta2 = dots.at(0)-dots.at(2);
     //double delta3 = dots.at(2)-dots.at(4);
 
@@ -298,8 +299,10 @@ QVector<double> firFilter::shadowFind(QVector<double> dots){
     //double y5=la*L*L*p2/(4*delta5*delta5*res*res + la*L*p2);
     //double y6=la*L*L*p3/(4*delta6*delta6*res*res + la*L*p3);
 
-    double x01=dots.at(0)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
-    double x04=dots.at(1)-sqrt(la*L*(L-y4)*1.5/(2*y4))/res;
+    double x01=dots.at(1)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
+    double x04=dots.at(2)-sqrt(la*L*(L-y4)*1.5/(2*y4))/res;
+//    double x01=dots.at(0)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
+//    double x04=dots.at(1)-sqrt(la*L*(L-y4)*1.5/(2*y4))/res;
     //double x02=dots.at(2)+sqrt(la*L*(L-y2)*3.5/(2*y2))/res;
     //double x03=dots.at(4)+sqrt(la*L*(L-y3)*5.5/(2*y3))/res;
     //double x05=dots.at(3)-sqrt(la*L*(L-y5)*3.5/(2*y5))/res;

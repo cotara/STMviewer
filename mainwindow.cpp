@@ -322,7 +322,7 @@ MainWindow::MainWindow(QWidget *parent) :
     filter = new firFilter;
 
 
-   constructorTest();
+   //constructorTest();
 }
 
 MainWindow::~MainWindow(){
@@ -721,8 +721,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             tempPLISextremums2.clear();
             tempPLISextremums1.clear();
             for(int i=0;i<8;i+=2){
-                tempPLISextremums2.append(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+20);
-                tempPLISextremums1.append(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+20);
+                tempPLISextremums2.prepend(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+20);
+                tempPLISextremums1.prepend(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+20);
             }
             bytes.remove(0, 16);
 
@@ -831,13 +831,15 @@ void MainWindow::selectShot(int index){
         if(shotsCH1.contains(shotNum)){
             ch = shotsCH1[shotNum];
             viewer->addUserGraph(ch,ch.size(),1);
-            viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},1,3);
-            viewer->addLines2(QVector<double>{static_cast<double>(compCH1Spinbox->value())},1,3);
+
+
         }
         if(shotsCH2.contains(shotNum)){
             ch = shotsCH2[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
             viewer->addLines(tempPLISextremums1,1,1);
+             viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},1,3);
+            viewer->addLines2(QVector<double>{static_cast<double>(compCH1Spinbox->value())},1,3);
         }
         if(shotsCH2In.contains(shotNum)){
             ch = shotsCH2In[shotNum];
@@ -850,7 +852,7 @@ void MainWindow::selectShot(int index){
             }
 
             shadowsCh1 = filter->shadowFind(xDots);
-            if(tempPLISextremums1.size()==6)
+            if(tempPLISextremums1.size()==4)
                 shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
             viewer->addLines(shadowsCh1,1,2);
             leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
@@ -861,13 +863,15 @@ void MainWindow::selectShot(int index){
         if(shotsCH3.contains(shotNum)){
             ch = shotsCH3[shotNum];
             viewer->addUserGraph(ch,ch.size(),3);
-            viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},2,3);
-            viewer->addLines2(QVector<double>{static_cast<double>(compCH2Spinbox->value())},2,3);
+
+
         }
         if(shotsCH4.contains(shotNum)){
             ch = shotsCH4[shotNum];
             viewer->addUserGraph(ch,ch.size(),4);
             viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
+            viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},2,3);
+            viewer->addLines2(QVector<double>{static_cast<double>(compCH2Spinbox->value())},2,3);
         }
         if(shotsCH4In.contains(shotNum)){
             ch = shotsCH4In[shotNum];
@@ -879,7 +883,7 @@ void MainWindow::selectShot(int index){
                 xDots.append(dots.at(i).at(0));
             }
             shadowsCh2 = filter->shadowFind(xDots);
-            if(tempPLISextremums2.size()==6)
+            if(tempPLISextremums2.size()==4)
                 shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
             viewer->addLines(shadowsCh2,2,2);
             leftShadow2Label->setText("   Лев. тень: " + QString::number(shadowsCh2.at(0)));

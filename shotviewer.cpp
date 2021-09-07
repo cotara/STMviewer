@@ -307,6 +307,7 @@ void ShotViewer::addLines2(QVector<double> dots, int ch, int w){
             y[0]=dots.at(i);
             x[0]=0;
             y[1]=dots.at(i);
+
             x[1]=customPlot1->graph(0)->data()->at(customPlot1->graph(0)->data()->size()-1)->key+1;
            customPlot1->addGraph();
            customPlot1->graph()->setData(x,y);
@@ -323,7 +324,8 @@ void ShotViewer::addLines2(QVector<double> dots, int ch, int w){
             y[0]=dots.at(i);
             x[0]=0;
             y[1]=dots.at(i);
-            x[1]=customPlot2->graph(0)->data()->at(customPlot1->graph(0)->data()->size()-1)->key+1;
+            x[1]=customPlot2->graph(0)->data()->at(customPlot2->graph(0)->data()->size()-1)->key+1;
+
            customPlot2->addGraph();
            customPlot2->graph()->setData(x,y);
            customPlot2->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
@@ -427,9 +429,11 @@ void ShotViewer::selectionChanged2(){
   for (int i=0; i<customPlot2->graphCount(); ++i){
     QCPGraph *graph = customPlot2->graph(i);
     QCPPlottableLegendItem *item = customPlot2->legend->itemWithPlottable(graph);
-    if (item->selected() || graph->selected())    {
-      item->setSelected(true);
-      graph->setSelection(QCPDataSelection(graph->data()->dataRange()));
+    if(item!=0)  {
+        if (item->selected() || graph->selected())    {
+          item->setSelected(true);
+          graph->setSelection(QCPDataSelection(graph->data()->dataRange()));
+        }
     }
   }
 }
