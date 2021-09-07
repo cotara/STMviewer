@@ -103,7 +103,6 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     textLabel1 = new QCPItemText(customPlot1);
     textLabel2 = new QCPItemText(customPlot2);
 
-
 }
 
 void ShotViewer::showGraphs(int state){
@@ -147,9 +146,11 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         customPlot1->addGraph();
         customPlot1->graph()->setData(x, y);
 
+
         if (ch==1){
             customPlot1->graph()->setName(QString("Канал 1. Нефильтрованный"));
             color =  Qt::black;
+
         }
         else{
             customPlot1->graph()->setName(QString("Канал 1. Фильтрованный"));
@@ -238,7 +239,7 @@ void ShotViewer::addDots(QVector<QVector<unsigned int> > dots, int ch){
 
 
 
-void ShotViewer::addLines(QVector<double> dots, int ch){
+void ShotViewer::addLines(QVector<double> dots, int ch,int w){
     QFont font;
     QPen graphPen;
     QColor color(Qt::darkRed);
@@ -246,12 +247,13 @@ void ShotViewer::addLines(QVector<double> dots, int ch){
 
     font.setPointSize(16);
     graphPen.setColor(color);
+    graphPen.setWidth(w);
     if(ch==1){
-           textLabel1->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-           textLabel1->position->setType(QCPItemPosition::ptAxisRectRatio);
-           textLabel1->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
-           textLabel1->setFont(font);
-           textLabel1->setText(QString::number(dots.at(1)-dots.at(0)));
+//           textLabel1->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+//           textLabel1->position->setType(QCPItemPosition::ptAxisRectRatio);
+//           textLabel1->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
+//           textLabel1->setFont(font);
+//           textLabel1->setText(QString::number(dots.at(1)-dots.at(0)));
         for(int i = 0; i<dots.size();i++){
             x[0]=dots.at(i);
             y[0]=0;
@@ -261,17 +263,18 @@ void ShotViewer::addLines(QVector<double> dots, int ch){
            customPlot1->graph()->setData(x,y);
            customPlot1->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
            customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
-           customPlot1->graph()->setName("Тень №" + QString::number(i));           
+           customPlot1->graph()->setName("Тень №" + QString::number(i));
+           customPlot1->legend->removeItem(customPlot1->legend->itemCount()-1);
            customPlot1->graph()->setPen(graphPen);
         }
            customPlot1->replot();
       }
     else if(ch==2){
-           textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
-           textLabel2->position->setType(QCPItemPosition::ptAxisRectRatio);
-           textLabel2->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
-           textLabel2->setFont(font);
-           textLabel2->setText(QString::number(dots.at(1)-dots.at(0)));
+//           textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
+//           textLabel2->position->setType(QCPItemPosition::ptAxisRectRatio);
+//           textLabel2->position->setCoords(0.5, 0.05); // place position at center/top of axis rect
+//           textLabel2->setFont(font);
+//           textLabel2->setText(QString::number(dots.at(1)-dots.at(0)));
         for(int i = 0; i<dots.size();i++){
             x[0]=dots.at(i);
             y[0]=0;
@@ -281,14 +284,58 @@ void ShotViewer::addLines(QVector<double> dots, int ch){
            customPlot2->graph()->setData(x,y);
            customPlot2->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
            customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
-           customPlot2->graph()->setName("Тень №" + QString::number(i));          
+           customPlot2->graph()->setName("Тень №" + QString::number(i));
+           customPlot2->legend->removeItem(customPlot2->legend->itemCount()-1);
            customPlot2->graph()->setPen(graphPen);
         }
            customPlot2->replot();
       }
 
 }
+//горизонтальные линии
+void ShotViewer::addLines2(QVector<double> dots, int ch, int w){
+    QFont font;
+    QPen graphPen;
+    QColor color(Qt::darkRed);
+    QVector<double> x(2), y(2);
 
+    font.setPointSize(16);
+    graphPen.setColor(color);
+    graphPen.setWidth(w);
+    if(ch==1){
+        for(int i = 0; i<dots.size();i++){
+            y[0]=dots.at(i);
+            x[0]=0;
+            y[1]=dots.at(i);
+            x[1]=customPlot1->graph(0)->data()->at(customPlot1->graph(0)->data()->size()-1)->key+1;
+           customPlot1->addGraph();
+           customPlot1->graph()->setData(x,y);
+           customPlot1->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
+           customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
+           customPlot1->graph()->setName("Граница компарирования");
+           customPlot1->legend->removeItem(customPlot1->legend->itemCount()-1);
+           customPlot1->graph()->setPen(graphPen);
+        }
+           customPlot1->replot();
+      }
+    else if(ch==2){
+        for(int i = 0; i<dots.size();i++){
+            y[0]=dots.at(i);
+            x[0]=0;
+            y[1]=dots.at(i);
+            x[1]=customPlot2->graph(0)->data()->at(customPlot1->graph(0)->data()->size()-1)->key+1;
+           customPlot2->addGraph();
+           customPlot2->graph()->setData(x,y);
+           customPlot2->graph()->setLineStyle(QCPGraph::LineStyle::lsLine);
+           customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssNone));
+           customPlot2->graph()->setName("Граница компарирования");
+           customPlot2->legend->removeItem(customPlot2->legend->itemCount()-1);
+           customPlot2->graph()->setPen(graphPen);
+        }
+           customPlot2->replot();
+      }
+
+}
 void ShotViewer::titleDoubleClick1(QMouseEvent* event)
 {
   Q_UNUSED(event)
@@ -353,9 +400,11 @@ void ShotViewer::selectionChanged1(){
   for (int i=0; i<customPlot1->graphCount(); ++i){
     QCPGraph *graph = customPlot1->graph(i);
     QCPPlottableLegendItem *item = customPlot1->legend->itemWithPlottable(graph);
+    if (item!=0){
     if (item->selected() || graph->selected())    {
       item->setSelected(true);
       graph->setSelection(QCPDataSelection(graph->data()->dataRange()));
+    }
     }
   }
 }

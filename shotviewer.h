@@ -24,7 +24,9 @@ public:
     void addUserGraph(QByteArray &buf, int len, int ch);
     void addDots(QVector<QVector<double>> dots, int ch);
     void addDots(QVector<QVector<unsigned int>> dots, int ch);
-    void addLines(QVector<double> dots, int ch);
+    void addLines(QVector<double> dots, int ch, int w);
+    void addLines2(QVector<double> dots, int ch, int w);
+
 signals:
     void graph_selected(QCPGraphDataContainer &dataMap);
 

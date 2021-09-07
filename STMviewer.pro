@@ -32,6 +32,7 @@ SOURCES += \
         mainwindow.cpp \
     serialsettings.cpp \
     qcustomplot/qcustomplot.cpp \
+    settingsshadowsfinddialog.cpp \
     shotviewer.cpp \
 	statusbar.cpp \
 	transp.cpp \
@@ -44,6 +45,7 @@ HEADERS += \
         mainwindow.h \
     serialsettings.h \
     qcustomplot/qcustomplot.h \
+    settingsshadowsfinddialog.h \
     shotviewer.h \
 	statusbar.h \
 	transp.h \
@@ -52,7 +54,8 @@ HEADERS += \
 
 FORMS += \
         mainwindow.ui \
-        serialsettings.ui
+        serialsettings.ui \
+        settingsshadowsfinddialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

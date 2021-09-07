@@ -13,7 +13,7 @@ public:
     QVector <QVector<unsigned int>> extrFind2(QByteArray &in,int len);
     QVector<double> shadowFind(QVector<double> dots);
     QVector<double> shadowFind(QVector<unsigned int> dots);
-    QVector<double> diameterFind(QVector <QVector<double>> shadowsCh1, QVector <QVector<double>> shadowsCh2);
+    QVector<double> diameterFind(QVector<double> shadowsCh1,QVector<double> shadowsCh2);
     //double freqCalc(QList<double> dots,int len);
 
 private:

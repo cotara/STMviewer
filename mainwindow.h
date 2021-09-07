@@ -38,7 +38,10 @@ const unsigned short CH4              = 0x08;
 const unsigned short LAZER1_SET       = 0x10;
 const unsigned short LAZER2_SET       = 0x11;
 const unsigned short LAZERS_SAVE      = 0x12;
-
+const unsigned short LEFT_BORDER_SET  = 0x13;
+const unsigned short RIGHT_BORDER_SET = 0x14;
+const unsigned short COMP_CH1_SET     = 0x15;
+const unsigned short COMP_CH2_SET     = 0x16;
 
 class QSerialPort;
 class QTimer;
@@ -70,6 +73,10 @@ private slots:
     void sendLazer1(int lazer1Par);
     void sendLazer2(int lazer2Par);
     void sendSaveEeprom();
+    void sendBorderLeft(int leftBorderVal);
+    void sendBorderRight(int leftBorderVal);
+    void sendCompCH1(int leftBorderVal);
+    void sendCompCH2(int leftBorderVal);
     void setPacketSize(unsigned short n);
     void incCountCh(int);
     void manualGetShotButton();
@@ -111,16 +118,16 @@ private:
     //Итерфейс
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *graphsLayout,*controlLayout,*lazerLayout,*transmitLayout,*resultLayout, *appSettingsLayout, *logLayout, *historyLayout;
-    QHBoxLayout *lazersHorizontalLayout;
-    QVBoxLayout *lazer1SettingLayout, *lazer2SettingLayout;
-    QGroupBox *lazerGroup, *transmitGroup,*resultGroup, *appSettingsGroup, *logGroup, *historyGrouop;
+    QVBoxLayout *graphsLayout,*controlLayout,*transmitLayout, *resultLayout, *appSettingsLayout, *logLayout, *historyLayout;
+    QHBoxLayout *lazerLayout,*borderLayout;
+    QVBoxLayout *lazer1SettingLayout, *lazer2SettingLayout,*borderLeftLayout,*borderRightLayout,*compCH1Layout,*compCH2Layout;
+    QGroupBox *lazerGroup, *transmitGroup, *borderGroup, *resultGroup, *appSettingsGroup, *logGroup, *historyGrouop;
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox,*ch2InCheckBox, *ch4InCheckBox;
     QComboBox *shotsComboBox;
-    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel;
-    QLabel *diametrLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label,*centerPositionLabel;
-    QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox;
+    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel,*borderLeftLabel, *borderRightLabel,*compCH1Label,*compCH2Label;
+    QLabel *diametrLabel,*diametrPlisLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label,*centerPositionLabel;
+    QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox, *borderLeftSpinbox, *borderRightSpinbox,*compCH1Spinbox,*compCH2Spinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
     QTableWidget *m_table;
     QLabel ch1ShadowsLabel;
@@ -133,8 +140,8 @@ private:
     short packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
     int countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
-    QVector<QVector<double>> shadowsCh1,shadowsCh2;
-    QVector<double> diameter;
+    QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
+    QVector<double> diameter, diameterPlis;
     QSignalMapper *signalMapper;
     //Работа с файлами
     QString dirname = "log";

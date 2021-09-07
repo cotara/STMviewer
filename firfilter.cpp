@@ -333,13 +333,13 @@ QVector<double> firFilter::shadowFind(QVector<unsigned int> dots)
     return x0;
 }
 
-QVector<double> firFilter::diameterFind(QVector<QVector<double>> shadowsCh1, QVector<QVector<double> > shadowsCh2){
+QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<double> shadowsCh2){
     QVector<double> result;
     if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
-            double Front1 = shadowsCh1.at(0).at(0);
-            double Spad1 = shadowsCh1.at(1).at(0);
-            double Front2 = shadowsCh2.at(0).at(0);
-            double Spad2 = shadowsCh2.at(1).at(0);
+            double Front1 = shadowsCh1.at(0);
+            double Spad1 = shadowsCh1.at(1);
+            double Front2 = shadowsCh2.at(0);
+            double Spad2 = shadowsCh2.at(1);
 
             double  X11 = (-Front1+ Nx)*res2+Cx;
             double  X21 = (-Spad1+ Nx)*res2+Cx;

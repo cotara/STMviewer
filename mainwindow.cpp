@@ -77,6 +77,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     lazerGroup = new QGroupBox("Настройка лазеров");
     transmitGroup = new QGroupBox("Обмен данными");
+    borderGroup = new QGroupBox("Границы сигналов");
     resultGroup = new QGroupBox("Результаты расчетов");
     appSettingsGroup = new QGroupBox("Настройки интерфейса");
     logGroup = new QGroupBox("Логирование");
@@ -84,6 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     lazerGroup->setMaximumWidth(250);
     transmitGroup->setMaximumWidth(250);
+    borderGroup->setMaximumWidth(250);
     resultGroup->setMaximumWidth(250);
     appSettingsGroup->setMaximumWidth(250);
     logGroup->setMaximumWidth(250);
@@ -91,14 +93,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
     controlLayout->addWidget(lazerGroup);
     controlLayout->addWidget(transmitGroup);
+    controlLayout->addWidget(borderGroup);
     controlLayout->addWidget(resultGroup);
     controlLayout->addWidget(appSettingsGroup);
     controlLayout->addWidget(logGroup);
     controlLayout->addWidget(historyGrouop);
 
 
-    lazerLayout = new QVBoxLayout();
+    lazerLayout = new QHBoxLayout();
     transmitLayout = new QVBoxLayout();
+    borderLayout = new QHBoxLayout();
     resultLayout = new QVBoxLayout();
     appSettingsLayout = new QVBoxLayout();
     logLayout = new QVBoxLayout();
@@ -106,26 +110,27 @@ MainWindow::MainWindow(QWidget *parent) :
 
     lazerGroup->setLayout(lazerLayout);
     transmitGroup->setLayout(transmitLayout);
+    borderGroup->setLayout(borderLayout);
     resultGroup->setLayout(resultLayout);
     appSettingsGroup->setLayout(appSettingsLayout);
     logGroup->setLayout(logLayout);
     historyGrouop->setLayout(historyLayout);
 
     //Настройки лазера
-    lazersHorizontalLayout = new QHBoxLayout();
-    lazerLayout->addLayout(lazersHorizontalLayout);
     lazer1SettingLayout = new QVBoxLayout();
     lazer2SettingLayout = new QVBoxLayout();
-    lazersHorizontalLayout->addLayout(lazer1SettingLayout);
-    lazersHorizontalLayout->addLayout(lazer2SettingLayout);
+    lazerLayout->addLayout(lazer1SettingLayout);
+    lazerLayout->addLayout(lazer2SettingLayout);
     lazer1Spinbox = new QSpinBox();
     lazer2Spinbox = new QSpinBox();
     lazer1Label = new QLabel("Лазер 1:");
     lazer2Label = new QLabel("Лазер 2:");
     lazersSaveButton = new QPushButton("Сохранить в EEPROM");
 
-    lazer1Spinbox->setRange(20,50);
-    lazer2Spinbox->setRange(20,50);
+    lazer1Spinbox->setRange(10,50);
+    lazer2Spinbox->setRange(10,50);
+    lazer1Spinbox->setMaximumWidth(50);
+    lazer2Spinbox->setMaximumWidth(50);
     lazer1Spinbox->setValue(40);
     lazer2Spinbox->setValue(40);
     lazer1SettingLayout->addWidget(lazer1Label);
@@ -139,7 +144,7 @@ MainWindow::MainWindow(QWidget *parent) :
     lazersSaveButton->setEnabled(false);
 
     connect(lazer1Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){MainWindow::sendLazer1(i);});
+          [=](int i){MainWindow::sendLazer1(i); });
     connect(lazer2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
           [=](int i){MainWindow::sendLazer2(i);});
     connect(lazersSaveButton,&QPushButton::clicked,this,&MainWindow::sendSaveEeprom);
@@ -199,9 +204,59 @@ MainWindow::MainWindow(QWidget *parent) :
 
     autoGetCheckBox->setEnabled(false);
     connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &MainWindow::autoGetCheckBoxChanged);
+    //Настройка границ
+    borderLeftLayout = new QVBoxLayout();
+    borderRightLayout = new QVBoxLayout();
+    compCH1Layout = new QVBoxLayout();
+    compCH2Layout = new QVBoxLayout();
+
+    borderLayout->addLayout(borderLeftLayout);
+    borderLayout->addLayout(borderRightLayout);
+    borderLayout->addLayout(compCH1Layout);
+    borderLayout->addLayout(compCH2Layout);
+
+    borderLeftSpinbox = new QSpinBox();
+    borderRightSpinbox = new QSpinBox();
+    compCH1Spinbox = new QSpinBox();
+    compCH2Spinbox = new QSpinBox();
+
+    borderLeftLabel = new QLabel("Лев. гр.:");
+    borderRightLabel = new QLabel("Прав. гр.:");
+    compCH1Label = new QLabel("Комп. кан. 1:");
+    compCH2Label = new QLabel("Комп. кан. 2:");
+
+    borderLeftSpinbox->setRange(0,255);
+    borderRightSpinbox->setRange(0,255);
+    compCH1Spinbox->setRange(0,255);
+    compCH2Spinbox->setRange(0,255);
+
+    borderLeftLayout->addWidget(borderLeftLabel);
+    borderLeftLayout->addWidget(borderLeftSpinbox);
+    borderRightLayout->addWidget(borderRightLabel);
+    borderRightLayout->addWidget(borderRightSpinbox);
+    compCH1Layout->addWidget(compCH1Label);
+    compCH1Layout->addWidget(compCH1Spinbox);
+    compCH2Layout->addWidget(compCH2Label);
+    compCH2Layout->addWidget(compCH2Spinbox);
+
+//    borderLeftSpinbox->setEnabled(false);
+//    borderRightSpinbox->setEnabled(false);
+//    compCH1Spinbox->setEnabled(false);
+//    compCH2Spinbox->setEnabled(false);
+
+    connect(borderLeftSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+          [=](int i){MainWindow::sendBorderLeft(i);});
+    connect(borderRightSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+          [=](int i){MainWindow::sendBorderRight(i);});
+    connect(compCH1Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+          [=](int i){MainWindow::sendCompCH1(i);});
+    connect(compCH2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+          [=](int i){MainWindow::sendCompCH1(i);});
+
 
     //Результат
     diametrLabel = new QLabel("Диаметр: ");
+    diametrPlisLabel = new QLabel("Диаметр ПЛИС: ");
     leftShadow1Label = new QLabel("   Лев.тень: ");
     rightShadow1Label = new QLabel("   Прав.тень: ");
     leftShadow2Label = new QLabel("   Лев.тень: ");
@@ -217,6 +272,7 @@ MainWindow::MainWindow(QWidget *parent) :
     resultLayout->addWidget(leftShadow2Label);
     resultLayout->addWidget(rightShadow2Label);
     resultLayout->addWidget(diametrLabel);
+    resultLayout->addWidget(diametrPlisLabel);
     resultLayout->addWidget(m_centerViewer);
     m_centerViewer->setMinimumHeight(105);
     resultLayout->addWidget(centerPositionLabel);
@@ -359,6 +415,10 @@ void MainWindow::on_connect_triggered()
         lazer1Spinbox->setEnabled(true);
         lazer2Spinbox->setEnabled(true);
         lazersSaveButton->setEnabled(true);
+        borderLeftSpinbox->setEnabled(true);
+        borderRightSpinbox->setEnabled(true);
+        compCH1Spinbox->setEnabled(true);
+        compCH2Spinbox->setEnabled(true);
 
         ch1CheckBox->setChecked(false);
         ch2CheckBox->setChecked(false);
@@ -412,6 +472,11 @@ void MainWindow::on_disconnect_triggered(){
     lazer1Spinbox->setEnabled(false);
     lazer2Spinbox->setEnabled(false);
     lazersSaveButton->setEnabled(false);
+    borderLeftSpinbox->setEnabled(false);
+    borderRightSpinbox->setEnabled(false);
+    compCH1Spinbox->setEnabled(false);
+    compCH2Spinbox->setEnabled(false);
+
 }
 
 //Управление лазером
@@ -443,6 +508,58 @@ void MainWindow::sendSaveEeprom()
     QByteArray data;
     data.append(LAZERS_SAVE);
     m_console->putData("Save lazer's parameters to EEPROM: ");
+    m_transp->sendPacket(data);
+}
+
+void MainWindow::sendBorderLeft(int leftBorderVal)
+{
+    QByteArray data;
+    char msb,lsb;
+    data.append(LEFT_BORDER_SET);
+    msb=(0&0xFF00)>>8;
+    lsb=static_cast<char> (leftBorderVal&0x00FF);
+    data.append(msb);
+    data.append(lsb);
+    m_console->putData("Set left border: ");
+    m_transp->sendPacket(data);
+}
+
+void MainWindow::sendBorderRight(int rightBorderVal)
+{
+    QByteArray data;
+    char msb,lsb;
+    data.append(RIGHT_BORDER_SET);
+    msb=(0&0xFF00)>>8;
+    lsb=static_cast<char> (rightBorderVal&0x00FF);
+    data.append(msb);
+    data.append(lsb);
+    m_console->putData("Set left border: ");
+    m_transp->sendPacket(data);
+}
+
+void MainWindow::sendCompCH1(int compCH1Val)
+{
+    QByteArray data;
+    char msb,lsb;
+    data.append(COMP_CH1_SET);
+    msb=(0&0xFF00)>>8;
+    lsb=static_cast<char> (compCH1Val&0x00FF);
+    data.append(msb);
+    data.append(lsb);
+    m_console->putData("Set left border: ");
+    m_transp->sendPacket(data);
+}
+
+void MainWindow::sendCompCH2(int compCH2Val)
+{
+    QByteArray data;
+    char msb,lsb;
+    data.append(COMP_CH2_SET);
+    msb=(0&0xFF00)>>8;
+    lsb=static_cast<char> (compCH2Val&0x00FF);
+    data.append(msb);
+    data.append(lsb);
+    m_console->putData("Set left border: ");
     m_transp->sendPacket(data);
 }
 
@@ -710,87 +827,77 @@ void MainWindow::selectShot(int index){
         QByteArray ch;
         int shotNum = shotsComboBox->currentText().toInt();
         viewer->clearGraphs(ShotViewer::AllCH);
-
+        //Первый канал
         if(shotsCH1.contains(shotNum)){
             ch = shotsCH1[shotNum];
             viewer->addUserGraph(ch,ch.size(),1);
+            viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},1,3);
+            viewer->addLines2(QVector<double>{static_cast<double>(compCH1Spinbox->value())},1,3);
         }
         if(shotsCH2.contains(shotNum)){
             ch = shotsCH2[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
-            viewer->addLines(tempPLISextremums1,1);
+            viewer->addLines(tempPLISextremums1,1,1);
         }
         if(shotsCH2In.contains(shotNum)){
             ch = shotsCH2In[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
-            //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());                                 //Размерность результата либо 6 либо 0
             QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
-            //if(dots.size()==6){
-                viewer->addDots(dots,1);
-                //QVector <double> xDots;
-                QVector <unsigned int> xDots;
-                //for (int i = 0;i<6;i++){
-                for (int i = 0;i<4;i++){
-                    xDots.append(dots.at(i).at(0));
-                }
-                QVector<double> shadows = filter->shadowFind(xDots);
-                viewer->addLines(shadows,1);
-                leftShadow1Label->setText("   Лев. тень: " +QString::number(shadows.at(0)));
-                rightShadow1Label->setText("   Прав. тень: " +QString::number(shadows.at(1)));
-                QVector <double> tempVect;
-                shadowsCh1.clear();
-                for(int i = 0;i<2;i++){
-                  if(shadows.at(i)>0){
-                    tempVect.append(shadows.at(i));
-                    tempVect.append(ch.at(static_cast <int>(shadows.at(i))));
-                    shadowsCh1.push_back(tempVect);
-                    tempVect.clear();
-                  }
-                }
+            viewer->addDots(dots,1);
+            QVector <unsigned int> xDots;
+            for (int i = 0;i<4;i++){
+                xDots.append(dots.at(i).at(0));
+            }
 
-            //}
+            shadowsCh1 = filter->shadowFind(xDots);
+            if(tempPLISextremums1.size()==6)
+                shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
+            viewer->addLines(shadowsCh1,1,2);
+            leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
+            rightShadow1Label->setText("   Прав. тень: " +QString::number(shadowsCh1.at(1)));
         }
+
+        //Второй канал
         if(shotsCH3.contains(shotNum)){
             ch = shotsCH3[shotNum];
             viewer->addUserGraph(ch,ch.size(),3);
+            viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},2,3);
+            viewer->addLines2(QVector<double>{static_cast<double>(compCH2Spinbox->value())},2,3);
         }
         if(shotsCH4.contains(shotNum)){
             ch = shotsCH4[shotNum];
             viewer->addUserGraph(ch,ch.size(),4);
-            viewer->addLines(tempPLISextremums2,2);
+            viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
         }
         if(shotsCH4In.contains(shotNum)){
             ch = shotsCH4In[shotNum];
             viewer->addUserGraph(ch,ch.size(),4);
-            //QVector<QVector<double>> dots = filter->extrFind(ch,ch.size());
             QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
             viewer->addDots(dots,2);
-            //if(dots.size()==6){
-                //QVector <double> xDots;
-                QVector <unsigned int> xDots;
-                //for (int i = 0;i<6;i++){
-                for (int i = 0;i<4;i++){
-                    xDots.append(dots.at(i).at(0));
-                }
-                QVector<double> shadows = filter->shadowFind(xDots);
-                viewer->addLines(shadows,2);
-                leftShadow2Label->setText("   Лев. тень: " + QString::number(shadows.at(0)));
-                rightShadow2Label->setText("   Прав. тень: " + QString::number(shadows.at(1)));
-                QVector <double> tempVect;
-                shadowsCh2.clear();
-                for(int i = 0;i<2;i++){
-                    if(shadows.at(i)>0){
-                        tempVect.append(shadows.at(i));
-                        tempVect.append(ch.at(static_cast <int>(shadows.at(i))));
-                        shadowsCh2.push_back(tempVect);
-                        tempVect.clear();
-                    }
-                }
-            //}
+            QVector <unsigned int> xDots;
+            for (int i = 0;i<4;i++){
+                xDots.append(dots.at(i).at(0));
+            }
+            shadowsCh2 = filter->shadowFind(xDots);
+            if(tempPLISextremums2.size()==6)
+                shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
+            viewer->addLines(shadowsCh2,2,2);
+            leftShadow2Label->setText("   Лев. тень: " + QString::number(shadowsCh2.at(0)));
+            rightShadow2Label->setText("   Прав. тень: " + QString::number(shadowsCh2.at(1)));
+
         }
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
             diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
+            m_centerViewer->setCoord(static_cast<int>(diameter.at(1)),static_cast<int>(diameter.at(2)));
+            centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
+
+        }
+        if(shadowsCh1Plis.size()>1 && shadowsCh1Plis.size()>1){
+            diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
+            diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
+            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
+            diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0)));
             m_centerViewer->setCoord(static_cast<int>(diameter.at(1)),static_cast<int>(diameter.at(2)));
             centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
 
