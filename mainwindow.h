@@ -18,6 +18,7 @@
 #include "shotviewer.h"
 #include "firfilter.h"
 #include "centerviewer.h"
+#include "settingsshadowsfinddialog.h"
 
 // answer status
 const unsigned short FAIL             = 0x0000;
@@ -99,6 +100,8 @@ private slots:
 
     //отрисовка таблицы
     void fillTable(QCPGraphDataContainer &dataMap);
+    void on_ShdowSet_triggered();
+
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
@@ -114,6 +117,7 @@ private:
     ShotViewer *viewer;
     firFilter *filter;
     centerViewer *m_centerViewer;
+    SettingsShadowsFindDialog *ShadowSettings;
     QDir *dir;
     //Итерфейс
     QHBoxLayout *layoutH;

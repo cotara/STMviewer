@@ -2,9 +2,9 @@
 #include <QDebug>
 #include <QTextStream>
 #include <cmath>
+#include <QMessageBox>
 
-
-firFilter::firFilter()
+firFilter::firFilter(QList<double> &s)
 {
     file =  new QFile();
     file->setFileName("koeff.txt");
@@ -20,6 +20,24 @@ firFilter::firFilter()
         k++;
     }
     offset=k;//201
+    if(s.size()==12){
+       la = s.at(0);
+       L = s.at(1);
+       p1 = s.at(2);
+       p2 = s.at(3);
+       p3 = s.at(4);
+       res = s.at(5);
+       Nx = s.at(6);
+       Ny = s.at(7);
+       Hx = s.at(8);
+       Hy = s.at(9);
+       Cx = s.at(10);
+       Cy = s.at(1);
+       res2=res*1000;
+    }
+    else
+         QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
+
 }
 firFilter::~firFilter(){
     delete file;

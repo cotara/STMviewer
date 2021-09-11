@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>791</width>
-    <height>406</height>
+    <width>1920</width>
+    <height>1080</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
-    <width>0</width>
-    <height>0</height>
+    <width>1920</width>
+    <height>1080</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -37,19 +37,26 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>791</width>
+     <width>1920</width>
      <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
     <property name="title">
-     <string>Настрйоки</string>
+     <string>Настройки</string>
     </property>
     <addaction name="connect"/>
     <addaction name="disconnect"/>
     <addaction name="settings"/>
    </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>Установки</string>
+    </property>
+    <addaction name="ShdowSet"/>
+   </widget>
    <addaction name="menu"/>
+   <addaction name="menu_2"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -61,11 +68,13 @@
    <addaction name="connect"/>
    <addaction name="disconnect"/>
    <addaction name="settings"/>
+   <addaction name="separator"/>
+   <addaction name="ShdowSet"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="connect">
    <property name="icon">
-    <iconset>
+    <iconset resource="res.qrc">
      <normaloff>:/1/Resources/connect.png</normaloff>:/1/Resources/connect.png</iconset>
    </property>
    <property name="text">
@@ -74,7 +83,7 @@
   </action>
   <action name="disconnect">
    <property name="icon">
-    <iconset>
+    <iconset resource="res.qrc">
      <normaloff>:/1/Resources/disconnect.png</normaloff>:/1/Resources/disconnect.png</iconset>
    </property>
    <property name="text">
@@ -83,15 +92,26 @@
   </action>
   <action name="settings">
    <property name="icon">
-    <iconset>
+    <iconset resource="res.qrc">
      <normaloff>:/1/Resources/settings.png</normaloff>:/1/Resources/settings.png</iconset>
    </property>
    <property name="text">
     <string>Настройки</string>
    </property>
   </action>
+  <action name="ShdowSet">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/Shadow.png</normaloff>:/1/Resources/Shadow.png</iconset>
+   </property>
+   <property name="text">
+    <string>Поиск тени</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="res.qrc"/>
+ </resources>
  <connections/>
 </ui>

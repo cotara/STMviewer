@@ -137,6 +137,6 @@
         <file>Resources/unnamed.gif</file>
         <file>Resources/unnamed2.gif</file>
         <file>Resources/unnamed3.gif</file>
+        <file>Resources/Shadow.png</file>
     </qresource>
-    <qresource prefix="/"/>
 </RCC>

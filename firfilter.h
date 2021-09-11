@@ -1,11 +1,14 @@
 #ifndef FIRFILTER_H
 #define FIRFILTER_H
 #include "qfile.h"
+#include <QWidget>
 
-class firFilter
+class firFilter: public QWidget
 {
+    Q_OBJECT
+
 public:
-    firFilter();
+    firFilter(QList<double>& s);
     ~firFilter();
     QByteArray toFilter(QByteArray &in,int len);
     QByteArray toButterFilter(QByteArray &in,int len);
@@ -21,20 +24,34 @@ private:
     double koefs[201];
     int offset=0;
     //shadowsFind constants:
-    const double la = 905.0/1000000000.0;
-    const double L = 207.4/1000;
-    const double p1=2.51087470;
-    const double p2=0.83484861;
-    const double p3=0.45007122;
-    const double res=0.000004;
+    double la;
+    double L=0;
+    double p1=0;
+    double p2=0;
+    double p3=0;
+    double res=0;
 
-    const double Nx=5320;
-    const double Ny=5320;
-    const double Hx=207.4;
-    const double Hy=207.4;
-    const double Cx=73.4;
-    const double Cy=73.4;
-    const double res2 =  0.004;
+    double Nx=0;
+    double Ny=0;
+    double Hx=0;
+    double Hy=0;
+    double Cx=0;
+    double Cy=0;
+    double res2=0;
+//    double la = 905.0/1000000000.0;
+//    double L = 207.4/1000;
+//    double p1=2.51087470;
+//    double p2=0.83484861;
+//    double p3=0.45007122;
+//    double res=0.000004;
+
+//    double Nx=5320;
+//    double Ny=5320;
+//    double Hx=207.4;
+//    double Hy=207.4;
+//    double Cx=73.4;
+//    double Cy=73.4;
+//    double res2 =  0.004;
     const double b[5]={0.00002673490400527396,0.0001069396160210958,0.0001604094240316438,0.0001069396160210958,0.00002673490400527396};
     const double a[5]={1,-3.606129410855792,4.894109789457051,-2.961577327764605,0.674024707627429};
     //const double b[5]={449,1794,2691,1794,449};

@@ -6,7 +6,6 @@
 #include "transp.h"
 #include "statusbar.h"
 
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -21,7 +20,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
 
     viewer = new ShotViewer(this);
-    connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
 
 
     m_table = new QTableWidget(this);
@@ -318,10 +316,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(clearButton,&QPushButton::clicked,this, &MainWindow::on_clearButton);
 
-    //Fir filter
-    filter = new firFilter;
-
-
+   ShadowSettings = new SettingsShadowsFindDialog(this);
+   //Fir filter
+   filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
    //constructorTest();
 }
 
@@ -1056,3 +1053,10 @@ void MainWindow::fillTable(QCPGraphDataContainer &dataMap)
 }
 
 
+
+void MainWindow::on_ShdowSet_triggered()
+{
+    ShadowSettings->updateSettingsStruct();
+    ShadowSettings->fillFileads();
+    ShadowSettings->show();
+}
