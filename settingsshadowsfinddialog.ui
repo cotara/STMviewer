@@ -14,78 +14,14 @@
    <string>Dialog</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="6" column="0">
-    <widget class="QLabel" name="label_6">
-     <property name="text">
-      <string>res</string>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="0">
-    <widget class="QLabel" name="label_9">
-     <property name="text">
-      <string>Hx</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1">
-    <widget class="QDoubleSpinBox" name="LSpinBox">
-     <property name="decimals">
-      <number>10</number>
-     </property>
-     <property name="maximum">
-      <double>10.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>0.000001000000000</double>
-     </property>
-     <property name="value">
-      <double>0.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1">
-    <widget class="QDoubleSpinBox" name="p2SpinBox">
-     <property name="decimals">
-      <number>10</number>
-     </property>
-     <property name="maximum">
-      <double>1.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>0.000001000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="0">
-    <widget class="QLabel" name="label_7">
-     <property name="text">
-      <string>Nx</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>p1</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="QDoubleSpinBox" name="p3SpinBox">
-     <property name="decimals">
-      <number>10</number>
-     </property>
-     <property name="maximum">
-      <double>1.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>0.000001000000000</double>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="2">
     <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
@@ -94,165 +30,254 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="label_4">
-     <property name="text">
-      <string>p2</string>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="1">
-    <widget class="QDoubleSpinBox" name="resSpinBox">
-     <property name="decimals">
-      <number>10</number>
-     </property>
-     <property name="maximum">
-      <double>1.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>0.000001000000000</double>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>la = </string>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
      </property>
-    </widget>
-   </item>
-   <item row="8" column="1">
-    <widget class="QDoubleSpinBox" name="NySpinBox">
-     <property name="decimals">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <double>10000.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="0">
-    <widget class="QLabel" name="label_8">
-     <property name="text">
-      <string>Ny</string>
-     </property>
-    </widget>
-   </item>
-   <item row="10" column="0">
-    <widget class="QLabel" name="label_10">
-     <property name="text">
-      <string>Hy</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>L</string>
-     </property>
-    </widget>
-   </item>
-   <item row="11" column="0">
-    <widget class="QLabel" name="label_11">
-     <property name="text">
-      <string>Cx</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="1">
-    <widget class="QDoubleSpinBox" name="NxSpinBox">
-     <property name="decimals">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <double>10000.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1">
-    <widget class="QDoubleSpinBox" name="p1SpinBox">
-     <property name="decimals">
-      <number>10</number>
-     </property>
-     <property name="maximum">
-      <double>10.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>0.000001000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_5">
-     <property name="text">
-      <string>p3</string>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="1">
-    <widget class="QDoubleSpinBox" name="HxSpinBox">
-     <property name="decimals">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <double>1000.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="12" column="0">
-    <widget class="QLabel" name="label_12">
-     <property name="text">
-      <string>Cy</string>
-     </property>
-    </widget>
-   </item>
-   <item row="10" column="1">
-    <widget class="QDoubleSpinBox" name="HySpinBox">
-     <property name="decimals">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <double>1000.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="11" column="1">
-    <widget class="QDoubleSpinBox" name="CxSpinBox">
-     <property name="decimals">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <double>1000.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="12" column="1">
-    <widget class="QDoubleSpinBox" name="CySpinBox">
-     <property name="decimals">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <double>1000.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QDoubleSpinBox" name="laSpinBox">
-     <property name="decimals">
-      <number>10</number>
-     </property>
-     <property name="maximum">
-      <double>1.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>0.000001000000000</double>
-     </property>
-     <property name="stepType">
-      <enum>QAbstractSpinBox::DefaultStepType</enum>
-     </property>
-     <property name="value">
-      <double>0.000000000000000</double>
-     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>263</width>
+        <height>324</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>p2</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="text">
+          <string>Hy</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QDoubleSpinBox" name="p2SpinBox">
+         <property name="decimals">
+          <number>10</number>
+         </property>
+         <property name="maximum">
+          <double>1.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.000001000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>p3</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string>Cx</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QDoubleSpinBox" name="p3SpinBox">
+         <property name="decimals">
+          <number>10</number>
+         </property>
+         <property name="maximum">
+          <double>1.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.000001000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="label_9">
+         <property name="text">
+          <string>Hx</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>L</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QDoubleSpinBox" name="HySpinBox">
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <double>1000.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QDoubleSpinBox" name="HxSpinBox">
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <double>1000.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="laSpinBox">
+         <property name="decimals">
+          <number>10</number>
+         </property>
+         <property name="maximum">
+          <double>1.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.000001000000000</double>
+         </property>
+         <property name="stepType">
+          <enum>QAbstractSpinBox::DefaultStepType</enum>
+         </property>
+         <property name="value">
+          <double>0.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QDoubleSpinBox" name="resSpinBox">
+         <property name="decimals">
+          <number>10</number>
+         </property>
+         <property name="maximum">
+          <double>1.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.000001000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QDoubleSpinBox" name="LSpinBox">
+         <property name="decimals">
+          <number>10</number>
+         </property>
+         <property name="maximum">
+          <double>10.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.000001000000000</double>
+         </property>
+         <property name="value">
+          <double>0.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QDoubleSpinBox" name="p1SpinBox">
+         <property name="decimals">
+          <number>10</number>
+         </property>
+         <property name="maximum">
+          <double>10.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.000001000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QDoubleSpinBox" name="CxSpinBox">
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <double>1000.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Nx</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>Ny</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QDoubleSpinBox" name="NxSpinBox">
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <double>10000.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>res</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>p1</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>la = </string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QDoubleSpinBox" name="NySpinBox">
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <double>10000.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0">
+        <widget class="QLabel" name="label_12">
+         <property name="text">
+          <string>Cy</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1">
+        <widget class="QDoubleSpinBox" name="CySpinBox">
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <double>1000.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>

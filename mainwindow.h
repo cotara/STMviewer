@@ -120,18 +120,20 @@ private:
     SettingsShadowsFindDialog *ShadowSettings;
     QDir *dir;
     //Итерфейс
+    QWidget *settingsWidget;
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *graphsLayout,*controlLayout,*transmitLayout, *resultLayout, *appSettingsLayout, *logLayout, *historyLayout;
-    QHBoxLayout *lazerLayout,*borderLayout;
+    QVBoxLayout *scrolLayout, *controlLayout,*transmitLayout, *resultLayout, *appSettingsLayout, *logLayout, *historyLayout;
+    QHBoxLayout *lazerLayout,*borderLayout, *tableSizeLayout;
     QVBoxLayout *lazer1SettingLayout, *lazer2SettingLayout,*borderLeftLayout,*borderRightLayout,*compCH1Layout,*compCH2Layout;
     QGroupBox *lazerGroup, *transmitGroup, *borderGroup, *resultGroup, *appSettingsGroup, *logGroup, *historyGrouop;
+    QScrollArea *scroll;
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox,*ch2InCheckBox, *ch4InCheckBox;
     QComboBox *shotsComboBox;
     QLabel *lazer1Label, *lazer2Label,*packetSizeLabel,*borderLeftLabel, *borderRightLabel,*compCH1Label,*compCH2Label;
-    QLabel *diametrLabel,*diametrPlisLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label,*centerPositionLabel;
-    QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox, *borderLeftSpinbox, *borderRightSpinbox,*compCH1Spinbox,*compCH2Spinbox;
+    QLabel *diametrLabel,*diametrPlisLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label,*centerPositionLabel,*tableSizeLabel;
+    QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox, *borderLeftSpinbox, *borderRightSpinbox,*compCH1Spinbox,*compCH2Spinbox,*tableSizeSpinbox;
     QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
     QTableWidget *m_table;
     QLabel ch1ShadowsLabel;
@@ -147,6 +149,7 @@ private:
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
     QVector<double> diameter, diameterPlis;
     QSignalMapper *signalMapper;
+    int tableSize=100;
     //Работа с файлами
     QString dirname = "log";
     QString filename;

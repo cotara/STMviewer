@@ -28,7 +28,7 @@ private:
     QFile *file;
     QString filename = "ShadowSettings.txt";
     QList<double> paramsDouble;
-
+    void defaultToFile();
     void writeToFile();
 
 };

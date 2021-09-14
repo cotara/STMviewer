@@ -593,8 +593,10 @@ void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QM
         //QToolTip::showText(currentMousePosition,QString("%1 , %2").arg(dataIndex).arg(y));
         int coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
         tracer1->setGraphKey(coordX);
+        tracer1->updatePosition();
         //int coordY = customPlot1->yAxis->pixelToCoord(event->pos().y());
         QToolTip::showText(currentMousePosition,QString::number(tracer1->position->key()) + "," + QString::number(tracer1->position->value()));
+        //QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
 
         //QString name = plottable->name();
         //QSharedPointer<QCPGraphDataContainer> dataMap = customPlot1->selectedGraphs().first()->data();

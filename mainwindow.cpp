@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
 
     viewer = new ShotViewer(this);
-
+    connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(2);
@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Консоль
     m_console = new Console(this);
-    m_console->setMaximumHeight(300);
+    m_console->setMaximumHeight(150);
     m_console->hide();
     //Транспортный уровень SLIP протокола
     m_slip = new Slip(serial,m_console);
@@ -56,6 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //hbox = QHBoxLayout(widget)
     // hbox.setSpacing(10)
 
+
     layoutV = new QVBoxLayout();
     centralWidget()->setLayout(layoutV);
 
@@ -65,13 +66,24 @@ MainWindow::MainWindow(QWidget *parent) :
     layoutV->addWidget(m_console);
 
     controlLayout = new QVBoxLayout();
-    graphsLayout = new QVBoxLayout();
 
     layoutH->addWidget(viewer);
     layoutH->addWidget(m_table);
     m_table->setMaximumWidth(200);
 
-    layoutH->addLayout(controlLayout);
+    //layoutH->addLayout(controlLayout);
+
+    scroll = new QScrollArea(this);
+    settingsWidget = new QWidget(scroll);
+    scrolLayout = new QVBoxLayout(settingsWidget);
+    scroll->setMaximumWidth(290);
+
+
+
+//    for(int i=0; i<100;i++)
+//        scrolLayout->addWidget(new QLabel("Привет, мир!"));
+
+
 
     lazerGroup = new QGroupBox("Настройка лазеров");
     transmitGroup = new QGroupBox("Обмен данными");
@@ -89,13 +101,14 @@ MainWindow::MainWindow(QWidget *parent) :
     logGroup->setMaximumWidth(250);
     historyGrouop->setMaximumWidth(250);
 
-    controlLayout->addWidget(lazerGroup);
-    controlLayout->addWidget(transmitGroup);
-    controlLayout->addWidget(borderGroup);
-    controlLayout->addWidget(resultGroup);
-    controlLayout->addWidget(appSettingsGroup);
-    controlLayout->addWidget(logGroup);
-    controlLayout->addWidget(historyGrouop);
+    scrolLayout->addWidget(lazerGroup);
+    scrolLayout->addWidget(transmitGroup);
+    scrolLayout->addWidget(borderGroup);
+    scrolLayout->addWidget(resultGroup);
+    scrolLayout->addWidget(appSettingsGroup);
+    scrolLayout->addWidget(logGroup);
+    scrolLayout->addWidget(historyGrouop);
+
 
 
     lazerLayout = new QHBoxLayout();
@@ -249,7 +262,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(compCH1Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
           [=](int i){MainWindow::sendCompCH1(i);});
     connect(compCH2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){MainWindow::sendCompCH1(i);});
+          [=](int i){MainWindow::sendCompCH2(i);});
 
 
     //Результат
@@ -284,6 +297,28 @@ MainWindow::MainWindow(QWidget *parent) :
     autoRangeGraph = new QPushButton("Автомасштаб");
     appSettingsLayout->addWidget(autoRangeGraph);
     connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
+
+    tableSizeLayout = new QHBoxLayout;
+    tableSizeSpinbox = new QSpinBox;
+    tableSizeLabel = new QLabel("Размер таблицы");
+
+    appSettingsLayout->addLayout(tableSizeLayout);
+    tableSizeLayout->addWidget(tableSizeLabel);
+    tableSizeLayout->addWidget(tableSizeSpinbox);
+    tableSizeSpinbox->setMaximum(20000);
+    tableSizeSpinbox->setValue(100);
+
+    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
+            tableSize = val;
+
+            if(m_table->rowCount()>=tableSize){
+                for(int i=0;i<tableSize;i++)
+                     m_table->showRow(i);
+                for(int i=tableSize;i<m_table->rowCount();i++)
+                    m_table->hideRow(i);
+            }
+
+    });
 
     //Настройки логирования
     autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка");
@@ -320,6 +355,10 @@ MainWindow::MainWindow(QWidget *parent) :
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
    //constructorTest();
+
+   settingsWidget->setLayout(scrolLayout);
+   scroll->setWidget(settingsWidget);
+   layoutH->addWidget(scroll);
 }
 
 MainWindow::~MainWindow(){
@@ -1043,6 +1082,7 @@ void MainWindow::fillTable(QCPGraphDataContainer &dataMap)
     QCPGraphDataContainer::const_iterator begin = dataMap.begin();
     QCPGraphDataContainer::const_iterator end = dataMap.end();
     m_table->setRowCount(0);
+
     for (QCPGraphDataContainer::const_iterator it=begin; it!=end; ++it)
     {
         m_table->setRowCount(m_table->rowCount()+1);
@@ -1050,6 +1090,8 @@ void MainWindow::fillTable(QCPGraphDataContainer &dataMap)
         m_table->setItem(m_table->rowCount() - 1, 1, new QTableWidgetItem(QString("%1").arg(it->value)));
 
     }
+    for(int i=tableSize;i<m_table->rowCount();i++)
+        m_table->hideRow(i);
 }
 
 
