@@ -130,6 +130,7 @@ void SettingsShadowsFindDialog::defaultToFile()
 void SettingsShadowsFindDialog::on_buttonBox_accepted(){
     writeToFile();              //Записали из полей в файл
     updateSettingsStruct();     //Обновили переменную из файла
+    emit settingsChanged();
 }
 
 void SettingsShadowsFindDialog::on_buttonBox_rejected(){

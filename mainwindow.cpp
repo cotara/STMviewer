@@ -29,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_table->setHorizontalHeaderLabels(QStringList{"X","Y"});
     m_table->horizontalHeader()->resizeSection(0, 50);//ширина
     m_table->horizontalHeader()->resizeSection(1, 50);
+    m_table->hide();
 
     //Консоль
     m_console = new Console(this);
@@ -69,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     layoutH->addWidget(viewer);
     layoutH->addWidget(m_table);
-    m_table->setMaximumWidth(200);
+    m_table->setMaximumWidth(150);
 
     //layoutH->addLayout(controlLayout);
 
@@ -131,11 +132,36 @@ MainWindow::MainWindow(QWidget *parent) :
     historyGrouop->setLayout(historyLayout);
 
     //Ошибки
-    err1 = new QLCDNumber(2,this);
-    err2 = new QLCDNumber(2,this);
-    errorsLayout->addWidget(err1);
-    errorsLayout->addWidget(err2);
+    err1Layout = new QHBoxLayout();
+    err2Layout = new QHBoxLayout();
+    errorsLayout->addLayout(err1Layout);
+    errorsLayout->addLayout(err2Layout);
 
+    err0 = new QLCDNumber(1,this);
+    err1 = new QLCDNumber(1,this);
+    err2 = new QLCDNumber(1,this);
+    err3 = new QLCDNumber(1,this);
+    err4 = new QLCDNumber(1,this);
+    err5 = new QLCDNumber(1,this);
+    err6 = new QLCDNumber(1,this);
+    err7 = new QLCDNumber(1,this);
+    err1Layout->addWidget(err0);
+    err1Layout->addWidget(err1);
+    err1Layout->addWidget(err2);
+    err1Layout->addWidget(err3);
+    err2Layout->addWidget(err4);
+    err2Layout->addWidget(err5);
+    err2Layout->addWidget(err6);
+    err2Layout->addWidget(err7);
+
+    err0->display("2");
+    err1->display("0");
+    err2->display("R");
+    err3->display("L");
+    err4->display("2");
+    err5->display("0");
+    err6->display("R");
+    err7->display("L");
 
 
     //Настройки лазера
@@ -285,19 +311,55 @@ MainWindow::MainWindow(QWidget *parent) :
     rightShadow2Label = new QLabel("   Прав.тень: ");
     m_centerViewer = new centerViewer();
     centerPositionLabel = new QLabel("Смещение: ");
+
+    extr1Ch1 = new QLabel("   Экстр1: ");
+    extr2Ch1 = new QLabel("   Экстр2: ");
+    extr3Ch1 = new QLabel("   Экстр3: ");
+    extr4Ch1 = new QLabel("   Экстр4: ");
+    extr1Ch2 = new QLabel("   Экстр1: ");
+    extr2Ch2 = new QLabel("   Экстр2: ");
+    extr3Ch2 = new QLabel("   Экстр3: ");
+    extr4Ch2 = new QLabel("   Экстр4: ");
+
+    shad1Ch1 = new QLabel("   Тень1: ");
+    shad2Ch1 = new QLabel("   Тень2: ");
+    shad1Ch2 = new QLabel("   Тень1: ");
+    shad2Ch2 = new QLabel("   Тень2: ");
+    diam1 = new QLabel("   Диаметр1: ");
+    diam2 = new QLabel("   Диаметр2: ");
+
     ch1ShadowsLabel.setText("Канал 1: ");
     ch2ShadowsLabel.setText("Канал 2: ");
     resultLayout->addWidget(&ch1ShadowsLabel);
     resultLayout->addWidget(leftShadow1Label);
     resultLayout->addWidget(rightShadow1Label);
+    resultLayout->addWidget(extr1Ch1);
+    resultLayout->addWidget(extr2Ch1);
+    resultLayout->addWidget(extr3Ch1);
+    resultLayout->addWidget(extr4Ch1);
+    resultLayout->addWidget(shad1Ch1);
+    resultLayout->addWidget(shad2Ch1);
+
     resultLayout->addWidget(&ch2ShadowsLabel);
     resultLayout->addWidget(leftShadow2Label);
     resultLayout->addWidget(rightShadow2Label);
+    resultLayout->addWidget(extr1Ch2);
+    resultLayout->addWidget(extr2Ch2);
+    resultLayout->addWidget(extr3Ch2);
+    resultLayout->addWidget(extr4Ch2);
+    resultLayout->addWidget(shad1Ch2);
+    resultLayout->addWidget(shad2Ch2);
+
     resultLayout->addWidget(diametrLabel);
+
+    resultLayout->addWidget(diam1);
+    resultLayout->addWidget(diam2);
     resultLayout->addWidget(diametrPlisLabel);
     resultLayout->addWidget(m_centerViewer);
     m_centerViewer->setMinimumHeight(105);
     resultLayout->addWidget(centerPositionLabel);
+
+
 
     //Настройки интерфейса
     consoleEnable = new QCheckBox("Вывод в консоль");
@@ -308,6 +370,9 @@ MainWindow::MainWindow(QWidget *parent) :
     autoRangeGraph = new QPushButton("Автомасштаб");
     appSettingsLayout->addWidget(autoRangeGraph);
     connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
+
+    tableEnable = new QCheckBox("Отображение таблицы");
+    appSettingsLayout->addWidget(tableEnable);
 
     tableSizeLayout = new QHBoxLayout;
     tableSizeSpinbox = new QSpinBox;
@@ -328,7 +393,16 @@ MainWindow::MainWindow(QWidget *parent) :
                 for(int i=tableSize;i<m_table->rowCount();i++)
                     m_table->hideRow(i);
             }
-
+    });
+    connect(tableEnable, QOverload<int>::of(&QCheckBox::stateChanged),[=](int state){
+            if(state){
+                m_table->show();
+                tableSizeSpinbox->setEnabled(true);
+            }
+            else{
+                m_table->hide();
+                tableSizeSpinbox->setEnabled(false);
+            }
     });
 
     //Настройки логирования
@@ -363,6 +437,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(clearButton,&QPushButton::clicked,this, &MainWindow::on_clearButton);
 
    ShadowSettings = new SettingsShadowsFindDialog(this);
+   connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
    //constructorTest();
@@ -764,16 +839,65 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
      case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
+
+            if(autoSaveShotCheckBox->isChecked())
+                writeToLogfileMeta(QString::number(value));
+
             //Забираем 16 байт метаданных
             tempPLISextremums2.clear();
             tempPLISextremums1.clear();
             for(int i=0;i<8;i+=2){
-                tempPLISextremums2.prepend(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+20);
-                tempPLISextremums1.prepend(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+20);
+                tempPLISextremums2.prepend(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+0);
+                tempPLISextremums1.prepend(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+0);
             }
+            extr1Ch1->setText("   Экстр1: " + QString::number(tempPLISextremums1.at(0)));
+            extr2Ch1->setText("   Экстр2: " + QString::number(tempPLISextremums1.at(1)));
+            extr3Ch1->setText("   Экстр3: " + QString::number(tempPLISextremums1.at(2)));
+            extr4Ch1->setText("   Экстр4: " + QString::number(tempPLISextremums1.at(3)));
+            extr1Ch2->setText("   Экстр1: " + QString::number(tempPLISextremums2.at(0)));
+            extr2Ch2->setText("   Экстр2: " + QString::number(tempPLISextremums2.at(1)));
+            extr3Ch2->setText("   Экстр3: " + QString::number(tempPLISextremums2.at(2)));
+            extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
+
+
             bytes.remove(0, 16);
-            err1->display(static_cast <unsigned char> (bytes.at(1))*256+static_cast <unsigned char>(bytes.at(0)));
-            err2->display(static_cast <unsigned char> (bytes.at(3))*256+static_cast <unsigned char>(bytes.at(2)));
+            QPalette redPalette(Qt::red);
+            QPalette blackPalette(Qt::black);
+
+            int tempErr = static_cast <unsigned char> (bytes.at(1))*256+static_cast <unsigned char>(bytes.at(0));
+            if(tempErr&0b00000001)
+                err0->setPalette(redPalette);
+            else
+               err0->setPalette(blackPalette);
+            if(tempErr&0b00000010)
+                err1->setPalette(redPalette);
+            else
+               err1->setPalette(blackPalette);
+            if(tempErr&0b00000100)
+                err2->setPalette(redPalette);
+            else
+               err2->setPalette(blackPalette);
+            if(tempErr&0b00001000)
+                err3->setPalette(redPalette);
+            else
+               err3->setPalette(blackPalette);
+            tempErr = static_cast <unsigned char> (bytes.at(3))*256+static_cast <unsigned char>(bytes.at(2));
+            if(tempErr&0b00000001)
+                err4->setPalette(redPalette);
+            else
+               err4->setPalette(blackPalette);
+            if(tempErr&0b00000010)
+                err5->setPalette(redPalette);
+            else
+               err5->setPalette(blackPalette);
+            if(tempErr&0b00000100)
+                err6->setPalette(redPalette);
+            else
+               err6->setPalette(blackPalette);
+            if(tempErr&0b00001000)
+                err7->setPalette(redPalette);
+            else
+               err7->setPalette(blackPalette);
 
             lazer1Spinbox->setValue(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4)));
             lazer2Spinbox->setValue(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6)));
@@ -781,7 +905,10 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             borderRightSpinbox->setValue(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10)));
             compCH1Spinbox->setValue(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12)));
             compCH2Spinbox->setValue(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14)));
-            bytes.remove(0, 12);
+            bytes.remove(0, 16);
+
+
+
 
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
             statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
@@ -808,9 +935,9 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         shotCountRecieved++;                                           //Начинаем следующую пачку
                         qDebug() << "Attantion! Dublicate CH2";
                     }
-                   chName="CH2_NF";
-                   currentShot=currentShot.mid(20);                                 //Смещение отфильтрованного сигнала из плисы
-                   currentShot.append(20,0);
+                   chName="CH1_F";
+                   //currentShot=currentShot.mid(20);                                 //Смещение отфильтрованного сигнала из плисы
+                   //currentShot.append(20,0);
                    shotsCH2.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
                    chCountRecieved++;
@@ -835,8 +962,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH4";
                      }
                      chName="CH2_F";
-                     currentShot=currentShot.mid(20);                                 //Смещение отфильтрованного сигнала из плисы
-                     currentShot.append(20,0);
+                     //currentShot=currentShot.mid(20);                                 //Смещение отфильтрованного сигнала из плисы
+                     //currentShot.append(20,0);
                      shotsCH4.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
                      chCountRecieved++;                                                  //Получили канал
@@ -895,8 +1022,14 @@ void MainWindow::selectShot(int index){
             ch = shotsCH2[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
             viewer->addLines(tempPLISextremums1,1,1);
-             viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},1,3);
+            viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},1,3);
             viewer->addLines2(QVector<double>{static_cast<double>(compCH1Spinbox->value())},1,3);
+            if(tempPLISextremums1.size()==4){
+                shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
+                shad1Ch1->setText("   Тень1: " + QString::number(shadowsCh1Plis.at(0)));
+                shad2Ch1->setText("   Тень2: " + QString::number(shadowsCh1Plis.at(1)));
+            }
+            viewer->addLines(shadowsCh1,1,2);
         }
         if(shotsCH2In.contains(shotNum)){
             ch = shotsCH2In[shotNum];
@@ -909,9 +1042,7 @@ void MainWindow::selectShot(int index){
             }
 
             shadowsCh1 = filter->shadowFind(xDots);
-            if(tempPLISextremums1.size()==4)
-                shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
-            viewer->addLines(shadowsCh1,1,2);
+
             leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
             rightShadow1Label->setText("   Прав. тень: " +QString::number(shadowsCh1.at(1)));
         }
@@ -929,6 +1060,12 @@ void MainWindow::selectShot(int index){
             viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
             viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},2,3);
             viewer->addLines2(QVector<double>{static_cast<double>(compCH2Spinbox->value())},2,3);
+            if(tempPLISextremums2.size()==4){
+                shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
+                shad1Ch2->setText("   Тень1: " + QString::number(shadowsCh2Plis.at(0)));
+                shad2Ch2->setText("   Тень2: " + QString::number(shadowsCh2Plis.at(1)));
+            }
+            viewer->addLines(shadowsCh2,2,2);
         }
         if(shotsCH4In.contains(shotNum)){
             ch = shotsCH4In[shotNum];
@@ -940,28 +1077,27 @@ void MainWindow::selectShot(int index){
                 xDots.append(dots.at(i).at(0));
             }
             shadowsCh2 = filter->shadowFind(xDots);
-            if(tempPLISextremums2.size()==4)
-                shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
-            viewer->addLines(shadowsCh2,2,2);
+
             leftShadow2Label->setText("   Лев. тень: " + QString::number(shadowsCh2.at(0)));
             rightShadow2Label->setText("   Прав. тень: " + QString::number(shadowsCh2.at(1)));
 
         }
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
-            m_centerViewer->setCoord(static_cast<int>(diameter.at(1)),static_cast<int>(diameter.at(2)));
+            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)*1000 + diameter.at(1)*1000));
+            m_centerViewer->setCoord(static_cast<int>(diameter.at(2)),static_cast<int>(diameter.at(3)));
             centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
 
         }
-        if(shadowsCh1Plis.size()>1 && shadowsCh1Plis.size()>1){
-            diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
+        if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
             diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
-            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)));
-            diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0)));
-            m_centerViewer->setCoord(static_cast<int>(diameter.at(1)),static_cast<int>(diameter.at(2)));
-            centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
-
+            diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0)*1000 + diameterPlis.at(1)*1000));
+            diam1->setText("   Диаметр1: " + QString::number(diameterPlis.at(0)*1000));
+            diam2->setText("   Диаметр2: " + QString::number(diameterPlis.at(1)*1000));
+            if(diameterPlis.at(0)<0){
+                int temp;
+                temp++;
+            }
         }
 
     }
@@ -1098,6 +1234,17 @@ void MainWindow::writeToLogfile(QString name)
     }
 }
 
+void MainWindow::writeToLogfileMeta(QString name)
+{
+    QFile tempFile;
+    tempFile.setFileName(dirname + "/" + QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+ name);
+    tempFile.open(QIODevice::WriteOnly);
+    tempFile.write(currentShot,32);
+    tempFile.write(endShotLine,endShotLine.size());
+    tempFile.flush();
+    tempFile.close();
+}
+
 void MainWindow::fillTable(QCPGraphDataContainer &dataMap)
 {
     QCPGraphDataContainer::const_iterator begin = dataMap.begin();
@@ -1122,4 +1269,9 @@ void MainWindow::on_ShdowSet_triggered()
     ShadowSettings->updateSettingsStruct();
     ShadowSettings->fillFileads();
     ShadowSettings->show();
+}
+
+void MainWindow::settingsChanged()
+{
+    filter->updateSettings(ShadowSettings->getShadowFindSettings());
 }

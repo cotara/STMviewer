@@ -17,6 +17,7 @@ public:
     QVector<double> shadowFind(QVector<double> dots);
     QVector<double> shadowFind(QVector<unsigned int> dots);
     QVector<double> diameterFind(QVector<double> shadowsCh1,QVector<double> shadowsCh2);
+    void updateSettings(QList<double>& s);
     //double freqCalc(QList<double> dots,int len);
 
 private:

@@ -27,9 +27,12 @@ private:
     Ui::SettingsShadowsFindDialog *ui;
     QFile *file;
     QString filename = "ShadowSettings.txt";
-    QList<double> paramsDouble;
+    QList<double> paramsDouble{0};
     void defaultToFile();
     void writeToFile();
+
+signals:
+    void settingsChanged();
 
 };
 

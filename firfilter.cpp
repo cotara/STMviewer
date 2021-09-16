@@ -20,23 +20,8 @@ firFilter::firFilter(QList<double> &s)
         k++;
     }
     offset=k;//201
-    if(s.size()==12){
-       la = s.at(0);
-       L = s.at(1);
-       p1 = s.at(2);
-       p2 = s.at(3);
-       p3 = s.at(4);
-       res = s.at(5);
-       Nx = s.at(6);
-       Ny = s.at(7);
-       Hx = s.at(8);
-       Hy = s.at(9);
-       Cx = s.at(10);
-       Cy = s.at(1);
-       res2=res*1000;
-    }
-    else
-         QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
+    updateSettings(s);
+
 
 }
 firFilter::~firFilter(){
@@ -362,10 +347,10 @@ QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<doub
             double Front2 = shadowsCh2.at(0);
             double Spad2 = shadowsCh2.at(1);
 
-            double  X11 = (-Front1+ Nx)*res2+Cx;
-            double  X21 = (-Spad1+ Nx)*res2+Cx;
-            double  Y11 = (-Front2+Ny)*res2+Cy;
-            double  Y21 = (-Spad2+Ny)*res2+Cy;
+            double  X11 = (-Front1+ Nx)*res+Cx;
+            double  X21 = (-Spad1+ Nx)*res+Cx;
+            double  Y11 = (-Front2+Ny)*res+Cy;
+            double  Y21 = (-Spad2+Ny)*res+Cy;
 
             double  X01 =    Hx*tan(0.5*(atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)))+Cx ;
             double  Y01 =    Hy*tan(0.5*(atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)))+Cy ;
@@ -375,11 +360,33 @@ QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<doub
 
             double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(-atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)));
             double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(-atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)));
-            result.append(Rx1 + Ry1);
+            result.append(Rx1);
+            result.append(Ry1);
             result.append(Ex01-Cx);
             result.append(Ey01-Cy);
     }
     return result;
+}
+
+void firFilter::updateSettings(QList<double> &s)
+{
+    if(s.size()==12){
+        la = s.at(0);
+        L = s.at(1);
+        p1 = s.at(2);
+        p2 = s.at(3);
+        p3 = s.at(4);
+        res = s.at(5);
+        Nx = s.at(6);
+        Ny = s.at(7);
+        Hx = s.at(8);
+        Hy = s.at(9);
+        Cx = s.at(10);
+        Cy = s.at(11);
+        res2=res*1000;
+    }
+    else
+         QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
 }
 
 
