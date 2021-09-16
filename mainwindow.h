@@ -19,6 +19,7 @@
 #include "firfilter.h"
 #include "centerviewer.h"
 #include "settingsshadowsfinddialog.h"
+#include <QLCDNumber>
 
 // answer status
 const unsigned short FAIL             = 0x0000;
@@ -123,10 +124,10 @@ private:
     QWidget *settingsWidget;
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *scrolLayout, *controlLayout,*transmitLayout, *resultLayout, *appSettingsLayout, *logLayout, *historyLayout;
+    QVBoxLayout *scrolLayout, *controlLayout,*transmitLayout, *resultLayout, *appSettingsLayout, *logLayout, *historyLayout, *errorsLayout;
     QHBoxLayout *lazerLayout,*borderLayout, *tableSizeLayout;
     QVBoxLayout *lazer1SettingLayout, *lazer2SettingLayout,*borderLeftLayout,*borderRightLayout,*compCH1Layout,*compCH2Layout;
-    QGroupBox *lazerGroup, *transmitGroup, *borderGroup, *resultGroup, *appSettingsGroup, *logGroup, *historyGrouop;
+    QGroupBox *lazerGroup, *transmitGroup, *borderGroup, *resultGroup, *appSettingsGroup, *logGroup, *historyGrouop, *errorsGroup;
     QScrollArea *scroll;
     QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox,*ch2InCheckBox, *ch4InCheckBox;
@@ -157,6 +158,7 @@ private:
     QVector<double> tempPLISextremums1,tempPLISextremums2;
     bool m_online = false;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
+    QLCDNumber *err1,*err2;
 };
 
 #endif // MAINWINDOW_H

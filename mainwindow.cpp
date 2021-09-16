@@ -84,7 +84,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //        scrolLayout->addWidget(new QLabel("Привет, мир!"));
 
 
-
+    errorsGroup = new QGroupBox("Ошибки");
     lazerGroup = new QGroupBox("Настройка лазеров");
     transmitGroup = new QGroupBox("Обмен данными");
     borderGroup = new QGroupBox("Границы сигналов");
@@ -93,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     logGroup = new QGroupBox("Логирование");
     historyGrouop = new QGroupBox("История");
 
+    errorsGroup->setMaximumWidth(250);
     lazerGroup->setMaximumWidth(250);
     transmitGroup->setMaximumWidth(250);
     borderGroup->setMaximumWidth(250);
@@ -101,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
     logGroup->setMaximumWidth(250);
     historyGrouop->setMaximumWidth(250);
 
+    scrolLayout->addWidget(errorsGroup);
     scrolLayout->addWidget(lazerGroup);
     scrolLayout->addWidget(transmitGroup);
     scrolLayout->addWidget(borderGroup);
@@ -110,7 +112,7 @@ MainWindow::MainWindow(QWidget *parent) :
     scrolLayout->addWidget(historyGrouop);
 
 
-
+    errorsLayout = new QVBoxLayout();
     lazerLayout = new QHBoxLayout();
     transmitLayout = new QVBoxLayout();
     borderLayout = new QHBoxLayout();
@@ -119,6 +121,7 @@ MainWindow::MainWindow(QWidget *parent) :
     logLayout = new QVBoxLayout();
     historyLayout = new QVBoxLayout();
 
+    errorsGroup->setLayout(errorsLayout);
     lazerGroup->setLayout(lazerLayout);
     transmitGroup->setLayout(transmitLayout);
     borderGroup->setLayout(borderLayout);
@@ -126,6 +129,14 @@ MainWindow::MainWindow(QWidget *parent) :
     appSettingsGroup->setLayout(appSettingsLayout);
     logGroup->setLayout(logLayout);
     historyGrouop->setLayout(historyLayout);
+
+    //Ошибки
+    err1 = new QLCDNumber(2,this);
+    err2 = new QLCDNumber(2,this);
+    errorsLayout->addWidget(err1);
+    errorsLayout->addWidget(err2);
+
+
 
     //Настройки лазера
     lazer1SettingLayout = new QVBoxLayout();
@@ -761,6 +772,16 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 tempPLISextremums1.prepend(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+20);
             }
             bytes.remove(0, 16);
+            err1->display(static_cast <unsigned char> (bytes.at(1))*256+static_cast <unsigned char>(bytes.at(0)));
+            err2->display(static_cast <unsigned char> (bytes.at(3))*256+static_cast <unsigned char>(bytes.at(2)));
+
+            lazer1Spinbox->setValue(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4)));
+            lazer2Spinbox->setValue(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6)));
+            borderLeftSpinbox->setValue(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8)));
+            borderRightSpinbox->setValue(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10)));
+            compCH1Spinbox->setValue(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12)));
+            compCH2Spinbox->setValue(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14)));
+            bytes.remove(0, 12);
 
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
             statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
