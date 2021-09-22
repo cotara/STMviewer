@@ -100,9 +100,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::shotSelected,this,&MainWindow::selectShot);
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::clearButtonClicked,this,&MainWindow::on_clearButton);
 
-
-
-    connect(consoleEnable,&QCheckBox::stateChanged,this,&MainWindow::consoleEnabledCheked);
+    ui->ShowMainControl->setChecked(true);
+    ui->ShowManagementPanel->setChecked(true);
+    connect(ui->showConsole,&QAction::toggled,[=](bool i){if(i) m_console->show(); else m_console->hide();});
+    connect(ui->TableShow,&QAction::toggled,[=](bool i){if(i) m_table->show(); else m_table->hide();});
+    connect(ui->ShowMainControl,&QAction::toggled,[=](bool i){if(i) m_MainControlWidget->show(); else m_MainControlWidget->hide();});
+    connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) m_ManagementWidget->show(); else m_ManagementWidget->hide();});
 
     //Настройки интерфейса
 //    consoleEnable = new QCheckBox("Вывод в консоль");
@@ -114,18 +117,11 @@ MainWindow::MainWindow(QWidget *parent) :
 //    appSettingsLayout->addWidget(autoRangeGraph);
 //    connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
 
-//    tableEnable = new QCheckBox("Отображение таблицы");
-//    appSettingsLayout->addWidget(tableEnable);
 
 //    tableSizeLayout = new QHBoxLayout;
 //    tableSizeSpinbox = new QSpinBox;
 //    tableSizeLabel = new QLabel("Размер таблицы");
 
-//    appSettingsLayout->addLayout(tableSizeLayout);
-//    tableSizeLayout->addWidget(tableSizeLabel);
-//    tableSizeLayout->addWidget(tableSizeSpinbox);
-//    tableSizeSpinbox->setMaximum(20000);
-//    tableSizeSpinbox->setValue(100);
 
 //    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
 //            tableSize = val;

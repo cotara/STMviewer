@@ -133,6 +133,9 @@
    </property>
   </action>
   <action name="showConsole">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="res.qrc">
      <normaloff>:/1/Resources/command-line.svg</normaloff>:/1/Resources/command-line.svg</iconset>
@@ -145,6 +148,9 @@
    </property>
   </action>
   <action name="TableShow">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="res.qrc">
      <normaloff>:/1/Resources/table.svg</normaloff>:/1/Resources/table.svg</iconset>
@@ -157,6 +163,9 @@
    </property>
   </action>
   <action name="ShowMainControl">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="res.qrc">
      <normaloff>:/1/Resources/Leftsidebar.svg</normaloff>:/1/Resources/Leftsidebar.svg</iconset>
@@ -169,6 +178,9 @@
    </property>
   </action>
   <action name="ShowManagementPanel">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="res.qrc">
      <normaloff>:/1/Resources/Rightsidebar.svg</normaloff>:/1/Resources/Rightsidebar.svg</iconset>
