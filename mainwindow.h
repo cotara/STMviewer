@@ -17,10 +17,10 @@
 #include "QGroupBox"
 #include "shotviewer.h"
 #include "firfilter.h"
-#include "centerviewer.h"
-#include "settingsshadowsfinddialog.h"
-#include <QLCDNumber>
 
+#include "settingsshadowsfinddialog.h"
+#include "maincontrolwidget.h"
+#include "managementwidget.h"
 // answer status
 const unsigned short FAIL             = 0x0000;
 const unsigned short OK               = 0x0101;
@@ -79,7 +79,7 @@ private slots:
     void sendBorderRight(int leftBorderVal);
     void sendCompCH1(int leftBorderVal);
     void sendCompCH2(int leftBorderVal);
-    void setPacketSize(unsigned short n);
+    void setPacketSize(int n);
     void incCountCh(int);
     void manualGetShotButton();
     void getPacketFromMCU(unsigned short n);
@@ -111,7 +111,9 @@ private:
     SerialSettings *settings_ptr;
 
     void constructorTest();
-
+    //Интерфейс
+    MainControlWidget *m_MainControlWidget;
+    ManagementWidget *m_ManagementWidget;
     Console *m_console;
     QSerialPort *serial;
     Slip *m_slip;
@@ -120,33 +122,23 @@ private:
     StatusBar *statusBar;
     ShotViewer *viewer;
     firFilter *filter;
-    centerViewer *m_centerViewer;
+
     SettingsShadowsFindDialog *ShadowSettings;
     QDir *dir;
     //Итерфейс
     QWidget *settingsWidget;
     QHBoxLayout *layoutH;
     QVBoxLayout *layoutV;
-    QVBoxLayout *scrolLayout, *controlLayout,*transmitLayout, *resultLayout, *appSettingsLayout, *logLayout, *historyLayout, *errorsLayout;
-    QHBoxLayout *lazerLayout,*borderLayout, *tableSizeLayout, *err1Layout, *err2Layout;
-    QVBoxLayout *lazer1SettingLayout, *lazer2SettingLayout,*borderLeftLayout,*borderRightLayout,*compCH1Layout,*compCH2Layout;
-    QGroupBox *lazerGroup, *transmitGroup, *borderGroup, *resultGroup, *appSettingsGroup, *logGroup, *historyGrouop, *errorsGroup;
-    QScrollArea *scroll;
-    QCheckBox *autoGetCheckBox, *autoSaveShotCheckBox, *consoleEnable, *tableEnable;
-    QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox,*ch2InCheckBox, *ch4InCheckBox;
-    QComboBox *shotsComboBox;
-    QLabel *lazer1Label, *lazer2Label,*packetSizeLabel,*borderLeftLabel, *borderRightLabel,*compCH1Label,*compCH2Label;
-    QLabel *diametrLabel,*diametrPlisLabel,*leftShadow1Label,*rightShadow1Label,*leftShadow2Label,*rightShadow2Label,*centerPositionLabel,*tableSizeLabel;
-    QLabel *extr1Ch1,*extr2Ch1,*extr3Ch1,*extr4Ch1,*extr1Ch2,*extr2Ch2,*extr3Ch2,*extr4Ch2;
-    QLabel *shad1Ch1,*shad2Ch1,*shad1Ch2,*shad2Ch2;
-    QLabel *diam1,*diam2;
+    QHBoxLayout  *tableSizeLayout;
 
 
-    QSpinBox *packetSizeSpinbox, *lazer1Spinbox, *lazer2Spinbox, *borderLeftSpinbox, *borderRightSpinbox,*compCH1Spinbox,*compCH2Spinbox,*tableSizeSpinbox;
-    QPushButton *getButton, *autoRangeGraph, *clearButton, *lazersSaveButton;
+    QCheckBox *consoleEnable, *tableEnable;
+
+    QLabel *tableSizeLabel;
+    QSpinBox  *tableSizeSpinbox;
+    QPushButton *autoRangeGraph;
     QTableWidget *m_table;
-    QLabel ch1ShadowsLabel;
-    QLabel ch2ShadowsLabel;
+
 
     //Переменные
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH2In,shotsCH3,shotsCH4,shotsCH4In;
@@ -157,7 +149,7 @@ private:
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
     QVector<double> diameter, diameterPlis;
-    QSignalMapper *signalMapper;
+
     int tableSize=100;
     //Работа с файлами
     QString dirname = "log";
@@ -166,7 +158,7 @@ private:
     QVector<double> tempPLISextremums1,tempPLISextremums2;
     bool m_online = false;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
-    QLCDNumber *err1,*err2,*err3,*err4,*err5,*err6,*err7,*err0;
+
 };
 
 #endif // MAINWINDOW_H

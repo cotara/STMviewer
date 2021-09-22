@@ -6,21 +6,40 @@
 #include "transp.h"
 #include "statusbar.h"
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     ui->disconnect->setEnabled(false);
-
+    ui->ShdowSet->setCheckable(true);
     settings_ptr = new SerialSettings();
     serial = new QSerialPort();
 
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
+    //Транспортный уровень SLIP протокола
+    m_slip = new Slip(serial,m_console);
+    connect(m_slip,&Slip::serialPortError,this,&MainWindow::on_disconnect_triggered);
 
+    m_transp = new Transp(m_slip);
+    connect(m_transp, &Transp::answerReceive, this, &MainWindow::handlerTranspAnswerReceive);
+    connect(m_transp, &Transp::transpError, this, &MainWindow::handlerTranspError);
+    connect(m_transp, &Transp::reSentInc,this, &MainWindow::reSentInc);
+    //Интерфейс
+    //Здесь нужно создавать виджет(главный), устанавливать его, как центральный и передавать в конструктор лайонута уже его..
+    //widget = QWidget(self)
+    //self.setCentralWidget(widget)
+    //hbox = QHBoxLayout(widget)
+    // hbox.setSpacing(10)
+
+//Виджеты интерфейса
     viewer = new ShotViewer(this);
     connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
+
+    m_MainControlWidget = new MainControlWidget(this);
+    m_ManagementWidget = new ManagementWidget(this);
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(2);
@@ -35,14 +54,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_console = new Console(this);
     m_console->setMaximumHeight(150);
     m_console->hide();
-    //Транспортный уровень SLIP протокола
-    m_slip = new Slip(serial,m_console);
-    connect(m_slip,&Slip::serialPortError,this,&MainWindow::on_disconnect_triggered);
-
-    m_transp = new Transp(m_slip);
-    connect(m_transp, &Transp::answerReceive, this, &MainWindow::handlerTranspAnswerReceive);
-    connect(m_transp, &Transp::transpError, this, &MainWindow::handlerTranspError);
-    connect(m_transp, &Transp::reSentInc,this, &MainWindow::reSentInc);
 
     //Статус бар
     statusBar = new StatusBar(ui->statusBar);
@@ -50,12 +61,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &MainWindow::dataReadyUpdate, [this](int ready) { statusBar->setDataReady(ready); });
     connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
 
-    //Интерфейс
-    //Здесь нужно создавать виджет(главный), устанавливать его, как центральный и передавать в конструктор лайонута уже его..
-    //widget = QWidget(self)
-    //self.setCentralWidget(widget)
-    //hbox = QHBoxLayout(widget)
-    // hbox.setSpacing(10)
 
 
     layoutV = new QVBoxLayout();
@@ -63,353 +68,86 @@ MainWindow::MainWindow(QWidget *parent) :
 
     layoutH = new QHBoxLayout();
     layoutV->addLayout(layoutH);
-
     layoutV->addWidget(m_console);
 
-    controlLayout = new QVBoxLayout();
-
+    layoutH->addWidget(m_MainControlWidget);
+    m_MainControlWidget->setMaximumWidth(250);
     layoutH->addWidget(viewer);
     layoutH->addWidget(m_table);
     m_table->setMaximumWidth(150);
+    layoutH->addWidget(m_ManagementWidget);
+    m_ManagementWidget->setMaximumWidth(250);
 
-    //layoutH->addLayout(controlLayout);
+    //Коннекты от Настроек ПЛИС
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,this,&MainWindow::sendLazer1);
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,this,&MainWindow::sendLazer2);
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::saveSend,this,&MainWindow::sendSaveEeprom);
 
-    scroll = new QScrollArea(this);
-    settingsWidget = new QWidget(scroll);
-    scrolLayout = new QVBoxLayout(settingsWidget);
-    scroll->setMaximumWidth(290);
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderLeft,this,&MainWindow::sendBorderLeft);
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderRight,this,&MainWindow::sendBorderRight);
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH1,this,&MainWindow::sendCompCH1);
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,this,&MainWindow::sendCompCH2);
 
-
-
-//    for(int i=0; i<100;i++)
-//        scrolLayout->addWidget(new QLabel("Привет, мир!"));
-
-
-    errorsGroup = new QGroupBox("Ошибки");
-    lazerGroup = new QGroupBox("Настройка лазеров");
-    transmitGroup = new QGroupBox("Обмен данными");
-    borderGroup = new QGroupBox("Границы сигналов");
-    resultGroup = new QGroupBox("Результаты расчетов");
-    appSettingsGroup = new QGroupBox("Настройки интерфейса");
-    logGroup = new QGroupBox("Логирование");
-    historyGrouop = new QGroupBox("История");
-
-    errorsGroup->setMaximumWidth(250);
-    lazerGroup->setMaximumWidth(250);
-    transmitGroup->setMaximumWidth(250);
-    borderGroup->setMaximumWidth(250);
-    resultGroup->setMaximumWidth(250);
-    appSettingsGroup->setMaximumWidth(250);
-    logGroup->setMaximumWidth(250);
-    historyGrouop->setMaximumWidth(250);
-
-    scrolLayout->addWidget(errorsGroup);
-    scrolLayout->addWidget(lazerGroup);
-    scrolLayout->addWidget(transmitGroup);
-    scrolLayout->addWidget(borderGroup);
-    scrolLayout->addWidget(resultGroup);
-    scrolLayout->addWidget(appSettingsGroup);
-    scrolLayout->addWidget(logGroup);
-    scrolLayout->addWidget(historyGrouop);
+    //Коннекты от параметров передачи
+    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,this,&MainWindow::setPacketSize);
+    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::chChooseChanged,this,&MainWindow::incCountCh);
+    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::getButtonClicked,this,&MainWindow::manualGetShotButton);
+    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::autoGetCheckBoxChanged,this,&MainWindow::autoGetCheckBoxChanged);
 
 
-    errorsLayout = new QVBoxLayout();
-    lazerLayout = new QHBoxLayout();
-    transmitLayout = new QVBoxLayout();
-    borderLayout = new QHBoxLayout();
-    resultLayout = new QVBoxLayout();
-    appSettingsLayout = new QVBoxLayout();
-    logLayout = new QVBoxLayout();
-    historyLayout = new QVBoxLayout();
-
-    errorsGroup->setLayout(errorsLayout);
-    lazerGroup->setLayout(lazerLayout);
-    transmitGroup->setLayout(transmitLayout);
-    borderGroup->setLayout(borderLayout);
-    resultGroup->setLayout(resultLayout);
-    appSettingsGroup->setLayout(appSettingsLayout);
-    logGroup->setLayout(logLayout);
-    historyGrouop->setLayout(historyLayout);
-
-    //Ошибки
-    err1Layout = new QHBoxLayout();
-    err2Layout = new QHBoxLayout();
-    errorsLayout->addLayout(err1Layout);
-    errorsLayout->addLayout(err2Layout);
-
-    err0 = new QLCDNumber(1,this);
-    err1 = new QLCDNumber(1,this);
-    err2 = new QLCDNumber(1,this);
-    err3 = new QLCDNumber(1,this);
-    err4 = new QLCDNumber(1,this);
-    err5 = new QLCDNumber(1,this);
-    err6 = new QLCDNumber(1,this);
-    err7 = new QLCDNumber(1,this);
-    err1Layout->addWidget(err0);
-    err1Layout->addWidget(err1);
-    err1Layout->addWidget(err2);
-    err1Layout->addWidget(err3);
-    err2Layout->addWidget(err4);
-    err2Layout->addWidget(err5);
-    err2Layout->addWidget(err6);
-    err2Layout->addWidget(err7);
-
-    err0->display("2");
-    err1->display("0");
-    err2->display("R");
-    err3->display("L");
-    err4->display("2");
-    err5->display("0");
-    err6->display("R");
-    err7->display("L");
-
-
-    //Настройки лазера
-    lazer1SettingLayout = new QVBoxLayout();
-    lazer2SettingLayout = new QVBoxLayout();
-    lazerLayout->addLayout(lazer1SettingLayout);
-    lazerLayout->addLayout(lazer2SettingLayout);
-    lazer1Spinbox = new QSpinBox();
-    lazer2Spinbox = new QSpinBox();
-    lazer1Label = new QLabel("Лазер 1:");
-    lazer2Label = new QLabel("Лазер 2:");
-    lazersSaveButton = new QPushButton("Сохранить в EEPROM");
-
-    lazer1Spinbox->setRange(10,50);
-    lazer2Spinbox->setRange(10,50);
-    lazer1Spinbox->setMaximumWidth(50);
-    lazer2Spinbox->setMaximumWidth(50);
-    lazer1Spinbox->setValue(40);
-    lazer2Spinbox->setValue(40);
-    lazer1SettingLayout->addWidget(lazer1Label);
-    lazer1SettingLayout->addWidget(lazer1Spinbox);
-    lazer2SettingLayout->addWidget(lazer2Label);
-    lazer2SettingLayout->addWidget(lazer2Spinbox);
-    lazerLayout->addWidget(lazersSaveButton);
-
-    lazer1Spinbox->setEnabled(false);
-    lazer2Spinbox->setEnabled(false);
-    lazersSaveButton->setEnabled(false);
-
-    connect(lazer1Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){MainWindow::sendLazer1(i); });
-    connect(lazer2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){MainWindow::sendLazer2(i);});
-    connect(lazersSaveButton,&QPushButton::clicked,this,&MainWindow::sendSaveEeprom);
-    //Настройки передачи
-    packetSizeLabel = new QLabel("Размер пакета:",this);
-    packetSizeSpinbox = new QSpinBox(this);
-    ch1CheckBox = new QCheckBox("Канал 1. Нефильтрованный");
-    ch2CheckBox = new QCheckBox("Канал 1. Фильтрованный");
-    ch2InCheckBox = new QCheckBox("Канал 1. Фильтрованный*");
-    ch3CheckBox = new QCheckBox("Канал 2. Нефильтрованный");
-    ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный");
-    ch4InCheckBox = new QCheckBox("Канал 2. Фильтрованный*");
-
-    getButton = new QPushButton("Получить снимок");
-    autoGetCheckBox = new QCheckBox("Авто-получение по готовности");
-
-    transmitLayout->addWidget(packetSizeLabel);
-    transmitLayout->addWidget(packetSizeSpinbox);
-    transmitLayout->addWidget(ch1CheckBox);
-    transmitLayout->addWidget(ch2CheckBox);
-    transmitLayout->addWidget(ch2InCheckBox);
-    transmitLayout->addWidget(ch3CheckBox);
-    transmitLayout->addWidget(ch4CheckBox);
-    transmitLayout->addWidget(ch4InCheckBox);
-    ch1CheckBox->setEnabled(false);
-    ch2CheckBox->setEnabled(false);
-    ch2InCheckBox->setEnabled(false);
-    ch3CheckBox->setEnabled(false);
-    ch4CheckBox->setEnabled(false);
-    ch4InCheckBox->setEnabled(false);
-    transmitLayout->addWidget(getButton);
-    transmitLayout->addWidget(autoGetCheckBox);
-
-    packetSizeSpinbox->setRange(50,15000);
-    packetSizeSpinbox->setValue(11000);
-    connect(packetSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-         [=](unsigned short i){
-            setPacketSize(i);});
-    emit packetSizeSpinbox->valueChanged(packetSizeSpinbox->value());
-
-    signalMapper = new QSignalMapper(this);
-    connect(signalMapper, QOverload<int>::of(&QSignalMapper::mapped), [=](int i){ incCountCh(i); });
-         signalMapper->setMapping(ch1CheckBox, 1);
-         signalMapper->setMapping(ch2CheckBox, 2);
-         signalMapper->setMapping(ch3CheckBox, 3);
-         signalMapper->setMapping(ch4CheckBox, 4);
-
-
-         connect(ch1CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
-         connect(ch2CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
-         connect(ch3CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
-         connect(ch4CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
-
-
-    getButton->setEnabled(false);
-    connect(getButton,&QPushButton::clicked,this, &MainWindow::manualGetShotButton);
-
-    autoGetCheckBox->setEnabled(false);
-    connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &MainWindow::autoGetCheckBoxChanged);
-    //Настройка границ
-    borderLeftLayout = new QVBoxLayout();
-    borderRightLayout = new QVBoxLayout();
-    compCH1Layout = new QVBoxLayout();
-    compCH2Layout = new QVBoxLayout();
-
-    borderLayout->addLayout(borderLeftLayout);
-    borderLayout->addLayout(borderRightLayout);
-    borderLayout->addLayout(compCH1Layout);
-    borderLayout->addLayout(compCH2Layout);
-
-    borderLeftSpinbox = new QSpinBox();
-    borderRightSpinbox = new QSpinBox();
-    compCH1Spinbox = new QSpinBox();
-    compCH2Spinbox = new QSpinBox();
-
-    borderLeftLabel = new QLabel("Лев. гр.:");
-    borderRightLabel = new QLabel("Прав. гр.:");
-    compCH1Label = new QLabel("Комп. кан. 1:");
-    compCH2Label = new QLabel("Комп. кан. 2:");
-
-    borderLeftSpinbox->setRange(0,255);
-    borderRightSpinbox->setRange(0,255);
-    compCH1Spinbox->setRange(0,255);
-    compCH2Spinbox->setRange(0,255);
-
-    borderLeftLayout->addWidget(borderLeftLabel);
-    borderLeftLayout->addWidget(borderLeftSpinbox);
-    borderRightLayout->addWidget(borderRightLabel);
-    borderRightLayout->addWidget(borderRightSpinbox);
-    compCH1Layout->addWidget(compCH1Label);
-    compCH1Layout->addWidget(compCH1Spinbox);
-    compCH2Layout->addWidget(compCH2Label);
-    compCH2Layout->addWidget(compCH2Spinbox);
-
-//    borderLeftSpinbox->setEnabled(false);
-//    borderRightSpinbox->setEnabled(false);
-//    compCH1Spinbox->setEnabled(false);
-//    compCH2Spinbox->setEnabled(false);
-
-    connect(borderLeftSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){MainWindow::sendBorderLeft(i);});
-    connect(borderRightSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){MainWindow::sendBorderRight(i);});
-    connect(compCH1Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){MainWindow::sendCompCH1(i);});
-    connect(compCH2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){MainWindow::sendCompCH2(i);});
-
-
-    //Результат
-    diametrLabel = new QLabel("Диаметр: ");
-    diametrPlisLabel = new QLabel("Диаметр ПЛИС: ");
-    leftShadow1Label = new QLabel("   Лев.тень: ");
-    rightShadow1Label = new QLabel("   Прав.тень: ");
-    leftShadow2Label = new QLabel("   Лев.тень: ");
-    rightShadow2Label = new QLabel("   Прав.тень: ");
-    m_centerViewer = new centerViewer();
-    centerPositionLabel = new QLabel("Смещение: ");
-
-    extr1Ch1 = new QLabel("   Экстр1: ");
-    extr2Ch1 = new QLabel("   Экстр2: ");
-    extr3Ch1 = new QLabel("   Экстр3: ");
-    extr4Ch1 = new QLabel("   Экстр4: ");
-    extr1Ch2 = new QLabel("   Экстр1: ");
-    extr2Ch2 = new QLabel("   Экстр2: ");
-    extr3Ch2 = new QLabel("   Экстр3: ");
-    extr4Ch2 = new QLabel("   Экстр4: ");
-
-    shad1Ch1 = new QLabel("   Тень1: ");
-    shad2Ch1 = new QLabel("   Тень2: ");
-    shad1Ch2 = new QLabel("   Тень1: ");
-    shad2Ch2 = new QLabel("   Тень2: ");
-    diam1 = new QLabel("   Диаметр1: ");
-    diam2 = new QLabel("   Диаметр2: ");
-
-    ch1ShadowsLabel.setText("Канал 1: ");
-    ch2ShadowsLabel.setText("Канал 2: ");
-    resultLayout->addWidget(&ch1ShadowsLabel);
-    resultLayout->addWidget(leftShadow1Label);
-    resultLayout->addWidget(rightShadow1Label);
-    resultLayout->addWidget(extr1Ch1);
-    resultLayout->addWidget(extr2Ch1);
-    resultLayout->addWidget(extr3Ch1);
-    resultLayout->addWidget(extr4Ch1);
-    resultLayout->addWidget(shad1Ch1);
-    resultLayout->addWidget(shad2Ch1);
-
-    resultLayout->addWidget(&ch2ShadowsLabel);
-    resultLayout->addWidget(leftShadow2Label);
-    resultLayout->addWidget(rightShadow2Label);
-    resultLayout->addWidget(extr1Ch2);
-    resultLayout->addWidget(extr2Ch2);
-    resultLayout->addWidget(extr3Ch2);
-    resultLayout->addWidget(extr4Ch2);
-    resultLayout->addWidget(shad1Ch2);
-    resultLayout->addWidget(shad2Ch2);
-
-    resultLayout->addWidget(diametrLabel);
-
-    resultLayout->addWidget(diam1);
-    resultLayout->addWidget(diam2);
-    resultLayout->addWidget(diametrPlisLabel);
-    resultLayout->addWidget(m_centerViewer);
-    m_centerViewer->setMinimumHeight(105);
-    resultLayout->addWidget(centerPositionLabel);
+    //Коннекты от истории
+    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::autoSaveShotCheked,this,&MainWindow::autoSaveShotCheked);
+    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::shotSelected,this,&MainWindow::selectShot);
+    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::clearButtonClicked,this,&MainWindow::on_clearButton);
 
 
 
-    //Настройки интерфейса
-    consoleEnable = new QCheckBox("Вывод в консоль");
-    appSettingsLayout->addWidget(consoleEnable);
-    consoleEnable->setChecked(false);
     connect(consoleEnable,&QCheckBox::stateChanged,this,&MainWindow::consoleEnabledCheked);
 
-    autoRangeGraph = new QPushButton("Автомасштаб");
-    appSettingsLayout->addWidget(autoRangeGraph);
-    connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
+    //Настройки интерфейса
+//    consoleEnable = new QCheckBox("Вывод в консоль");
+//    appSettingsLayout->addWidget(consoleEnable);
+//    consoleEnable->setChecked(false);
+//
 
-    tableEnable = new QCheckBox("Отображение таблицы");
-    appSettingsLayout->addWidget(tableEnable);
+//    autoRangeGraph = new QPushButton("Автомасштаб");
+//    appSettingsLayout->addWidget(autoRangeGraph);
+//    connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
 
-    tableSizeLayout = new QHBoxLayout;
-    tableSizeSpinbox = new QSpinBox;
-    tableSizeLabel = new QLabel("Размер таблицы");
+//    tableEnable = new QCheckBox("Отображение таблицы");
+//    appSettingsLayout->addWidget(tableEnable);
 
-    appSettingsLayout->addLayout(tableSizeLayout);
-    tableSizeLayout->addWidget(tableSizeLabel);
-    tableSizeLayout->addWidget(tableSizeSpinbox);
-    tableSizeSpinbox->setMaximum(20000);
-    tableSizeSpinbox->setValue(100);
+//    tableSizeLayout = new QHBoxLayout;
+//    tableSizeSpinbox = new QSpinBox;
+//    tableSizeLabel = new QLabel("Размер таблицы");
 
-    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
-            tableSize = val;
+//    appSettingsLayout->addLayout(tableSizeLayout);
+//    tableSizeLayout->addWidget(tableSizeLabel);
+//    tableSizeLayout->addWidget(tableSizeSpinbox);
+//    tableSizeSpinbox->setMaximum(20000);
+//    tableSizeSpinbox->setValue(100);
 
-            if(m_table->rowCount()>=tableSize){
-                for(int i=0;i<tableSize;i++)
-                     m_table->showRow(i);
-                for(int i=tableSize;i<m_table->rowCount();i++)
-                    m_table->hideRow(i);
-            }
-    });
-    connect(tableEnable, QOverload<int>::of(&QCheckBox::stateChanged),[=](int state){
-            if(state){
-                m_table->show();
-                tableSizeSpinbox->setEnabled(true);
-            }
-            else{
-                m_table->hide();
-                tableSizeSpinbox->setEnabled(false);
-            }
-    });
+//    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
+//            tableSize = val;
 
-    //Настройки логирования
-    autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка");
-    logLayout->addWidget(autoSaveShotCheckBox);
-    connect(autoSaveShotCheckBox,&QCheckBox::stateChanged,this,&MainWindow::autoSaveShotCheked);
-    autoSaveShotCheckBox->setEnabled(false);
+//            if(m_table->rowCount()>=tableSize){
+//                for(int i=0;i<tableSize;i++)
+//                     m_table->showRow(i);
+//                for(int i=tableSize;i<m_table->rowCount();i++)
+//                    m_table->hideRow(i);
+//            }
+//    });
+//    connect(tableEnable, QOverload<int>::of(&QCheckBox::stateChanged),[=](int state){
+//            if(state){
+//                m_table->show();
+//                tableSizeSpinbox->setEnabled(true);
+//            }
+//            else{
+//                m_table->hide();
+//                tableSizeSpinbox->setEnabled(false);
+//            }
+//    });
+
 
     //Создание папки с логами, если ее нет.
     dir = new QDir(dirname);
@@ -423,18 +161,6 @@ MainWindow::MainWindow(QWidget *parent) :
     file3 = new QFile();
     file4 = new QFile();
 
-    //История
-    shotsComboBox = new QComboBox;
-    clearButton = new QPushButton("Очистить список");
-    historyLayout->addWidget(shotsComboBox);
-    historyLayout->addWidget(clearButton);
-
-    connect(shotsComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-          [=](int index){
-            selectShot(index);
-    });
-
-    connect(clearButton,&QPushButton::clicked,this, &MainWindow::on_clearButton);
 
    ShadowSettings = new SettingsShadowsFindDialog(this);
    connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
@@ -442,9 +168,6 @@ MainWindow::MainWindow(QWidget *parent) :
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
    //constructorTest();
 
-   settingsWidget->setLayout(scrolLayout);
-   scroll->setWidget(settingsWidget);
-   layoutH->addWidget(scroll);
 }
 
 MainWindow::~MainWindow(){
@@ -496,7 +219,7 @@ void MainWindow::constructorTest(){
             shotsCH4In.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
         }
         k++;
-        shotsComboBox->addItem(QString::number(i));
+        m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(i));
     }
 }
 
@@ -521,33 +244,36 @@ void MainWindow::on_connect_triggered()
         ui->disconnect->setEnabled(true);
         m_timer->start(150);
         statusBar->clearReSent();
-        getButton->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
         m_transp->clearQueue();
         serial->readAll();
-        ch1CheckBox->setEnabled(true);
-        ch2CheckBox->setEnabled(true);
-        ch2InCheckBox->setEnabled(true);
-        ch3CheckBox->setEnabled(true);
-        ch4CheckBox->setEnabled(true);
-        ch4InCheckBox->setEnabled(true);
-        autoSaveShotCheckBox->setEnabled(true);
+
+        m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->setEnabled(true);
         if(channelsOrder!=0){
             sendChannelOrder();
         }
-        lazer1Spinbox->setEnabled(true);
-        lazer2Spinbox->setEnabled(true);
-        lazersSaveButton->setEnabled(true);
-        borderLeftSpinbox->setEnabled(true);
-        borderRightSpinbox->setEnabled(true);
-        compCH1Spinbox->setEnabled(true);
-        compCH2Spinbox->setEnabled(true);
 
-        ch1CheckBox->setChecked(false);
-        ch2CheckBox->setChecked(false);
-        ch2InCheckBox->setChecked(false);
-        ch3CheckBox->setChecked(false);
-        ch4CheckBox->setChecked(false);
-        ch4InCheckBox->setChecked(false);
+        m_ManagementWidget->m_plisSettings->lazer1Spinbox->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->lazer2Spinbox->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->saveButton->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->borderLeftSpinbox->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->borderRightSpinbox->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->compCH1Spinbox->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->compCH2Spinbox->setEnabled(true);
+
+        m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(true);
+
+        m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setChecked(false);
+        m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setChecked(false);
+        m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setChecked(false);
+        m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setChecked(false);
+        m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setChecked(false);
+        m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setChecked(false);
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
@@ -564,7 +290,7 @@ void MainWindow::on_disconnect_triggered(){
         statusBar->setMessageBar("Невозможно отключиться от COM-порта");
     }
 
-    getButton->setEnabled(false);
+
     ui->connect->setEnabled(true);
     ui->settings->setEnabled(true);
     ui->disconnect->setEnabled(false);
@@ -580,24 +306,27 @@ void MainWindow::on_disconnect_triggered(){
     emit dataReadyUpdate(-1);
     currentShot.clear();
 
-    autoGetCheckBox->setCheckState(Qt::Unchecked);          //Вырубаем автополучение на всякий
+    m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->setEnabled(false);
+    m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->setChecked(false);
 
-    ch1CheckBox->setEnabled(false);
-    ch2CheckBox->setEnabled(false);
-    ch2InCheckBox->setEnabled(false);
-    ch3CheckBox->setEnabled(false);
-    ch4CheckBox->setEnabled(false);
-    ch4InCheckBox->setEnabled(false);
+    //Вырубаем автополучение на всякий
+    m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);
+    m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setChecked(false);
 
-    autoSaveShotCheckBox->setEnabled(false);
-    autoSaveShotCheckBox->setCheckState(Qt::Unchecked);
-    lazer1Spinbox->setEnabled(false);
-    lazer2Spinbox->setEnabled(false);
-    lazersSaveButton->setEnabled(false);
-    borderLeftSpinbox->setEnabled(false);
-    borderRightSpinbox->setEnabled(false);
-    compCH1Spinbox->setEnabled(false);
-    compCH2Spinbox->setEnabled(false);
+    m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(false);
+    m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(false);
+    m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(false);
+    m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(false);
+    m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(false);
+    m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(false);
+
+    m_ManagementWidget->m_plisSettings->lazer1Spinbox->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->lazer2Spinbox->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->saveButton->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->borderLeftSpinbox->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->borderRightSpinbox->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->compCH1Spinbox->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->compCH2Spinbox->setEnabled(false);
 
 }
 
@@ -688,28 +417,27 @@ void MainWindow::sendCompCH2(int compCH2Val)
 //Подсчет количества отмеченных каналов
 void MainWindow::incCountCh(int ch)
 {
-
     switch (ch){
     case 1:
-       if(ch1CheckBox->isChecked())
+       if(m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->isChecked())
            channelsOrder|=0x01;
        else
           channelsOrder&=~0x01;
         break;
     case 2:
-       if(ch2CheckBox->isChecked())
+       if(m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->isChecked())
            channelsOrder|=0x02;
        else
           channelsOrder&=~0x02;
         break;
     case 3:
-       if(ch3CheckBox->isChecked())
+       if(m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->isChecked())
            channelsOrder|=0x04;
        else
           channelsOrder&=~0x04;
         break;
     case 4:
-       if(ch4CheckBox->isChecked())
+       if(m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->isChecked())
            channelsOrder|=0x08;
        else
           channelsOrder&=~0x08;
@@ -721,14 +449,14 @@ void MainWindow::incCountCh(int ch)
             chCountChecked++;
     }
     if(chCountChecked)
-         autoGetCheckBox->setEnabled(true);
+         m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setEnabled(true);
     else
-        autoGetCheckBox->setEnabled(false);
+        m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setEnabled(false);
     sendChannelOrder();
 }
 
 //Настройка разбиения данных на пакеты
-void MainWindow::setPacketSize(unsigned short n){
+void MainWindow::setPacketSize(int n){
     packetSize=n;
 }
 
@@ -747,18 +475,18 @@ void MainWindow::getPacketFromMCU(unsigned short n)
 void MainWindow::autoGetCheckBoxChanged(int st)
 {
     if(st){
-        ch1CheckBox->setEnabled(false);
-        ch2CheckBox->setEnabled(false);
-        ch3CheckBox->setEnabled(false);
-        ch4CheckBox->setEnabled(false);
-        getButton->setEnabled(false);
+        m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(false);
+        m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(false);
+        m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(false);
+        m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(false);
+        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);
     }
     else {
-        ch1CheckBox->setEnabled(true);
-        ch2CheckBox->setEnabled(true);
-        ch3CheckBox->setEnabled(true);
-        ch4CheckBox->setEnabled(true);
-        getButton->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
+        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
     }
 }
 
@@ -775,13 +503,13 @@ void MainWindow::autoGetCheckBoxChanged(int st)
 void MainWindow::manualGetShotButton(){
     statusBar->setMessageBar("");
     if(countAvaibleDots){
-        if (!ch1CheckBox->isChecked() && !ch2CheckBox->isChecked()
-            && !ch3CheckBox->isChecked() && !ch4CheckBox->isChecked()){
+        if (!m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->isChecked() && !m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->isChecked()
+            && !m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->isChecked() && !m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->isChecked()){
             statusBar->setMessageBar("ОШИБКА!, Не выбрано ни одного канала!");
             return;
         }
         m_timer->stop();
-        getButton->setEnabled(false);                                                   //Защита от двойного нажатия кнопки
+        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);                                                   //Защита от двойного нажатия кнопки
         m_console->putData("REQUEST_POINTS: ");
         countWaitingDots = countAvaibleDots;                                             //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
         statusBar->setDownloadBarRange(countAvaibleDots);
@@ -823,7 +551,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         countAvaibleDots=value;
         if (value != NO_DATA_READY) {
             dataReady = value;
-            if(autoGetCheckBox->isChecked() || notYetFlag){                       //Если включен автозапрос данных или не вычитали все пачку каналов
+            if(m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->isChecked() || notYetFlag){                       //Если включен автозапрос данных или не вычитали все пачку каналов
                 manualGetShotButton();                                                  //Запрашиваем шот
             }
         }
@@ -840,7 +568,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
 
-            if(autoSaveShotCheckBox->isChecked())
+            if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
                 writeToLogfileMeta(QString::number(value));
 
             //Забираем 16 байт метаданных
@@ -850,61 +578,28 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 tempPLISextremums2.prepend(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+0);
                 tempPLISextremums1.prepend(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+0);
             }
-            extr1Ch1->setText("   Экстр1: " + QString::number(tempPLISextremums1.at(0)));
-            extr2Ch1->setText("   Экстр2: " + QString::number(tempPLISextremums1.at(1)));
-            extr3Ch1->setText("   Экстр3: " + QString::number(tempPLISextremums1.at(2)));
-            extr4Ch1->setText("   Экстр4: " + QString::number(tempPLISextremums1.at(3)));
-            extr1Ch2->setText("   Экстр1: " + QString::number(tempPLISextremums2.at(0)));
-            extr2Ch2->setText("   Экстр2: " + QString::number(tempPLISextremums2.at(1)));
-            extr3Ch2->setText("   Экстр3: " + QString::number(tempPLISextremums2.at(2)));
-            extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
 
+            m_MainControlWidget->m_resultWidget->extr1Ch1->setText("   Экстр1: " + QString::number(tempPLISextremums1.at(0)));
+            m_MainControlWidget->m_resultWidget->extr2Ch1->setText("   Экстр2: " + QString::number(tempPLISextremums1.at(1)));
+            m_MainControlWidget->m_resultWidget->extr3Ch1->setText("   Экстр3: " + QString::number(tempPLISextremums1.at(2)));
+            m_MainControlWidget->m_resultWidget->extr4Ch1->setText("   Экстр4: " + QString::number(tempPLISextremums1.at(3)));
+            m_MainControlWidget->m_resultWidget->extr1Ch2->setText("   Экстр1: " + QString::number(tempPLISextremums2.at(0)));
+            m_MainControlWidget->m_resultWidget->extr2Ch2->setText("   Экстр2: " + QString::number(tempPLISextremums2.at(1)));
+            m_MainControlWidget->m_resultWidget->extr3Ch2->setText("   Экстр3: " + QString::number(tempPLISextremums2.at(2)));
+            m_MainControlWidget->m_resultWidget->extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
 
             bytes.remove(0, 16);
-            QPalette redPalette(Qt::red);
-            QPalette blackPalette(Qt::black);
 
-            int tempErr = static_cast <unsigned char> (bytes.at(1))*256+static_cast <unsigned char>(bytes.at(0));
-            if(tempErr&0b00000001)
-                err0->setPalette(redPalette);
-            else
-               err0->setPalette(blackPalette);
-            if(tempErr&0b00000010)
-                err1->setPalette(redPalette);
-            else
-               err1->setPalette(blackPalette);
-            if(tempErr&0b00000100)
-                err2->setPalette(redPalette);
-            else
-               err2->setPalette(blackPalette);
-            if(tempErr&0b00001000)
-                err3->setPalette(redPalette);
-            else
-               err3->setPalette(blackPalette);
-            tempErr = static_cast <unsigned char> (bytes.at(3))*256+static_cast <unsigned char>(bytes.at(2));
-            if(tempErr&0b00000001)
-                err4->setPalette(redPalette);
-            else
-               err4->setPalette(blackPalette);
-            if(tempErr&0b00000010)
-                err5->setPalette(redPalette);
-            else
-               err5->setPalette(blackPalette);
-            if(tempErr&0b00000100)
-                err6->setPalette(redPalette);
-            else
-               err6->setPalette(blackPalette);
-            if(tempErr&0b00001000)
-                err7->setPalette(redPalette);
-            else
-               err7->setPalette(blackPalette);
+            m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(0),1);   //Младшие значащие байты
+            m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(2),1);
 
-            lazer1Spinbox->setValue(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4)));
-            lazer2Spinbox->setValue(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6)));
-            borderLeftSpinbox->setValue(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8)));
-            borderRightSpinbox->setValue(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10)));
-            compCH1Spinbox->setValue(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12)));
-            compCH2Spinbox->setValue(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14)));
+
+            m_ManagementWidget->m_plisSettings->lazer1Spinbox->setValue(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4)));
+            m_ManagementWidget->m_plisSettings->lazer2Spinbox->setValue(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6)));
+            m_ManagementWidget->m_plisSettings->borderLeftSpinbox->setValue(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8)));
+            m_ManagementWidget->m_plisSettings->borderRightSpinbox->setValue(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10)));
+            m_ManagementWidget->m_plisSettings->compCH1Spinbox->setValue(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12)));
+            m_ManagementWidget->m_plisSettings->compCH2Spinbox->setValue(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14)));
             bytes.remove(0, 16);
 
 
@@ -925,7 +620,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
                     chCountRecieved++;                                                  //Получили канал
 
-                    if(ch2InCheckBox->isChecked()) {                                                      //Если нужна фильтрация
+                    if(m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->isChecked()) {                                                      //Если нужна фильтрация
                         QByteArray filtered = filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH2In.insert(shotCountRecieved,filtered);
                     }
@@ -951,7 +646,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                      shotsCH3.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
                      chCountRecieved++;                                                  //Получили канал
-                     if(ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
+                     if(m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
                         QByteArray filtered =filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH4In.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
                      }
@@ -970,7 +665,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 }
 
                 //Если включено автосохранение в файл
-                if(autoSaveShotCheckBox->isChecked())
+                if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
                     writeToLogfile(chName);
                 //Обнуляем всякое
                 countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
@@ -981,11 +676,11 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     m_console->putData("\n\n");
                     chCountRecieved=0;
                     shotCountRecieved++;                                                //Увеличиваем счетчик пачек
-                    shotsComboBox->addItem(QString::number(shotCountRecieved-1));
+                    m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(shotCountRecieved-1));
                     //shotsComboBox->setCurrentIndex(shotCountRecieved-1);
-                    shotsComboBox->setCurrentIndex(shotsComboBox->count()-1);
-                    if (!autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
-                        getButton->setEnabled(true);
+                    m_ManagementWidget->m_HistorySettings->shotsComboBox->setCurrentIndex(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()-1);
+                    if (!m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
+                        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
                 }
                 m_timer->start();                                                       //Стартуем таймер опроса статуса
             }
@@ -994,12 +689,12 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
             QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
             m_console->putData("Warning: MCU has no data\n\n");
-            getButton->setEnabled(true);
+            m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
         }
         else{
             statusBar->setMessageBar("Error: Wrong REQUEST_POINTS ansver message!");
             m_console->putData("Warning: MCU has no data\n\n");
-            getButton->setEnabled(true);
+            m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
         }
         break;
    }
@@ -1009,7 +704,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 void MainWindow::selectShot(int index){
     if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
         QByteArray ch;
-        int shotNum = shotsComboBox->currentText().toInt();
+        int shotNum = m_ManagementWidget->m_HistorySettings->shotsComboBox->currentText().toInt();
         viewer->clearGraphs(ShotViewer::AllCH);
         //Первый канал
         if(shotsCH1.contains(shotNum)){
@@ -1022,12 +717,13 @@ void MainWindow::selectShot(int index){
             ch = shotsCH2[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
             viewer->addLines(tempPLISextremums1,1,1);
-            viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},1,3);
-            viewer->addLines2(QVector<double>{static_cast<double>(compCH1Spinbox->value())},1,3);
+            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftSpinbox->value()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightSpinbox->value())},1,3);
+            viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Spinbox->value())},1,3);
             if(tempPLISextremums1.size()==4){
                 shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
-                shad1Ch1->setText("   Тень1: " + QString::number(shadowsCh1Plis.at(0)));
-                shad2Ch1->setText("   Тень2: " + QString::number(shadowsCh1Plis.at(1)));
+
+                m_MainControlWidget->m_resultWidget->shad1Ch1->setText("   Тень1: " + QString::number(shadowsCh1Plis.at(0)));
+                m_MainControlWidget->m_resultWidget->shad2Ch1->setText("   Тень2: " + QString::number(shadowsCh1Plis.at(1)));
             }
             viewer->addLines(shadowsCh1,1,2);
         }
@@ -1043,8 +739,8 @@ void MainWindow::selectShot(int index){
 
             shadowsCh1 = filter->shadowFind(xDots);
 
-            leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
-            rightShadow1Label->setText("   Прав. тень: " +QString::number(shadowsCh1.at(1)));
+            m_MainControlWidget->m_resultWidget->leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
+            m_MainControlWidget->m_resultWidget->rightShadow1Label->setText("   Прав. тень: " +QString::number(shadowsCh1.at(1)));
         }
 
         //Второй канал
@@ -1058,12 +754,12 @@ void MainWindow::selectShot(int index){
             ch = shotsCH4[shotNum];
             viewer->addUserGraph(ch,ch.size(),4);
             viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
-            viewer->addLines(QVector<double>{static_cast<double>(borderLeftSpinbox->value()),static_cast<double>(10800-borderRightSpinbox->value())},2,3);
-            viewer->addLines2(QVector<double>{static_cast<double>(compCH2Spinbox->value())},2,3);
+            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftSpinbox->value()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightSpinbox->value())},2,3);
+            viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Spinbox->value())},2,3);
             if(tempPLISextremums2.size()==4){
                 shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
-                shad1Ch2->setText("   Тень1: " + QString::number(shadowsCh2Plis.at(0)));
-                shad2Ch2->setText("   Тень2: " + QString::number(shadowsCh2Plis.at(1)));
+                m_MainControlWidget->m_resultWidget->shad1Ch2->setText("   Тень1: " + QString::number(shadowsCh2Plis.at(0)));
+                m_MainControlWidget->m_resultWidget->shad2Ch2->setText("   Тень2: " + QString::number(shadowsCh2Plis.at(1)));
             }
             viewer->addLines(shadowsCh2,2,2);
         }
@@ -1078,22 +774,22 @@ void MainWindow::selectShot(int index){
             }
             shadowsCh2 = filter->shadowFind(xDots);
 
-            leftShadow2Label->setText("   Лев. тень: " + QString::number(shadowsCh2.at(0)));
-            rightShadow2Label->setText("   Прав. тень: " + QString::number(shadowsCh2.at(1)));
+            m_MainControlWidget->m_resultWidget->leftShadow2Label->setText("   Лев. тень: " + QString::number(shadowsCh2.at(0)));
+            m_MainControlWidget->m_resultWidget->rightShadow2Label->setText("   Прав. тень: " + QString::number(shadowsCh2.at(1)));
 
         }
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-            diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)*1000 + diameter.at(1)*1000));
-            m_centerViewer->setCoord(static_cast<int>(diameter.at(2)),static_cast<int>(diameter.at(3)));
-            centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
+            m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)*1000 + diameter.at(1)*1000));
+            m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameter.at(2)),static_cast<int>(diameter.at(3)));
+            m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
 
         }
         if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
             diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
-            diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0)*1000 + diameterPlis.at(1)*1000));
-            diam1->setText("   Диаметр1: " + QString::number(diameterPlis.at(0)*1000));
-            diam2->setText("   Диаметр2: " + QString::number(diameterPlis.at(1)*1000));
+            m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0)*1000 + diameterPlis.at(1)*1000));
+            m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)*1000));
+            m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)*1000));
             if(diameterPlis.at(0)<0){
                 int temp;
                 temp++;
@@ -1119,23 +815,23 @@ void MainWindow::consoleEnabledCheked(bool en){
 void MainWindow::autoSaveShotCheked(bool en)
 {
     if(en){
-        if(ch1CheckBox->isChecked()){
+        if(m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->isChecked()){
             filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1";
             file1->setFileName(dirname + "/" + filename);
             file1->open(QIODevice::WriteOnly);
         }
-        if(ch2CheckBox->isChecked()){
+        if(m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->isChecked()){
             filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1F";
             file2->setFileName(dirname + "/" + filename);
             file2->open(QIODevice::WriteOnly);
         }
 
-        if(ch3CheckBox->isChecked()){
+        if(m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->isChecked()){
             filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2";
             file3->setFileName(dirname + "/" + filename);
             file3->open(QIODevice::WriteOnly);
         }
-        if(ch4CheckBox->isChecked()){
+        if(m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->isChecked()){
             filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2F";
             file4->setFileName(dirname + "/" + filename);
             file4->open(QIODevice::WriteOnly);
@@ -1160,7 +856,7 @@ void MainWindow::on_clearButton(){
     shotsCH2.clear();
     shotsCH3.clear();
     shotsCH4.clear();
-    shotsComboBox->clear();
+    m_ManagementWidget->m_HistorySettings->shotsComboBox->clear();
     viewer->clearGraphs(ShotViewer::AllCH);
 }
 

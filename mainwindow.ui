@@ -50,15 +50,34 @@
     <addaction name="settings"/>
    </widget>
    <widget class="QMenu" name="menu_2">
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
     <property name="title">
-     <string>Установки</string>
+     <string>Инструменты</string>
     </property>
     <addaction name="ShdowSet"/>
    </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>Вид</string>
+    </property>
+    <addaction name="ShowMainControl"/>
+    <addaction name="ShowManagementPanel"/>
+    <addaction name="TableShow"/>
+    <addaction name="showConsole"/>
+   </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
+   <addaction name="menu_3"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
@@ -70,6 +89,11 @@
    <addaction name="settings"/>
    <addaction name="separator"/>
    <addaction name="ShdowSet"/>
+   <addaction name="separator"/>
+   <addaction name="showConsole"/>
+   <addaction name="TableShow"/>
+   <addaction name="ShowMainControl"/>
+   <addaction name="ShowManagementPanel"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="connect">
@@ -106,6 +130,54 @@
    </property>
    <property name="text">
     <string>Поиск тени</string>
+   </property>
+  </action>
+  <action name="showConsole">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/command-line.svg</normaloff>:/1/Resources/command-line.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Консоль</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Показать консоль отладки&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="TableShow">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/table.svg</normaloff>:/1/Resources/table.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Таблица</string>
+   </property>
+   <property name="toolTip">
+    <string>Отобразить значения сигнала в таблице</string>
+   </property>
+  </action>
+  <action name="ShowMainControl">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/Leftsidebar.svg</normaloff>:/1/Resources/Leftsidebar.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Парель контроля</string>
+   </property>
+   <property name="toolTip">
+    <string>Показать панель контроля</string>
+   </property>
+  </action>
+  <action name="ShowManagementPanel">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/Rightsidebar.svg</normaloff>:/1/Resources/Rightsidebar.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Панель управления</string>
+   </property>
+   <property name="toolTip">
+    <string>Показать панель управления</string>
    </property>
   </action>
  </widget>

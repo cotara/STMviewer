@@ -138,5 +138,10 @@
         <file>Resources/unnamed2.gif</file>
         <file>Resources/unnamed3.gif</file>
         <file>Resources/Shadow.png</file>
+        <file>Resources/command-line.svg</file>
+        <file>Resources/table.svg</file>
+        <file>Resources/scale.svg</file>
+        <file>Resources/Leftsidebar.svg</file>
+        <file>Resources/Rightsidebar.svg</file>
     </qresource>
 </RCC>

@@ -28,13 +28,20 @@ SOURCES += \
     centerviewer.cpp \
     console.cpp \
     firfilter.cpp \
+    historysettings.cpp \
         main.cpp \
+    maincontrolwidget.cpp \
         mainwindow.cpp \
+    managementwidget.cpp \
+    plissettings.cpp \
+    resultswidget.cpp \
     serialsettings.cpp \
     qcustomplot/qcustomplot.cpp \
     settingsshadowsfinddialog.cpp \
     shotviewer.cpp \
+    signalerrwidget.cpp \
 	statusbar.cpp \
+    transmitionsettings.cpp \
 	transp.cpp \
 	slip.cpp \
 
@@ -42,12 +49,19 @@ HEADERS += \
     centerviewer.h \
     console.h \
     firfilter.h \
+    historysettings.h \
+    maincontrolwidget.h \
         mainwindow.h \
+    managementwidget.h \
+    plissettings.h \
+    resultswidget.h \
     serialsettings.h \
     qcustomplot/qcustomplot.h \
     settingsshadowsfinddialog.h \
     shotviewer.h \
+    signalerrwidget.h \
 	statusbar.h \
+    transmitionsettings.h \
 	transp.h \
 	slip.h \
 	types.h \
