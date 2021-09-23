@@ -2,6 +2,8 @@
 
 ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
 {
+
+
     layout = new QVBoxLayout(this);
     setTitle("Результаты расчетов");
     //Результат
@@ -33,6 +35,7 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     ch2ShadowsLabel = new QLabel("Канал 2: ");
 
 
+
     layout->addWidget(ch1ShadowsLabel);
     layout->addWidget(leftShadow1Label);
     layout->addWidget(rightShadow1Label);
@@ -61,4 +64,10 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     layout->addWidget(m_centerViewer);
     m_centerViewer->setMinimumHeight(100);
     layout->addWidget(centerPositionLabel);
+
+
+
+
+
+
 }

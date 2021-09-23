@@ -5,7 +5,7 @@
 #include "slip.h"
 #include "transp.h"
 #include "statusbar.h"
-
+#include <QSplitter>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,16 +13,15 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->disconnect->setEnabled(false);
-    ui->ShdowSet->setCheckable(true);
+
     settings_ptr = new SerialSettings();
     serial = new QSerialPort();
-
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
+
     //Транспортный уровень SLIP протокола
     m_slip = new Slip(serial,m_console);
     connect(m_slip,&Slip::serialPortError,this,&MainWindow::on_disconnect_triggered);
-
     m_transp = new Transp(m_slip);
     connect(m_transp, &Transp::answerReceive, this, &MainWindow::handlerTranspAnswerReceive);
     connect(m_transp, &Transp::transpError, this, &MainWindow::handlerTranspError);
@@ -34,12 +33,22 @@ MainWindow::MainWindow(QWidget *parent) :
     //hbox = QHBoxLayout(widget)
     // hbox.setSpacing(10)
 
-//Виджеты интерфейса
-    viewer = new ShotViewer(this);
-    connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
+    //Статус бар
+    statusBar = new StatusBar(ui->statusBar);
+    connect(this, &MainWindow::statusUpdate, [this](bool online) { statusBar->setStatus(online); });
+    connect(this, &MainWindow::dataReadyUpdate, [this](int ready) { statusBar->setDataReady(ready); });
+    connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
+
+    //Виджеты интерфейса
+    layoutV = new QVBoxLayout();
+    centralWidget()->setLayout(layoutV);
 
     m_MainControlWidget = new MainControlWidget(this);
+    //m_MainControlWidget->setMaximumWidth(250);
+    viewer = new ShotViewer(this);
+    connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
     m_ManagementWidget = new ManagementWidget(this);
+    //m_ManagementWidget->setMaximumWidth(250);
 
     m_table = new QTableWidget(this);
     m_table->setColumnCount(2);
@@ -49,35 +58,35 @@ MainWindow::MainWindow(QWidget *parent) :
     m_table->horizontalHeader()->resizeSection(0, 50);//ширина
     m_table->horizontalHeader()->resizeSection(1, 50);
     m_table->hide();
+   // m_table->setMaximumWidth(150);
 
     //Консоль
     m_console = new Console(this);
-    m_console->setMaximumHeight(150);
+    //m_console->setMaximumHeight(150);
     m_console->hide();
 
-    //Статус бар
-    statusBar = new StatusBar(ui->statusBar);
-    connect(this, &MainWindow::statusUpdate, [this](bool online) { statusBar->setStatus(online); });
-    connect(this, &MainWindow::dataReadyUpdate, [this](int ready) { statusBar->setDataReady(ready); });
-    connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
+    QWidget *container = new QWidget;
+    QSplitter *splitterV = new QSplitter(Qt::Vertical, this);
+    QSplitter *splitterH = new QSplitter(Qt::Horizontal, this);
+    QVBoxLayout *qVBoxLayout  = new QVBoxLayout();
+
+    m_ManagementWidget->setMinimumWidth(150);
+
+    splitterH->addWidget(m_MainControlWidget);
+    splitterH->addWidget(viewer);
+    splitterH->addWidget(m_ManagementWidget);
+    splitterH->addWidget(m_table);
+    qVBoxLayout->addWidget(splitterH);
+    container->setLayout(qVBoxLayout);
 
 
+    splitterV->addWidget(container);
+    splitterV->addWidget(m_console);
+    layoutV->addWidget(splitterV);
 
-    layoutV = new QVBoxLayout();
-    centralWidget()->setLayout(layoutV);
-
-    layoutH = new QHBoxLayout();
-    layoutV->addLayout(layoutH);
-    layoutV->addWidget(m_console);
-
-    layoutH->addWidget(m_MainControlWidget);
-    m_MainControlWidget->setMaximumWidth(250);
-    layoutH->addWidget(viewer);
-    layoutH->addWidget(m_table);
-    m_table->setMaximumWidth(150);
-    layoutH->addWidget(m_ManagementWidget);
-    m_ManagementWidget->setMaximumWidth(250);
-
+    splitterH->setStretchFactor(0,1);
+    splitterH->setStretchFactor(1,40);
+    splitterH->setStretchFactor(2,1);
     //Коннекты от Настроек ПЛИС
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,this,&MainWindow::sendLazer1);
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,this,&MainWindow::sendLazer2);
@@ -106,16 +115,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->TableShow,&QAction::toggled,[=](bool i){if(i) m_table->show(); else m_table->hide();});
     connect(ui->ShowMainControl,&QAction::toggled,[=](bool i){if(i) m_MainControlWidget->show(); else m_MainControlWidget->hide();});
     connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) m_ManagementWidget->show(); else m_ManagementWidget->hide();});
+    connect(ui->AutoRange,&QAction::triggered,viewer, &ShotViewer::autoScale);
 
-    //Настройки интерфейса
-//    consoleEnable = new QCheckBox("Вывод в консоль");
-//    appSettingsLayout->addWidget(consoleEnable);
-//    consoleEnable->setChecked(false);
-//
+    //Пустой виджет, разделяющий кнопки на mainToolBar
+    QWidget* empty = new QWidget();
+    empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
+    ui->mainToolBar->insertWidget(ui->showConsole,empty);
 
-//    autoRangeGraph = new QPushButton("Автомасштаб");
-//    appSettingsLayout->addWidget(autoRangeGraph);
-//    connect(autoRangeGraph,&QPushButton::clicked,viewer, &ShotViewer::autoScale);
 
 
 //    tableSizeLayout = new QHBoxLayout;
@@ -792,18 +798,6 @@ void MainWindow::selectShot(int index){
             }
         }
 
-    }
-}
-
-
-//Показать консоль
-void MainWindow::consoleEnabledCheked(bool en){
-    if(en){
-        m_console->show();
-    }
-    else{
-        m_console->clear();
-        m_console->hide();
     }
 }
 

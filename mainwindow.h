@@ -84,7 +84,6 @@ private slots:
     void manualGetShotButton();
     void getPacketFromMCU(unsigned short n);
     void autoGetCheckBoxChanged(int);
-    void consoleEnabledCheked(bool);
     void autoSaveShotCheked(bool);
     void selectShot(int index);
     void on_clearButton();
@@ -111,34 +110,26 @@ private:
     SerialSettings *settings_ptr;
 
     void constructorTest();
-    //Интерфейс
-    MainControlWidget *m_MainControlWidget;
-    ManagementWidget *m_ManagementWidget;
-    Console *m_console;
+
     QSerialPort *serial;
     Slip *m_slip;
     Transp *m_transp;
     QTimer *m_timer;
-    StatusBar *statusBar;
+
+
+    //Интерфейс
+    QVBoxLayout *layoutV;
+    MainControlWidget *m_MainControlWidget;
+    ManagementWidget *m_ManagementWidget;
+    QTableWidget *m_table;
+    Console *m_console;
     ShotViewer *viewer;
     firFilter *filter;
-
     SettingsShadowsFindDialog *ShadowSettings;
-    QDir *dir;
-    //Итерфейс
-    QWidget *settingsWidget;
-    QHBoxLayout *layoutH;
-    QVBoxLayout *layoutV;
-    QHBoxLayout  *tableSizeLayout;
-
-
-    QCheckBox *consoleEnable, *tableEnable;
+    StatusBar *statusBar;
 
     QLabel *tableSizeLabel;
     QSpinBox  *tableSizeSpinbox;
-    QPushButton *autoRangeGraph;
-    QTableWidget *m_table;
-
 
     //Переменные
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH2In,shotsCH3,shotsCH4,shotsCH4In;
@@ -149,14 +140,17 @@ private:
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
     QVector<double> diameter, diameterPlis;
+    QVector<double> tempPLISextremums1,tempPLISextremums2;
 
     int tableSize=100;
+    bool m_online = false;
+
+
     //Работа с файлами
+    QDir *dir;
     QString dirname = "log";
     QString filename;
     QFile *file1,*file2,*file3,*file4;
-    QVector<double> tempPLISextremums1,tempPLISextremums2;
-    bool m_online = false;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
 
 };

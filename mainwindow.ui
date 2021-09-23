@@ -60,6 +60,7 @@
      <string>Инструменты</string>
     </property>
     <addaction name="ShdowSet"/>
+    <addaction name="AutoRange"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -89,7 +90,7 @@
    <addaction name="settings"/>
    <addaction name="separator"/>
    <addaction name="ShdowSet"/>
-   <addaction name="separator"/>
+   <addaction name="AutoRange"/>
    <addaction name="showConsole"/>
    <addaction name="TableShow"/>
    <addaction name="ShowMainControl"/>
@@ -190,6 +191,18 @@
    </property>
    <property name="toolTip">
     <string>Показать панель управления</string>
+   </property>
+  </action>
+  <action name="AutoRange">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/scale.svg</normaloff>:/1/Resources/scale.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Автомасштаб</string>
+   </property>
+   <property name="toolTip">
+    <string>Автомасштаб</string>
    </property>
   </action>
  </widget>

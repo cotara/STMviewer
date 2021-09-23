@@ -7,7 +7,18 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     file = new QFile();
+    QPalette palette;
+    QColor colorBck = {102, 102, 102};
+    QColor colorBck2 = {170, 170, 170};
+    QColor colorTxt = {255, 255, 255};
 
+    palette.setColor (QPalette::Window, colorBck);
+    palette.setColor (QPalette::WindowText, colorTxt);
+    palette.setColor (QPalette::Button, colorTxt);
+    palette.setColor (QPalette::ButtonText, colorBck);
+    palette.setColor (QPalette::Base, colorBck2);
+    palette.setColor (QPalette::PlaceholderText, colorBck2);
+    setPalette(palette);
     file->setFileName(filename);
     updateSettingsStruct();     //Обновили настройки из файла
     fillFileads();            //Заполнили поля

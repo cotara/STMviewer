@@ -18,7 +18,6 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     lazer2Label = new QLabel("Лазер 2:");
     saveButton = new QPushButton("Сохранить в EEPROM");
 
-
     lazer1Spinbox->setRange(10,50);
     lazer2Spinbox->setRange(10,50);
     lazer1Spinbox->setMaximumWidth(50);
