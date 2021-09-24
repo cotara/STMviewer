@@ -29,7 +29,18 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>STMViewer</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normalon>:/1/Resources/voice-record.svg</normalon>
+   </iconset>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(230, 255, 219);</string>
   </property>
   <widget class="QWidget" name="centralWidget"/>
   <widget class="QMenuBar" name="menuBar">

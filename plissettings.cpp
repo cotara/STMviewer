@@ -54,50 +54,49 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     borderLayout->addLayout(compCH1Layout);
     borderLayout->addLayout(compCH2Layout);
 
-    borderLeftSpinbox = new QSpinBox();
-    borderRightSpinbox = new QSpinBox();
-    compCH1Spinbox = new QSpinBox();
-    compCH2Spinbox = new QSpinBox();
+    borderLeftButton = new QPushButton();
+    borderRightButton = new QPushButton();
+    compCH1Button = new QPushButton();
+    compCH2Button = new QPushButton();
+    borderLeftButton->setText(QString::number(0));
+    borderRightButton->setText(QString::number(0));
+    compCH1Button->setText(QString::number(0));
+    compCH2Button->setText(QString::number(0));
+
+    borderLeftWidget = new EnterValueWidget(this);
+    borderRightWidget = new EnterValueWidget(this);
+    compCH1Widget = new EnterValueWidget(this);
+    compCH2Widget = new EnterValueWidget(this);
 
     borderLeftLabel = new QLabel("Лев. гр.:");
     borderRightLabel = new QLabel("Прав. гр.:");
     compCH1Label = new QLabel("Комп. кан. 1:");
     compCH2Label = new QLabel("Комп. кан. 2:");
 
-    borderLeftSpinbox->setRange(0,255);
-    borderRightSpinbox->setRange(0,255);
-    compCH1Spinbox->setRange(0,255);
-    compCH2Spinbox->setRange(0,255);
-
     borderLeftLayout->addWidget(borderLeftLabel);
-    borderLeftLayout->addWidget(borderLeftSpinbox);
+    borderLeftLayout->addWidget(borderLeftButton);
     borderRightLayout->addWidget(borderRightLabel);
-    borderRightLayout->addWidget(borderRightSpinbox);
+    borderRightLayout->addWidget(borderRightButton);
     compCH1Layout->addWidget(compCH1Label);
-    compCH1Layout->addWidget(compCH1Spinbox);
+    compCH1Layout->addWidget(compCH1Button);
     compCH2Layout->addWidget(compCH2Label);
-    compCH2Layout->addWidget(compCH2Spinbox);
+    compCH2Layout->addWidget(compCH2Button);
 
-    borderLeftSpinbox->setEnabled(false);
-    borderRightSpinbox->setEnabled(false);
-    compCH1Spinbox->setEnabled(false);
-    compCH2Spinbox->setEnabled(false);
+    connect(borderLeftWidget,&EnterValueWidget::sendValue, [=](int i)
+        {borderLeftButton->setText(QString::number(i)); emit sendBorderLeft(i);});
+    connect(borderRightWidget,&EnterValueWidget::sendValue, [=](int i)
+        {borderRightButton->setText(QString::number(i)); emit sendBorderRight(i);});
+    connect(compCH1Widget,&EnterValueWidget::sendValue, [=](int i)
+        {compCH1Button->setText(QString::number(i)); emit sendCompCH1(i);});
+    connect(compCH2Widget,&EnterValueWidget::sendValue, [=](int i)
+        {compCH2Button->setText(QString::number(i)); emit sendCompCH2(i);});
 
-    connect(borderLeftSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){emit sendBorderLeft(i);});
-    connect(borderRightSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){emit sendBorderRight(i);});
-    connect(compCH1Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){emit sendCompCH1(i);});
-    connect(compCH2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){emit sendCompCH2(i);});
+    connect(borderLeftButton,&QPushButton::clicked, [=]{borderLeftWidget->show();});
+    connect(borderRightButton,&QPushButton::clicked, [=]{borderRightWidget->show();});
+    connect(compCH1Button,&QPushButton::clicked, [=]{compCH1Widget->show();});
+    connect(compCH2Button,&QPushButton::clicked, [=]{compCH2Widget->show();});
 
     lazer1Spinbox->setEnabled(false);
     lazer2Spinbox->setEnabled(false);
     saveButton->setEnabled(false);
-    borderLeftSpinbox->setEnabled(false);
-    borderRightSpinbox->setEnabled(false);
-    compCH1Spinbox->setEnabled(false);
-    compCH2Spinbox->setEnabled(false);
-
 }

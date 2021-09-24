@@ -27,6 +27,7 @@ CONFIG += c++11
 SOURCES += \
     centerviewer.cpp \
     console.cpp \
+    entervaluewidget.cpp \
     firfilter.cpp \
     historysettings.cpp \
         main.cpp \
@@ -48,6 +49,7 @@ SOURCES += \
 HEADERS += \
     centerviewer.h \
     console.h \
+    entervaluewidget.h \
     firfilter.h \
     historysettings.h \
     maincontrolwidget.h \
@@ -67,6 +69,7 @@ HEADERS += \
 	types.h \
 
 FORMS += \
+        entervaluewidget.ui \
         mainwindow.ui \
         serialsettings.ui \
         settingsshadowsfinddialog.ui
