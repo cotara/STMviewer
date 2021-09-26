@@ -4,6 +4,7 @@
 HistorySettings::HistorySettings(QWidget *parent) : QGroupBox(parent)
 {
     setTitle("История сигнала");
+    setObjectName("historysettings");
     layout = new QVBoxLayout(this);
 
 

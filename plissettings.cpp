@@ -3,6 +3,7 @@
 PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
 {
     setTitle("Настройки ПЛИС");
+    setObjectName("plissettings");
     layout = new QVBoxLayout(this);
     lazerLayout = new QHBoxLayout();
     //Настройки лазера
@@ -99,4 +100,7 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     lazer1Spinbox->setEnabled(false);
     lazer2Spinbox->setEnabled(false);
     saveButton->setEnabled(false);
+
+
+    saveButton->setObjectName("saveButton");
 }

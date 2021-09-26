@@ -3,6 +3,7 @@
 SignalErrWidget::SignalErrWidget(QWidget *parent) : QGroupBox(parent)
 { 
     setTitle("Ошибки");
+    setObjectName("signalerrwidget");
     //Ошибки
     errorsLayout = new QVBoxLayout(this);       //Т.к. родителем назначен текущий виджет, то setLayout не нужен
     err1Layout = new QHBoxLayout();

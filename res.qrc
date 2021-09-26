@@ -147,5 +147,16 @@
         <file>Resources/sound-1781570_960_720.png</file>
         <file>Resources/png-transparent-sound-wave-acoustic-wave-sound-sound-wave-curve-template-blue-angle.png</file>
         <file>Resources/voice-record.svg</file>
+        <file>Resources/unnamed.jpg</file>
+    </qresource>
+    <qresource prefix="/qss">
+        <file>style.css</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file>Resources/Fonts/Nunito/Nunito-Light.ttf</file>
+        <file>Resources/Fonts/GranaPadano.ttf</file>
+        <file>Resources/Fonts/SF/SFUIText-Bold.ttf</file>
+        <file>Resources/Fonts/SF/SFUIText-Light.ttf</file>
+        <file>Resources/Fonts/SF/SFUIText-Regular.ttf</file>
     </qresource>
 </RCC>

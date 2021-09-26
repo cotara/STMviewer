@@ -5,6 +5,7 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsShadowsFindDialog)
 {
+    setObjectName("settingsshadowsfinddialog");
     ui->setupUi(this);
     file = new QFile();
     QPalette palette;

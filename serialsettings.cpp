@@ -8,6 +8,7 @@
 
 SerialSettings::SerialSettings(QDialog *parent) : QDialog(parent)
 {
+    setObjectName("serialsettings");
     serialSettings = new Ui::SerialSettings;            //
     serialSettings->setupUi(this);
     if(!fill_all()){

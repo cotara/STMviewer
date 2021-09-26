@@ -3,7 +3,7 @@
 ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
 {
 
-
+    setObjectName("resultswidget");
     layout = new QVBoxLayout(this);
     setTitle("Результаты расчетов");
     //Результат

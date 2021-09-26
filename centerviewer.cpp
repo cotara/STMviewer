@@ -1,6 +1,7 @@
 #include "centerviewer.h"
 
 centerViewer::centerViewer(QWidget *parent): QWidget(parent) {
+    setObjectName("centerviewer");
     layoutV = new QVBoxLayout;
     setLayout(layoutV);
 

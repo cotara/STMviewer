@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
 
+
     //Транспортный уровень SLIP протокола
     m_slip = new Slip(serial,m_console);
     connect(m_slip,&Slip::serialPortError,this,&MainWindow::on_disconnect_triggered);
@@ -44,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
     centralWidget()->setLayout(layoutV);
 
     m_MainControlWidget = new MainControlWidget(this);
+    //m_MainControlWidget->setStyleSheet(" background-color: #120A52;");
     //m_MainControlWidget->setMaximumWidth(250);
     viewer = new ShotViewer(this);
     connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
@@ -86,7 +88,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     splitterH->setStretchFactor(0,1);
     splitterH->setStretchFactor(1,40);
-    splitterH->setStretchFactor(2,1);
+    splitterH->setStretchFactor(2,2);
     //Коннекты от Настроек ПЛИС
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,this,&MainWindow::sendLazer1);
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,this,&MainWindow::sendLazer2);
@@ -168,7 +170,9 @@ MainWindow::MainWindow(QWidget *parent) :
    connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
-   //constructorTest();
+   constructorTest();
+
+
 
 }
 

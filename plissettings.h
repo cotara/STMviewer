@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QGroupBox>
 #include "entervaluewidget.h"
+#include <QFile>
 
 class PlisSettings: public QGroupBox
 {

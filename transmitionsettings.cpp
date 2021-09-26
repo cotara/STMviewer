@@ -3,6 +3,7 @@
 TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
 {
     setTitle("Параметры передачи");
+    setObjectName("transmitionsettings");
     layout = new QVBoxLayout(this);
 
     //Настройки передачи

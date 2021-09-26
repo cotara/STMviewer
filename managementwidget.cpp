@@ -2,6 +2,7 @@
 
 ManagementWidget::ManagementWidget(QWidget *parent) : QWidget(parent)
 {
+    setObjectName("managementwidget");
     layout = new QVBoxLayout(this);
     m_plisSettings = new PlisSettings(this);
     m_TransmitionSettings = new TransmitionSettings(this);
@@ -13,4 +14,5 @@ ManagementWidget::ManagementWidget(QWidget *parent) : QWidget(parent)
 
     layout->addStretch(1);
 
+    //setStyleSheet("background-color: #120A52;");
 }

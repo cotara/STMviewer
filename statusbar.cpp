@@ -9,6 +9,7 @@
 StatusBar::StatusBar(QStatusBar *statusBar)
     : m_statusBar(statusBar) {
 
+
     dataReadyLabel = new QLabel("Error Status", statusBar);
     dataReadyLabel->setStyleSheet(red);
     mcuLabel = new QLabel("Off-line", statusBar);

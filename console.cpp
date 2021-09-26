@@ -56,6 +56,7 @@
 Console::Console(QWidget *parent) :
     QPlainTextEdit(parent)
 {
+    setObjectName("console");
     document()->setMaximumBlockCount(5000);
     QPalette p = palette();
     p.setColor(QPalette::Base, Qt::black);

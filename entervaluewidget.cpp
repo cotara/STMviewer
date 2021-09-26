@@ -10,7 +10,7 @@ EnterValueWidget::EnterValueWidget(QWidget *parent) :
 
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Отправить");
     ui->buttonBox->button(QDialogButtonBox::Cancel)->setText("Отмена");
-
+    setObjectName("entervaluewidget");
 
 }
 

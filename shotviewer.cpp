@@ -3,6 +3,7 @@
 
 ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
 {
+    setObjectName("shotviewer");
     //Графики
     customPlot1 = new QCustomPlot();
     customPlot2 = new QCustomPlot();
