@@ -6,14 +6,14 @@
 #include <iostream>
 #include <QMessageBox>
 
-SerialSettings::SerialSettings(QDialog *parent) : QDialog(parent)
+SerialSettings::SerialSettings(QWidget *parent) : QDialog(parent), serialSettings(new Ui::SerialSettings)
 {
-    setObjectName("serialsettings");
-    serialSettings = new Ui::SerialSettings;            //
     serialSettings->setupUi(this);
+    setObjectName("serialsettings");   
     if(!fill_all()){
         QMessageBox::warning(this,"Внимание!","В системе нет ни одного COM-порта");
     }
+    setWindowTitle("Настройки подключения");
 }
 
 SerialSettings::~SerialSettings()

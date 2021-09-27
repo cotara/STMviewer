@@ -11,16 +11,9 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Параметры поиска тени</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="16" column="1">
-    <widget class="QPushButton" name="pushButton_2">
-     <property name="text">
-      <string>Отправить в МК</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="3">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="sizePolicy">
@@ -37,22 +30,15 @@
      </property>
     </widget>
    </item>
-   <item row="16" column="0">
-    <widget class="QPushButton" name="pushButton">
-     <property name="text">
-      <string>Подобрать</string>
-     </property>
-    </widget>
-   </item>
-   <item row="17" column="1">
-    <widget class="QProgressBar" name="progressBar">
-     <property name="value">
-      <number>24</number>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0" colspan="2">
     <layout class="QVBoxLayout" name="verticalLayout_5">
+     <item>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="text">
+        <string>Отправить в МК</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
@@ -640,6 +626,41 @@
       </layout>
      </item>
     </layout>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="etalonDiameterLabel">
+       <property name="text">
+        <string>Эталонное значение диаметра, мм</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="etalonDiameterSpinBox">
+       <property name="decimals">
+        <number>2</number>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Подобрать</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="19" column="0" colspan="2">
+    <widget class="QProgressBar" name="progressBar">
+     <property name="value">
+      <number>24</number>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

@@ -51,7 +51,7 @@
    </property>
    <widget class="QMenu" name="menu">
     <property name="title">
-     <string>Настройки</string>
+     <string>Подключение</string>
     </property>
     <addaction name="connect"/>
     <addaction name="disconnect"/>
@@ -129,7 +129,7 @@
      <normaloff>:/1/Resources/settings.png</normaloff>:/1/Resources/settings.png</iconset>
    </property>
    <property name="text">
-    <string>Настройки</string>
+    <string>Настройки подключения</string>
    </property>
   </action>
   <action name="ShdowSet">

@@ -8,7 +8,9 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     setTitle("Результаты расчетов");
     //Результат
     diametrLabel = new QLabel("Диаметр: ");
+    diametrLabel->setObjectName("BigLabel");
     diametrPlisLabel = new QLabel("Диаметр ПЛИС: ");
+    diametrPlisLabel->setObjectName("BigLabel");
     leftShadow1Label = new QLabel("   Лев.тень: ");
     rightShadow1Label = new QLabel("   Прав.тень: ");
     leftShadow2Label = new QLabel("   Лев.тень: ");
@@ -31,10 +33,13 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     shad2Ch2 = new QLabel("   Тень2: ");
     radius1 = new QLabel("   Радиус1: ");
     radius2 = new QLabel("   Радиус2: ");
-    ch1ShadowsLabel = new QLabel("Канал 1: ");
-    ch2ShadowsLabel = new QLabel("Канал 2: ");
+    ch1ShadowsLabel = new QLabel("Канал 1:");
+    ch2ShadowsLabel = new QLabel("Канал 2:");
 
-
+    ch1ShadowsLabel->setAlignment(Qt::AlignCenter);
+    ch2ShadowsLabel->setAlignment(Qt::AlignCenter);
+    ch1ShadowsLabel->setObjectName("BigLabel");
+    ch2ShadowsLabel->setObjectName("BigLabel");
 
     layout->addWidget(ch1ShadowsLabel);
     layout->addWidget(leftShadow1Label);
@@ -56,10 +61,14 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     layout->addWidget(shad1Ch2);
     layout->addWidget(shad2Ch2);
 
-    layout->addWidget(diametrLabel);
-
+    QFrame *line = new QFrame(this);
+    line->setObjectName("line");
+    line->setFrameShape(QFrame::HLine);
+    line->setLineWidth(1);
+    layout->addWidget(line);
     layout->addWidget(radius1);
     layout->addWidget(radius2);
+    layout->addWidget(diametrLabel);
     layout->addWidget(diametrPlisLabel);
     layout->addWidget(m_centerViewer);
     m_centerViewer->setMinimumHeight(100);

@@ -12,7 +12,7 @@ class SerialSettings : public QDialog
 {
     Q_OBJECT
 public:
-    explicit SerialSettings(QDialog *parent = nullptr);
+    explicit SerialSettings(QWidget *parent = nullptr);
     ~SerialSettings();
 
      bool fill_all();

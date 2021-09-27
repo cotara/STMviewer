@@ -148,6 +148,8 @@
         <file>Resources/png-transparent-sound-wave-acoustic-wave-sound-sound-wave-curve-template-blue-angle.png</file>
         <file>Resources/voice-record.svg</file>
         <file>Resources/unnamed.jpg</file>
+        <file>Resources/plus.svg</file>
+        <file>Resources/minus.svg</file>
     </qresource>
     <qresource prefix="/qss">
         <file>style.css</file>

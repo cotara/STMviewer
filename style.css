@@ -1,148 +1,132 @@
-
+/*#003AA3 - текст
+#5CA4FF - обводка
+*/
 QMainWindow{
-    background-color: #6A93D4;
+    background-color: white;
+}
+QToolBar {
+    background-color:#E0EEFF;
+    spacing: 7px; /* spacing between items in the tool bar */
+}
+QToolBar::separator {
+    background-color:#5CA4FF ;
+    width: 1px;
+}
+QFrame#line {
+    background: #A8CFFF;
+}
+QLabel{
+    color:#003AA3;
+    font-family: SFUIText-Light;
+    font-size: 12px;
+}
+QLabel#BigLabel{
+    color:#003AA3;
+    font-family: SFUIText-Bold;
+    font-size: 14px;
 }
 
-QLabel{
-    color:#224782;
-    font-family: SFUIText-Light;
-}
-QChechBox{
-    color:#224782;
-}
-/*
-.ResultsWidget{
-    background: #120A52;
-}
-.MainControlWidget{
-    background-color: #120A52;
-    color: white;
-}*/
-.ManagementWidget{
-    background-color: #6A93D4;
-}
 QPushButton{
     background: white;
-    border-radius: 5px;
+    color: #003AA3;
+    border-radius:4px;
+    border:1px solid #5CA4FF;
+    min-height:25px;
+    font-family: SFUIText-Bold;
+    font-size:16px;
+    padding-left:15px;
+    padding-right:15px;
 }
 QPushButton:hover{
-    background: #C48D2B;
+    background: #5CA4FF;
     color: white;
-    border-radius: 5px;
+
+}
+QPushButton:disabled{
+    background: #E0E0E0;
+    color: #969696;
+}
+QCheckBox{
+    font-family: SFUIText-Bold;
+    font-size:14px;
+    border-radius:4px;
+    min-height:25px;
+    color: #003AA3;
+    padding-left:5px;
+    padding-right:5px;
+}
+QCheckBox:unchecked{
+    color: #969696;
+}
+QSpinBox{
+    font-family: SFUIText-Bold;
+    font-size:14px;
+    border-radius:4px;
+    border:1px solid #5CA4FF;
+    min-height:25px;
+    color: #003AA3;
+    padding-left:5px;
+    padding-right:5px;
+}
+QSpinBox:disabled{
+    color: #969696;
+}
+QDoubleSpinBox{
+    font-family: SFUIText-Bold;
+    font-size:14px;
+    border-radius:4px;
+    border:1px solid #5CA4FF;
+    min-height:25px;
+    color: #003AA3;
+    padding-left:5px;
+    padding-right:5px;
+}
+QComboBox{
+    font-family: SFUIText-Bold;
+    font-size:14px;
+    border-radius:4px;
+    border:1px solid #5CA4FF;
+    min-height:25px;
+    color: #003AA3;
+    padding-left:5px;
+    padding-right:5px;
 }
 
-/***********Настройки ПЛИС*************/
-PlisSettings{
-    background: #FFE0A9;
-    border: 2px solid #D5A95D;
+
+/*Любой групбокс*/
+QGroupBox{
+    border: 1px solid #5CA4FF;
     font: bold 14px;
-    /*margin-top: 3ex;*/
+    font-family: SFUIText-Bold;
+    margin-bottom: 5ex;
     padding-top: 20px;
-
 }
-PlisSettings::title {
+QGroupBox::title {
     subcontrol-position: top center; /* position at the top center */
-    color: #D5A95D;
+    color: #003AA3;
 }
-
-PlisSettings QPushButton:hover{
-    background: #120A52;
-    color: white;
-    border-radius: 5px;
-}
-PlisSettings QPushButton{
-    background: white;
-    border-radius: 5px;
-}
-
-/**************************************/
-/***************История****************/
-HistorySettings{
-    background: #FFE0A9;
-    border: 2px solid #D5A95D;
-    font: bold 14px;
-    /*margin-top: 3ex;*/
-    padding-top: 20px;
-}
-
-HistorySettings::title{
-    subcontrol-position: top center;
-}
-/**************************************/
-
-/***************Результаты****************/
-ResultsWidget{
-    background: #FFE0A9;
-    border: 2px solid #D5A95D;
-    font: bold 14px;
-    /*margin-top: 3ex;*/
-    padding-top: 20px;
-}
-ResultsWidget::title {
-    subcontrol-position: top center; /* position at the top center */
-    color: #D5A95D;
-}
-/**************************************/
-
-
-/***************Ошибки****************/
-SignalErrWidget{
-    background: #FFE0A9;
-    border: 2px solid #D5A95D;
-    font: bold 14px;
-    /*margin-top: 3ex;*/
-    padding-top: 20px;
-}
-SignalErrWidget::title {
-    subcontrol-position: top center; /* position at the top center */
-    color: #D5A95D;
-}
-/**************************************/
-
-/***************Ошибки****************/
-TransmitionSettings{
-    background: #FFE0A9;
-    border: 2px solid #D5A95D;
-    font: bold 14px;
-    /*margin-top: 3ex;*/
-    padding-top: 20px;
-}
-TransmitionSettings::title {
-    subcontrol-position: top center; /* position at the top center */
-    color: #D5A95D;
-}
-
-
-
 
 QSplitter::handle{
     width: 2px;
     height: 2px;
-    background: #4169A9;
-}
-
-QSplitter::handle:hover {
-    width: 5px;
-    height: 5px;
-    background: #224782;
+    background: #E0EEFF;
 }
 
 QSplitter::handle:pressed{
+    background: #B5B5B5;
+}
+
+
+QProgressBar {
+    border: 1px solid #5CA4FF;
+    border-radius: 5px;
+    text-align: center;
+    color:#003AA3;
+    font-size:16px;
+}
+
+QProgressBar::chunk {
+    background-color: #B3D5FF;
     width: 10px;
-    height: 10px;
-    background: #EFF5FF
+    margin: 0.5px;
 }
-/**************************************/
-
-/*ShotViewer#shotviewer{
-    background: #120A52;
-}
-
-HistorySettings#historysettings{
-    background: #120A52;
-}
-
-EnterValueWidget#entervaluewidget{
-    background: #120A52;
-}
-*/

@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>SerialSettings</class>
  <widget class="QDialog" name="SerialSettings">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Настройки подключения</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="2">
@@ -110,7 +113,7 @@
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap resource="resources.qrc">:/new/Resources/004-engine.png</pixmap>
+      <pixmap>:/new/Resources/004-engine.png</pixmap>
      </property>
      <property name="scaledContents">
       <bool>true</bool>
@@ -213,8 +216,6 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

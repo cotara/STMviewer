@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->disconnect->setEnabled(false);
 
-    settings_ptr = new SerialSettings();
+    settings_ptr = new SerialSettings(this);
     serial = new QSerialPort();
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
@@ -596,10 +596,11 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             m_ManagementWidget->m_plisSettings->lazer1Spinbox->setValue(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4)));
             m_ManagementWidget->m_plisSettings->lazer2Spinbox->setValue(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6)));
-            //m_ManagementWidget->m_plisSettings->borderLeftSpinbox->setValue(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8)));
-            //m_ManagementWidget->m_plisSettings->borderRightSpinbox->setValue(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10)));
-            //m_ManagementWidget->m_plisSettings->compCH1Spinbox->setValue(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12)));
-            //m_ManagementWidget->m_plisSettings->compCH2Spinbox->setValue(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14)));
+
+            m_ManagementWidget->m_plisSettings->borderLeftButton->setText(QString::number(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8))));
+            m_ManagementWidget->m_plisSettings->borderRightButton->setText(QString::number(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10))));
+            m_ManagementWidget->m_plisSettings->compCH1Button->setText(QString::number(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12))));
+            m_ManagementWidget->m_plisSettings->compCH2Button->setText(QString::number(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14))));
             bytes.remove(0, 16);
 
 
@@ -717,8 +718,8 @@ void MainWindow::selectShot(int index){
             ch = shotsCH2[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
             viewer->addLines(tempPLISextremums1,1,1);
-            //viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftSpinbox->value()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightSpinbox->value())},1,3);
-            //viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Spinbox->value())},1,3);
+            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt(),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt()))},1,3);
+            viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Button->text().toInt())},1,3);
             if(tempPLISextremums1.size()==4){
                 shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
 
@@ -754,8 +755,8 @@ void MainWindow::selectShot(int index){
             ch = shotsCH4[shotNum];
             viewer->addUserGraph(ch,ch.size(),4);
             viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
-            //viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftSpinbox->value()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightSpinbox->value())},2,3);
-            //viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Spinbox->value())},2,3);
+            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);
+            viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Button->text().toInt())},2,3);
             if(tempPLISextremums2.size()==4){
                 shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
                 m_MainControlWidget->m_resultWidget->shad1Ch2->setText("   Тень1: " + QString::number(shadowsCh2Plis.at(0)));

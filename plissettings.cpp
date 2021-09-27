@@ -17,7 +17,7 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     lazer2Spinbox = new QSpinBox();
     lazer1Label = new QLabel("Лазер 1:");
     lazer2Label = new QLabel("Лазер 2:");
-    saveButton = new QPushButton("Сохранить в EEPROM");
+    saveButton = new QPushButton("Сохранить");
 
     lazer1Spinbox->setRange(10,50);
     lazer2Spinbox->setRange(10,50);
@@ -69,10 +69,14 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     compCH1Widget = new EnterValueWidget(this);
     compCH2Widget = new EnterValueWidget(this);
 
-    borderLeftLabel = new QLabel("Лев. гр.:");
-    borderRightLabel = new QLabel("Прав. гр.:");
-    compCH1Label = new QLabel("Комп. кан. 1:");
-    compCH2Label = new QLabel("Комп. кан. 2:");
+    borderLeftLabel = new QLabel("Л.Гр.:");
+    borderRightLabel = new QLabel("П.Гр.:");
+    compCH1Label = new QLabel("Ур.К1:");
+    compCH2Label = new QLabel("Ур.К2:");
+    borderLeftLabel->setAlignment(Qt::AlignCenter);
+    borderRightLabel->setAlignment(Qt::AlignCenter);
+    compCH1Label->setAlignment(Qt::AlignCenter);
+    compCH2Label->setAlignment(Qt::AlignCenter);
 
     borderLeftLayout->addWidget(borderLeftLabel);
     borderLeftLayout->addWidget(borderLeftButton);
@@ -84,13 +88,13 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     compCH2Layout->addWidget(compCH2Button);
 
     connect(borderLeftWidget,&EnterValueWidget::sendValue, [=](int i)
-        {borderLeftButton->setText(QString::number(i)); emit sendBorderLeft(i);});
+        {emit sendBorderLeft(i);});
     connect(borderRightWidget,&EnterValueWidget::sendValue, [=](int i)
-        {borderRightButton->setText(QString::number(i)); emit sendBorderRight(i);});
+        { emit sendBorderRight(i);});
     connect(compCH1Widget,&EnterValueWidget::sendValue, [=](int i)
-        {compCH1Button->setText(QString::number(i)); emit sendCompCH1(i);});
+        {emit sendCompCH1(i);});
     connect(compCH2Widget,&EnterValueWidget::sendValue, [=](int i)
-        {compCH2Button->setText(QString::number(i)); emit sendCompCH2(i);});
+        {emit sendCompCH2(i);});
 
     connect(borderLeftButton,&QPushButton::clicked, [=]{borderLeftWidget->show();});
     connect(borderRightButton,&QPushButton::clicked, [=]{borderRightWidget->show();});

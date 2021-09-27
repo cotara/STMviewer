@@ -5,6 +5,7 @@
 #include <QGroupBox>
 #include <QLabel>
 #include "centerviewer.h"
+#include <QFrame>
 
 class ResultsWidget : public QGroupBox
 {
