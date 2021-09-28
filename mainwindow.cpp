@@ -49,7 +49,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //m_MainControlWidget->setMaximumWidth(250);
     viewer = new ShotViewer(this);
     connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
-    m_ManagementWidget = new ManagementWidget(this);
+    m_ManagementWidget = new ManagementWidget(this);\
+    packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
     //m_ManagementWidget->setMaximumWidth(250);
 
     m_table = new QTableWidget(this);
@@ -170,7 +171,7 @@ MainWindow::MainWindow(QWidget *parent) :
    connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
-   constructorTest();
+   //constructorTest();
 
 
 
@@ -549,8 +550,60 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
         countAvaibleDots=value;
+        bytes.remove(0, 3);
         if (value != NO_DATA_READY) {
             dataReady = value;
+
+            //Забираем 16 байт метаданных
+            tempPLISextremums2.clear();
+            tempPLISextremums1.clear();
+            for(int i=0;i<8;i+=2){
+                tempPLISextremums2.prepend(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+0);
+                tempPLISextremums1.prepend(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+0);
+            }
+            m_MainControlWidget->m_resultWidget->extr1Ch1->setText("   Экстр1: " + QString::number(tempPLISextremums1.at(0)));
+            m_MainControlWidget->m_resultWidget->extr2Ch1->setText("   Экстр2: " + QString::number(tempPLISextremums1.at(1)));
+            m_MainControlWidget->m_resultWidget->extr3Ch1->setText("   Экстр3: " + QString::number(tempPLISextremums1.at(2)));
+            m_MainControlWidget->m_resultWidget->extr4Ch1->setText("   Экстр4: " + QString::number(tempPLISextremums1.at(3)));
+            m_MainControlWidget->m_resultWidget->extr1Ch2->setText("   Экстр1: " + QString::number(tempPLISextremums2.at(0)));
+            m_MainControlWidget->m_resultWidget->extr2Ch2->setText("   Экстр2: " + QString::number(tempPLISextremums2.at(1)));
+            m_MainControlWidget->m_resultWidget->extr3Ch2->setText("   Экстр3: " + QString::number(tempPLISextremums2.at(2)));
+            m_MainControlWidget->m_resultWidget->extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
+            bytes.remove(0, 16);
+
+            m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(0),1);   //Младшие значащие байты
+            m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(2),2);
+            m_ManagementWidget->m_plisSettings->lazer1Spinbox->setValue(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4)));
+            m_ManagementWidget->m_plisSettings->lazer2Spinbox->setValue(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6)));
+            m_ManagementWidget->m_plisSettings->borderLeftButton->setText(QString::number(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8))));
+            m_ManagementWidget->m_plisSettings->borderRightButton->setText(QString::number(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10))));
+            m_ManagementWidget->m_plisSettings->compCH1Button->setText(QString::number(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12))));
+            m_ManagementWidget->m_plisSettings->compCH2Button->setText(QString::number(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14))));
+            bytes.remove(0, 16);
+
+            if(tempPLISextremums1.size()==4){
+                shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
+
+                m_MainControlWidget->m_resultWidget->shad1Ch1->setText("   Тень1: " + QString::number(shadowsCh1Plis.at(0)));
+                m_MainControlWidget->m_resultWidget->shad2Ch1->setText("   Тень2: " + QString::number(shadowsCh1Plis.at(1)));
+            }
+            if(tempPLISextremums2.size()==4){
+                shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
+                m_MainControlWidget->m_resultWidget->shad1Ch2->setText("   Тень1: " + QString::number(shadowsCh2Plis.at(0)));
+                m_MainControlWidget->m_resultWidget->shad2Ch2->setText("   Тень2: " + QString::number(shadowsCh2Plis.at(1)));
+            }
+
+            if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
+                diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
+                m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0)*1000 + diameterPlis.at(1)*1000));
+                m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)*1000));
+                m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)*1000));
+                if(diameterPlis.at(0)<0){
+                    int temp;
+                    temp++;
+                }
+            }
+
             if(m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->isChecked() || notYetFlag){                       //Если включен автозапрос данных или не вычитали все пачку каналов
                 manualGetShotButton();                                                  //Запрашиваем шот
             }
@@ -570,41 +623,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
                 writeToLogfileMeta(QString::number(value));
-
-            //Забираем 16 байт метаданных
-            tempPLISextremums2.clear();
-            tempPLISextremums1.clear();
-            for(int i=0;i<8;i+=2){
-                tempPLISextremums2.prepend(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+0);
-                tempPLISextremums1.prepend(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+0);
-            }
-
-            m_MainControlWidget->m_resultWidget->extr1Ch1->setText("   Экстр1: " + QString::number(tempPLISextremums1.at(0)));
-            m_MainControlWidget->m_resultWidget->extr2Ch1->setText("   Экстр2: " + QString::number(tempPLISextremums1.at(1)));
-            m_MainControlWidget->m_resultWidget->extr3Ch1->setText("   Экстр3: " + QString::number(tempPLISextremums1.at(2)));
-            m_MainControlWidget->m_resultWidget->extr4Ch1->setText("   Экстр4: " + QString::number(tempPLISextremums1.at(3)));
-            m_MainControlWidget->m_resultWidget->extr1Ch2->setText("   Экстр1: " + QString::number(tempPLISextremums2.at(0)));
-            m_MainControlWidget->m_resultWidget->extr2Ch2->setText("   Экстр2: " + QString::number(tempPLISextremums2.at(1)));
-            m_MainControlWidget->m_resultWidget->extr3Ch2->setText("   Экстр3: " + QString::number(tempPLISextremums2.at(2)));
-            m_MainControlWidget->m_resultWidget->extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
-
-            bytes.remove(0, 16);
-
-            m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(0),1);   //Младшие значащие байты
-            m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(2),1);
-
-
-            m_ManagementWidget->m_plisSettings->lazer1Spinbox->setValue(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4)));
-            m_ManagementWidget->m_plisSettings->lazer2Spinbox->setValue(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6)));
-
-            m_ManagementWidget->m_plisSettings->borderLeftButton->setText(QString::number(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8))));
-            m_ManagementWidget->m_plisSettings->borderRightButton->setText(QString::number(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10))));
-            m_ManagementWidget->m_plisSettings->compCH1Button->setText(QString::number(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12))));
-            m_ManagementWidget->m_plisSettings->compCH2Button->setText(QString::number(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14))));
-            bytes.remove(0, 16);
-
-
-
 
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
             statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
@@ -718,14 +736,9 @@ void MainWindow::selectShot(int index){
             ch = shotsCH2[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
             viewer->addLines(tempPLISextremums1,1,1);
-            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt(),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt()))},1,3);
+            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},1,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Button->text().toInt())},1,3);
-            if(tempPLISextremums1.size()==4){
-                shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
 
-                m_MainControlWidget->m_resultWidget->shad1Ch1->setText("   Тень1: " + QString::number(shadowsCh1Plis.at(0)));
-                m_MainControlWidget->m_resultWidget->shad2Ch1->setText("   Тень2: " + QString::number(shadowsCh1Plis.at(1)));
-            }
             viewer->addLines(shadowsCh1,1,2);
         }
         if(shotsCH2In.contains(shotNum)){
@@ -737,9 +750,7 @@ void MainWindow::selectShot(int index){
             for (int i = 0;i<4;i++){
                 xDots.append(dots.at(i).at(0));
             }
-
             shadowsCh1 = filter->shadowFind(xDots);
-
             m_MainControlWidget->m_resultWidget->leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
             m_MainControlWidget->m_resultWidget->rightShadow1Label->setText("   Прав. тень: " +QString::number(shadowsCh1.at(1)));
         }
@@ -757,11 +768,7 @@ void MainWindow::selectShot(int index){
             viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Button->text().toInt())},2,3);
-            if(tempPLISextremums2.size()==4){
-                shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
-                m_MainControlWidget->m_resultWidget->shad1Ch2->setText("   Тень1: " + QString::number(shadowsCh2Plis.at(0)));
-                m_MainControlWidget->m_resultWidget->shad2Ch2->setText("   Тень2: " + QString::number(shadowsCh2Plis.at(1)));
-            }
+
             viewer->addLines(shadowsCh2,2,2);
         }
         if(shotsCH4In.contains(shotNum)){
@@ -786,17 +793,6 @@ void MainWindow::selectShot(int index){
             m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
 
         }
-        if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
-            diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
-            m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0)*1000 + diameterPlis.at(1)*1000));
-            m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)*1000));
-            m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)*1000));
-            if(diameterPlis.at(0)<0){
-                int temp;
-                temp++;
-            }
-        }
-
     }
 }
 
