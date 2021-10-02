@@ -23,6 +23,8 @@ private slots:
 
     void on_buttonBox_rejected();
 
+    void on_pushButton_3_clicked();
+
 private:
     Ui::SettingsShadowsFindDialog *ui;
     QFile *file;
