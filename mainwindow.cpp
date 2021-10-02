@@ -171,7 +171,7 @@ MainWindow::MainWindow(QWidget *parent) :
    connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
-   //constructorTest();
+   constructorTest();
 
 
 

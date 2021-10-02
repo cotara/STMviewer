@@ -99,7 +99,7 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
           outShifted.append(15,0);
    return outShifted;
 }
-
+//В один проход
 QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
     const unsigned int start= 100, stop = len-100;                          //Начало и конец поиска экстремумов
     int  backMinsIndex=0;                                                   //индекс спада в векторе минимумов
@@ -121,7 +121,7 @@ QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
            state=0;                                                         //сейчс прямой участок
        }
        else if(ch>chPrev){                                                  //Если текущее значение больше предыдущего, это значит, что график пошел вверх
-            if(down > 1){                                                   //Если состояние невозрастания и оно достаточно (4), то Нашли минимум
+            if(down > 1){                                                   //Если состояние невозрастания и оно достаточно (, то Нашли минимум
                 yCurrentMin = chPrev;
                 if(state==0)                                                //Если экстремум найден после прямого участка
                     xCurrentMin = (j-1+xStartStraight)/2;                   //Берем середину прямого участка
@@ -284,59 +284,42 @@ QVector <QVector<double>> firFilter::extrFind(QByteArray &in,int len){
 
 //находит левую и правую тень для одного канала
 QVector<double> firFilter::shadowFind(QVector<double> dots){
-    QVector<double> x0;
+    QVector<double> x;
     double delta1 = dots.at(1)-dots.at(0);
-    double delta4 = dots.at(3)-dots.at(2);
-    //double delta1 = dots.at(0)-dots.at(4);
-    //double delta4 = dots.at(5)-dots.at(1);
-    //double delta2 = dots.at(0)-dots.at(2);
-    //double delta3 = dots.at(2)-dots.at(4);
+    double delta2 = dots.at(3)-dots.at(2);
 
-    //double delta5 = dots.at(3)-dots.at(1);
-    //double delta6 = dots.at(5)-dots.at(3);
 
     double y1=la*L*L*p1/(4*delta1*delta1*res*res + la*L*p1);
-    double y4=la*L*L*p1/(4*delta4*delta4*res*res + la*L*p1);
-    //double y2=la*L*L*p2/(4*delta2*delta2*res*res + la*L*p2);
-    //double y3=la*L*L*p3/(4*delta3*delta3*res*res + la*L*p3);
-    //double y5=la*L*L*p2/(4*delta5*delta5*res*res + la*L*p2);
-    //double y6=la*L*L*p3/(4*delta6*delta6*res*res + la*L*p3);
+    double y2=la*L*L*p1/(4*delta2*delta2*res*res + la*L*p1);
+
 
     double x01=dots.at(1)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
-    double x04=dots.at(2)-sqrt(la*L*(L-y4)*1.5/(2*y4))/res;
-//    double x01=dots.at(0)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
-//    double x04=dots.at(1)-sqrt(la*L*(L-y4)*1.5/(2*y4))/res;
-    //double x02=dots.at(2)+sqrt(la*L*(L-y2)*3.5/(2*y2))/res;
-    //double x03=dots.at(4)+sqrt(la*L*(L-y3)*5.5/(2*y3))/res;
-    //double x05=dots.at(3)-sqrt(la*L*(L-y5)*3.5/(2*y5))/res;
-    //double x06=dots.at(5)-sqrt(la*L*(L-y6)*5.5/(2*y6))/res;
+    double x02=dots.at(2)-sqrt(la*L*(L-y2)*1.5/(2*y2))/res;
 
-    x0.append(x01);
-    x0.append(x04);
-    //x0.append(x02);
-    //x0.append(x03);
-    //x0.append(x05);
-    //x0.append(x06);
-    return x0;
+
+    x.append(x01);
+    x.append(x02);
+
+    return x;
 }
 
 QVector<double> firFilter::shadowFind(QVector<unsigned int> dots)
 {
-    QVector<double> x0;
+    QVector<double> x;
 
     double delta1 = dots.at(1)-dots.at(0);
-    double delta4 = dots.at(3)-dots.at(2);
+    double delta2 = dots.at(3)-dots.at(2);
 
     double y1=la*L*L*p1/(4*delta1*delta1*res*res + la*L*p1);
-    double y4=la*L*L*p1/(4*delta4*delta4*res*res + la*L*p1);
+    double y2=la*L*L*p1/(4*delta2*delta2*res*res + la*L*p1);
 
     double x01=dots.at(1)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
-    double x04=dots.at(2)-sqrt(la*L*(L-y4)*1.5/(2*y4))/res;
+    double x04=dots.at(2)-sqrt(la*L*(L-y2)*1.5/(2*y2))/res;
 
-    x0.append(x01);
-    x0.append(x04);
+    x.append(x01);
+    x.append(x04);
 
-    return x0;
+    return x;
 }
 
 QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<double> shadowsCh2){
@@ -370,20 +353,16 @@ QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<doub
 
 void firFilter::updateSettings(QList<double> &s)
 {
-    if(s.size()==12){
+    if(s.size()==9){
         la = s.at(0);
         L = s.at(1);
-        p1 = s.at(2);
-        p2 = s.at(3);
-        p3 = s.at(4);
-        res = s.at(5);
-        Nx = s.at(6);
-        Ny = s.at(7);
-        Hx = s.at(8);
-        Hy = s.at(9);
-        Cx = s.at(10);
-        Cy = s.at(11);
-        res2=res*1000;
+        res = s.at(2);
+        Nx = s.at(3);
+        Ny = s.at(4);
+        Hx = s.at(5);
+        Hy = s.at(6);
+        Cx = s.at(7);
+        Cy = s.at(8);
     }
     else
          QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);

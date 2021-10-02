@@ -26,33 +26,27 @@ void SettingsShadowsFindDialog::fillFileads()
 {
     ui->laSpinBox->setValue(paramsDouble.at(0));
     ui->LSpinBox->setValue(paramsDouble.at(1));
-    ui->p1SpinBox->setValue(paramsDouble.at(2));
-    ui->p2SpinBox->setValue(paramsDouble.at(3));
-    ui->p3SpinBox->setValue(paramsDouble.at(4));
-    ui->resSpinBox->setValue(paramsDouble.at(5));
-    ui->NxSpinBox->setValue(paramsDouble.at(6));
-    ui->NySpinBox->setValue(paramsDouble.at(7));
-    ui->HxSpinBox->setValue(paramsDouble.at(8));
-    ui->HySpinBox->setValue(paramsDouble.at(9));
-    ui->CxSpinBox->setValue(paramsDouble.at(10));
-    ui->CySpinBox->setValue(paramsDouble.at(11));
+    ui->resSpinBox->setValue(paramsDouble.at(2));
+    ui->NxSpinBox->setValue(paramsDouble.at(3));
+    ui->NySpinBox->setValue(paramsDouble.at(4));
+    ui->HxSpinBox->setValue(paramsDouble.at(5));
+    ui->HySpinBox->setValue(paramsDouble.at(6));
+    ui->CxSpinBox->setValue(paramsDouble.at(7));
+    ui->CySpinBox->setValue(paramsDouble.at(8));
 }
 
 void SettingsShadowsFindDialog::writeToFile()
 {
     QString tempToWrite;
-    tempToWrite =  "la=" +QString::number(ui->laSpinBox->value(),'g',10)+ '\n'+        //Здесь обрезает до 6 знаков после запятой
-                   "L=" + QString::number(ui->LSpinBox->value(),'g',10) + '\n'+
-                    "p1=" + QString::number(ui->p1SpinBox->value(),'g',10) + '\n'+
-                    "p2=" + QString::number(ui->p2SpinBox->value(),'g',10) + '\n'+
-                    "p3=" + QString::number(ui->p3SpinBox->value(),'g',10) + '\n'+
-                    "res=" + QString::number(ui->resSpinBox->value(),'g',10) + '\n'+
-                    "Nx=" + QString::number(ui->NxSpinBox->value(),'g',10) + '\n'+
-                    "Ny=" + QString::number(ui->NySpinBox->value(),'g',10) + '\n'+
-                    "Hx=" + QString::number(ui->HxSpinBox->value(),'g',10) + '\n'+
-                    "Hy=" + QString::number(ui->HySpinBox->value(),'g',10) + '\n'+
-                    "Cx=" + QString::number(ui->CxSpinBox->value(),'g',10) + '\n'+
-                    "Cy=" + QString::number(ui->CySpinBox->value(),'g',10);
+    tempToWrite =  "la=" +QString::number(ui->laSpinBox->value(),'g',5)+ '\n'+        //Здесь обрезает до 6 знаков после запятой
+                   "L=" + QString::number(ui->LSpinBox->value(),'g',1) + '\n'+
+                    "res=" + QString::number(ui->resSpinBox->value(),'g',0) + '\n'+
+                    "Nx=" + QString::number(ui->NxSpinBox->value(),'g',1) + '\n'+
+                    "Ny=" + QString::number(ui->NySpinBox->value(),'g',1) + '\n'+
+                    "Hx=" + QString::number(ui->HxSpinBox->value(),'g',1) + '\n'+
+                    "Hy=" + QString::number(ui->HySpinBox->value(),'g',1) + '\n'+
+                    "Cx=" + QString::number(ui->CxSpinBox->value(),'g',1) + '\n'+
+                    "Cy=" + QString::number(ui->CySpinBox->value(),'g',1);
     if(file->isOpen())
          file->close();
     if(!file->open(QIODevice::WriteOnly)){
@@ -102,12 +96,9 @@ void SettingsShadowsFindDialog::defaultToFile()
 {
 
     QString tempToWrite;
-    tempToWrite =  "la=" +QString::number(0.000000905,'g',10)+ '\n'+        //Здесь обрезает до 6 знаков после запятой
-                   "L=" + QString::number(0.2074,'g',10) + '\n'+
-                    "p1=" + QString::number(2.51087470,'g',10) + '\n'+
-                    "p2=" + QString::number(0.83484861,'g',10) + '\n'+
-                    "p3=" + QString::number(0.45007122,'g',10) + '\n'+
-                    "res=" + QString::number(0.000004,'g',10) + '\n'+
+    tempToWrite =  "la=" +QString::number(0.905)+ '\n'+        //Здесь обрезает до 6 знаков после запятой
+                   "L=" + QString::number(207400) + '\n'+
+                    "res=" + QString::number(4,'g',10) + '\n'+
                     "Nx=" + QString::number(5320,'g',10) + '\n'+
                     "Ny=" + QString::number(5320,'g',10) + '\n'+
                     "Hx=" + QString::number(207.4,'g',10) + '\n'+
@@ -136,4 +127,9 @@ void SettingsShadowsFindDialog::on_buttonBox_accepted(){
 
 void SettingsShadowsFindDialog::on_buttonBox_rejected(){
     fillFileads();      //Заполнили поля из переменной
+}
+
+void SettingsShadowsFindDialog::on_pushButton_3_clicked()
+{
+
 }
