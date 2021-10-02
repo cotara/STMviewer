@@ -18,7 +18,7 @@ public:
     ~AutoFindWizard();
     catchDataDialog *catchData;
     void setExtremums(QVector<QVector<double>> &extr);
-    void accept();
+    void accept() override;
 
 private slots:
     void on_AutoFindWizard_currentIdChanged(int id);

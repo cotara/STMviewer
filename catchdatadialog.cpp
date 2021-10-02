@@ -101,10 +101,10 @@ void catchDataDialog::setButtonPushed(QVector <double> data, int i)
 void catchDataDialog::clear()
 {
     QFile file;
+    QByteArray style;
     file.setFileName(":/qss/styleWhiteButtons.css");//Красим кнопку желтой
     if(file.open(QFile::ReadOnly)){
-          QByteArray style = file.readAll();
-          setStyleSheet(style);
+          style = file.readAll();
           file.close();
     }
 
@@ -118,6 +118,16 @@ void catchDataDialog::clear()
     ui->pushButton_7->setText("");
     ui->pushButton_8->setText("");
     ui->pushButton_9->setText("");
+
+    ui->pushButton->setStyleSheet(style);
+    ui->pushButton_2->setStyleSheet(style);
+    ui->pushButton_3->setStyleSheet(style);
+    ui->pushButton_4->setStyleSheet(style);
+    ui->pushButton_5->setStyleSheet(style);;
+    ui->pushButton_6->setStyleSheet(style);
+    ui->pushButton_7->setStyleSheet(style);
+    ui->pushButton_8->setStyleSheet(style);
+    ui->pushButton_9->setStyleSheet(style);
 
 }
 

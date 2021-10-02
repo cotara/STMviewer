@@ -624,6 +624,24 @@
      </layout>
     </item>
     <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Минимальная достигнутая ошибка, мкм</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="bestErr">
+        <property name="text">
+         <string>0</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
      <widget class="QProgressBar" name="progressBar">
       <property name="value">
        <number>0</number>

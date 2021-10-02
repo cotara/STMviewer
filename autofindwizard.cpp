@@ -56,7 +56,8 @@ void AutoFindWizard::setExtremums(QVector<QVector<double> > &extr){
 void AutoFindWizard::accept()
 {
     catchData->clear();
-    hide();
+    QDialog::accept();
+    restart();
 }
 
 //Алгоритм подбора параметров
@@ -170,7 +171,7 @@ void AutoFindWizard::autoFindAlg()
     ui->CxSpinBox_2->setValue(bestCx);
     ui->CySpinBox_2->setValue(bestCy);
     ui->resultDiameter->setText(QString::number(ui->etalonDiameterSpinBox->value()+bestErr/1000,'g',10));
-
+    ui->bestErr->setText(QString::number(bestErr,'g',10));
 }
 
 
