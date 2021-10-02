@@ -153,6 +153,8 @@
     </qresource>
     <qresource prefix="/qss">
         <file>style.css</file>
+        <file>styleYelowButtons.css</file>
+        <file>styleWhiteButtons.css</file>
     </qresource>
     <qresource prefix="/fonts">
         <file>Resources/Fonts/Nunito/Nunito-Light.ttf</file>

@@ -148,7 +148,7 @@ private:
 
     //Работа с файлами
     QDir *dir;
-    QString dirname = "log";
+    QString dirname = "log/3_27";
     QString filename;
     QFile *file1,*file2,*file3,*file4;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);

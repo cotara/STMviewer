@@ -12,7 +12,7 @@ ManagementWidget::ManagementWidget(QWidget *parent) : QWidget(parent)
     layout->addWidget(m_TransmitionSettings);
     layout->addWidget(m_HistorySettings);
 
-    layout->addStretch(1);
+    layout->addStretch(0);
 
     //setStyleSheet("background-color: #120A52;");
 }

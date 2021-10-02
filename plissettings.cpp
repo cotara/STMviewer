@@ -13,34 +13,34 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
 
     lazerLayout->addLayout(lazer1SettingLayout);
     lazerLayout->addLayout(lazer2SettingLayout);
-    lazer1Spinbox = new QSpinBox();
-    lazer2Spinbox = new QSpinBox();
+    lazer1Button = new AsynchronButton(this,10,50);
+    lazer2Button = new AsynchronButton(this,10,50);
     lazer1Label = new QLabel("Лазер 1:");
     lazer2Label = new QLabel("Лазер 2:");
     saveButton = new QPushButton("Сохранить");
 
-    lazer1Spinbox->setRange(10,50);
-    lazer2Spinbox->setRange(10,50);
-    lazer1Spinbox->setMaximumWidth(50);
-    lazer2Spinbox->setMaximumWidth(50);
-    lazer1Spinbox->setValue(40);
-    lazer2Spinbox->setValue(40);
+    emit lazer1Send(40);
+    emit lazer2Send(40);
+
     lazer1SettingLayout->addWidget(lazer1Label);
-    lazer1SettingLayout->addWidget(lazer1Spinbox);
+    lazer1SettingLayout->addWidget(lazer1Button);
     lazer2SettingLayout->addWidget(lazer2Label);
-    lazer2SettingLayout->addWidget(lazer2Spinbox);
+    lazer2SettingLayout->addWidget(lazer2Button);
     lazerLayout->addWidget(saveButton);
 
-    lazer1Spinbox->setEnabled(false);
-    lazer2Spinbox->setEnabled(false);
-    saveButton->setEnabled(false);
+    //lazer1Button->setEnabled(false);
+    //lazer2Button->setEnabled(false);
+    //saveButton->setEnabled(false);
 
-    connect(lazer1Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+    connect(lazer1Button, &AsynchronButton::sendValue,
           [=](int i){emit lazer1Send(i); });
-    connect(lazer2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
-          [=](int i){emit lazer2Send(i);});
+    connect(lazer2Button, &AsynchronButton::sendValue,
+          [=](int i){emit lazer2Send(i); });
 
-    connect(saveButton,&QPushButton::clicked,this,&PlisSettings::saveSend);
+
+
+    lazer1Button->setText(QString::number(0));
+    lazer2Button->setText(QString::number(0));
 
     //Настройка границ
     borderLayout = new QHBoxLayout();
@@ -55,19 +55,16 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     borderLayout->addLayout(compCH1Layout);
     borderLayout->addLayout(compCH2Layout);
 
-    borderLeftButton = new QPushButton();
-    borderRightButton = new QPushButton();
-    compCH1Button = new QPushButton();
-    compCH2Button = new QPushButton();
+    borderLeftButton = new AsynchronButton(this,0,255);
+    borderRightButton = new AsynchronButton(this,0,255);
+    compCH1Button = new AsynchronButton(this,0,255);
+    compCH2Button = new AsynchronButton(this,0,255);
+
     borderLeftButton->setText(QString::number(0));
     borderRightButton->setText(QString::number(0));
     compCH1Button->setText(QString::number(0));
     compCH2Button->setText(QString::number(0));
 
-    borderLeftWidget = new EnterValueWidget(this);
-    borderRightWidget = new EnterValueWidget(this);
-    compCH1Widget = new EnterValueWidget(this);
-    compCH2Widget = new EnterValueWidget(this);
 
     borderLeftLabel = new QLabel("Л.Гр.:");
     borderRightLabel = new QLabel("П.Гр.:");
@@ -87,24 +84,27 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     compCH2Layout->addWidget(compCH2Label);
     compCH2Layout->addWidget(compCH2Button);
 
-    connect(borderLeftWidget,&EnterValueWidget::sendValue, [=](int i)
-        {emit sendBorderLeft(i);});
-    connect(borderRightWidget,&EnterValueWidget::sendValue, [=](int i)
-        { emit sendBorderRight(i);});
-    connect(compCH1Widget,&EnterValueWidget::sendValue, [=](int i)
-        {emit sendCompCH1(i);});
-    connect(compCH2Widget,&EnterValueWidget::sendValue, [=](int i)
-        {emit sendCompCH2(i);});
-
-    connect(borderLeftButton,&QPushButton::clicked, [=]{borderLeftWidget->show();});
-    connect(borderRightButton,&QPushButton::clicked, [=]{borderRightWidget->show();});
-    connect(compCH1Button,&QPushButton::clicked, [=]{compCH1Widget->show();});
-    connect(compCH2Button,&QPushButton::clicked, [=]{compCH2Widget->show();});
-
-    lazer1Spinbox->setEnabled(false);
-    lazer2Spinbox->setEnabled(false);
-    saveButton->setEnabled(false);
+    connect(borderLeftButton, &AsynchronButton::sendValue,
+          [=](int i){emit sendBorderLeft(i); });
+    connect(borderRightButton, &AsynchronButton::sendValue,
+          [=](int i){emit sendBorderRight(i); });
+    connect(compCH1Button, &AsynchronButton::sendValue,
+          [=](int i){emit sendCompCH1(i); });
+    connect(compCH2Button, &AsynchronButton::sendValue,
+          [=](int i){emit sendCompCH2(i); });
 
 
+    connect(saveButton,&QPushButton::clicked,[=]{
+        emit saveSend();
+        QFile file(":/qss/styleWhiteButtons.css");
+          if(file.open(QFile::ReadOnly)){
+              QByteArray style = file.readAll();
+              borderLeftButton->setStyleSheet(style);
+              borderRightButton->setStyleSheet(style);
+              compCH1Button->setStyleSheet(style);
+              compCH2Button->setStyleSheet(style);
+              lazer1Button->setStyleSheet(style);
+              lazer2Button->setStyleSheet(style);
+        }});
     saveButton->setObjectName("saveButton");
 }

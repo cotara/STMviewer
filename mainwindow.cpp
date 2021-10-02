@@ -44,15 +44,20 @@ MainWindow::MainWindow(QWidget *parent) :
     layoutV = new QVBoxLayout();
     centralWidget()->setLayout(layoutV);
 
+    //Левая панель
     m_MainControlWidget = new MainControlWidget(this);
-    //m_MainControlWidget->setStyleSheet(" background-color: #120A52;");
-    //m_MainControlWidget->setMaximumWidth(250);
+    m_MainControlWidget->setMinimumWidth(250);
+
+    //Центр
     viewer = new ShotViewer(this);
     connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
-    m_ManagementWidget = new ManagementWidget(this);\
-    packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
-    //m_ManagementWidget->setMaximumWidth(250);
 
+    //Правая панель
+    m_ManagementWidget = new ManagementWidget(this);
+    m_ManagementWidget->setMinimumWidth(250);
+    packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
+
+    //Таблица
     m_table = new QTableWidget(this);
     m_table->setColumnCount(2);
     m_table->setRowCount(1);
@@ -61,19 +66,18 @@ MainWindow::MainWindow(QWidget *parent) :
     m_table->horizontalHeader()->resizeSection(0, 50);//ширина
     m_table->horizontalHeader()->resizeSection(1, 50);
     m_table->hide();
-   // m_table->setMaximumWidth(150);
+    m_table->setMinimumWidth(150);
 
     //Консоль
     m_console = new Console(this);
-    //m_console->setMaximumHeight(150);
+    m_console->setMinimumWidth(150);
     m_console->hide();
 
+    //Разделители
     QWidget *container = new QWidget;
     QSplitter *splitterV = new QSplitter(Qt::Vertical, this);
     QSplitter *splitterH = new QSplitter(Qt::Horizontal, this);
     QVBoxLayout *qVBoxLayout  = new QVBoxLayout();
-
-    m_ManagementWidget->setMinimumWidth(150);
 
     splitterH->addWidget(m_MainControlWidget);
     splitterH->addWidget(viewer);
@@ -81,7 +85,6 @@ MainWindow::MainWindow(QWidget *parent) :
     splitterH->addWidget(m_table);
     qVBoxLayout->addWidget(splitterH);
     container->setLayout(qVBoxLayout);
-
 
     splitterV->addWidget(container);
     splitterV->addWidget(m_console);
@@ -105,7 +108,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::chChooseChanged,this,&MainWindow::incCountCh);
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::getButtonClicked,this,&MainWindow::manualGetShotButton);
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::autoGetCheckBoxChanged,this,&MainWindow::autoGetCheckBoxChanged);
-
 
     //Коннекты от истории
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::autoSaveShotCheked,this,&MainWindow::autoSaveShotCheked);
@@ -171,7 +173,7 @@ MainWindow::MainWindow(QWidget *parent) :
    connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
-   //constructorTest();
+   constructorTest();
 
 
 
@@ -189,7 +191,7 @@ void MainWindow::constructorTest(){
     QFile *tempFile;                                                            //Файл лога
     tempFile = new QFile();
 
-    filename = "2021_08_16__20_05_22_CH1";
+    filename = "2021_09_16__19_35_37_CH1";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
@@ -199,7 +201,7 @@ void MainWindow::constructorTest(){
     QList<QByteArray> list_tempCH1=tempBuf.split(0xFF);                                    //разделяем кадры
     tempFile->close();
 
-    filename = "2021_08_16__20_05_22_CH2";
+    filename = "2021_09_16__19_35_37_CH2";
     tempFile->setFileName(dirname + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
@@ -228,6 +230,20 @@ void MainWindow::constructorTest(){
         k++;
         m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(i));
     }
+
+
+    //Считывание метаданных
+
+    filename = "2021_09_16__19_35_422";
+    tempFile->setFileName(dirname + "/" + filename);
+    if(!tempFile->open(QIODevice::ReadOnly)){
+        qDebug() << "tempFile can`t be open";
+        return;
+    }
+    tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
+    QList<QByteArray> list_meta=tempBuf.split(0xFF);                                    //разделяем кадры
+    tempFile->close();
+
 }
 
 //Настройки, коннекты
@@ -260,8 +276,8 @@ void MainWindow::on_connect_triggered()
             sendChannelOrder();
         }
 
-        m_ManagementWidget->m_plisSettings->lazer1Spinbox->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->lazer2Spinbox->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->lazer1Button->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->lazer2Button->setEnabled(true);
         m_ManagementWidget->m_plisSettings->saveButton->setEnabled(true);
 
 
@@ -324,8 +340,8 @@ void MainWindow::on_disconnect_triggered(){
     m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(false);
     m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(false);
 
-    m_ManagementWidget->m_plisSettings->lazer1Spinbox->setEnabled(false);
-    m_ManagementWidget->m_plisSettings->lazer2Spinbox->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->lazer1Button->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->lazer2Button->setEnabled(false);
     m_ManagementWidget->m_plisSettings->saveButton->setEnabled(false);
 
 
@@ -573,8 +589,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(0),1);   //Младшие значащие байты
             m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(2),2);
-            m_ManagementWidget->m_plisSettings->lazer1Spinbox->setValue(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4)));
-            m_ManagementWidget->m_plisSettings->lazer2Spinbox->setValue(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6)));
+            m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4))));
+            m_ManagementWidget->m_plisSettings->lazer2Button->setText(QString::number(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6))));
             m_ManagementWidget->m_plisSettings->borderLeftButton->setText(QString::number(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8))));
             m_ManagementWidget->m_plisSettings->borderRightButton->setText(QString::number(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10))));
             m_ManagementWidget->m_plisSettings->compCH1Button->setText(QString::number(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12))));
@@ -621,8 +637,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
 
-            if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
-                writeToLogfileMeta(QString::number(value));
+            //if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
+            //    writeToLogfileMeta(QString::number(value));
 
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
             statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд

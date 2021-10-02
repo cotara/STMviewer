@@ -25,6 +25,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+    asynchronbutton.cpp \
     centerviewer.cpp \
     console.cpp \
     entervaluewidget.cpp \
@@ -47,6 +48,7 @@ SOURCES += \
 	slip.cpp \
 
 HEADERS += \
+    asynchronbutton.h \
     centerviewer.h \
     console.h \
     entervaluewidget.h \

@@ -32,6 +32,9 @@
    </item>
    <item row="0" column="0">
     <widget class="QSpinBox" name="spinBox">
+     <property name="focusPolicy">
+      <enum>Qt::TabFocus</enum>
+     </property>
      <property name="maximum">
       <number>255</number>
      </property>
@@ -39,6 +42,9 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>spinBox</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -48,8 +54,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>182</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -64,8 +70,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>182</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
