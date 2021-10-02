@@ -15,10 +15,12 @@ int main(int argc, char *argv[])
 
 
     QFile file(":/qss/style.css");
-      if(file.open(QFile::ReadOnly)){
+    if(file.open(QFile::ReadOnly)){
           QByteArray style = file.readAll();
           a.setStyleSheet(style);
+          file.close();
     }
+
 
 
     return a.exec();

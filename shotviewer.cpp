@@ -638,6 +638,7 @@ void ShotViewer::graphClicked2(QCPAbstractPlottable *plottable, int dataIndex,QM
 
         int coordX = customPlot2->xAxis->pixelToCoord(event->pos().x());
         tracer2->setGraphKey(coordX);
+        tracer2->updatePosition();
         QToolTip::showText(currentMousePosition,QString::number(tracer2->position->key()) + "," + QString::number(tracer2->position->value()));
 
         //int coordY = customPlot2->yAxis->pixelToCoord(event->pos().y());

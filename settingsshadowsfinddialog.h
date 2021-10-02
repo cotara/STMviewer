@@ -4,6 +4,8 @@
 #include <QDialog>
 #include <QFile>
 #include <QDebug>
+#include "autofindwizard.h"
+
 namespace Ui {
 class SettingsShadowsFindDialog;
 }
@@ -15,9 +17,11 @@ class SettingsShadowsFindDialog : public QDialog
 public:
     explicit SettingsShadowsFindDialog(QWidget *parent = nullptr);
     ~SettingsShadowsFindDialog();
-    QList<double>& getShadowFindSettings();
+    QVector<double>& getShadowFindSettings();
     void updateSettingsStruct();
     void fillFileads();
+    AutoFindWizard *wizard;
+
 private slots:
     void on_buttonBox_accepted();
 
@@ -25,11 +29,13 @@ private slots:
 
     void on_pushButton_3_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::SettingsShadowsFindDialog *ui;
     QFile *file;
     QString filename = "ShadowSettings.txt";
-    QList<double> paramsDouble{0};
+    QVector<double> paramsDouble{0};
     void defaultToFile();
     void writeToFile();
 

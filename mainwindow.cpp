@@ -175,7 +175,16 @@ MainWindow::MainWindow(QWidget *parent) :
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
    constructorTest();
 
-
+   catchedData.resize(9);
+   //Коннект от сбора данных
+   connect(ShadowSettings->wizard->catchData,&catchDataDialog::buttonClicked,[=](int i){
+       QVector<double> temp;
+       temp = tempPLISextremums1 + tempPLISextremums2;
+       if(catchedData.size()>=i){
+        catchedData[i-1]=temp;
+        ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
+       }});
+   connect(ShadowSettings->wizard,&AutoFindWizard::giveMeExtremums,[=]{ShadowSettings->wizard->setExtremums(catchedData);});
 
 }
 
@@ -230,19 +239,6 @@ void MainWindow::constructorTest(){
         k++;
         m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(i));
     }
-
-
-    //Считывание метаданных
-
-    filename = "2021_09_16__19_35_422";
-    tempFile->setFileName(dirname + "/" + filename);
-    if(!tempFile->open(QIODevice::ReadOnly)){
-        qDebug() << "tempFile can`t be open";
-        return;
-    }
-    tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
-    QList<QByteArray> list_meta=tempBuf.split(0xFF);                                    //разделяем кадры
-    tempFile->close();
 
 }
 

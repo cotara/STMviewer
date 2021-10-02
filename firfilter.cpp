@@ -4,7 +4,7 @@
 #include <cmath>
 #include <QMessageBox>
 
-firFilter::firFilter(QList<double> &s)
+firFilter::firFilter(QVector<double> &s)
 {
     file =  new QFile();
     file->setFileName("koeff.txt");
@@ -351,7 +351,7 @@ QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<doub
     return result;
 }
 
-void firFilter::updateSettings(QList<double> &s)
+void firFilter::updateSettings(QVector<double> &s)
 {
     if(s.size()==9){
         la = s.at(0);

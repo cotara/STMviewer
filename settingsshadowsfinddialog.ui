@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>463</width>
-    <height>429</height>
+    <width>466</width>
+    <height>360</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -331,7 +331,7 @@
             <number>1</number>
            </property>
            <property name="maximum">
-            <double>1000.000000000000000</double>
+            <double>1000000.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -347,7 +347,7 @@
             <number>1</number>
            </property>
            <property name="maximum">
-            <double>1000.000000000000000</double>
+            <double>1000000.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -363,7 +363,7 @@
             <number>1</number>
            </property>
            <property name="maximum">
-            <double>1000.000000000000000</double>
+            <double>1000000.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -379,87 +379,7 @@
             <number>1</number>
            </property>
            <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <item>
-          <widget class="QLabel" name="label_14">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Допуски</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_2">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_3">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_5">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_7">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_8">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_10">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_9">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_11">
-           <property name="maximum">
-            <number>100</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBox_12">
-           <property name="maximum">
-            <number>100</number>
+            <double>1000000.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -470,51 +390,16 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QLabel" name="etalonDiameterLabel">
-         <property name="text">
-          <string>Эталонное значение диаметра, мм</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="etalonDiameterSpinBox">
-         <property name="decimals">
-          <number>2</number>
-         </property>
-         <property name="singleStep">
-          <double>0.010000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="pushButton">
          <property name="text">
           <string>Подобрать</string>
          </property>
         </widget>
        </item>
-      </layout>
-     </item>
-     <item>
-      <widget class="QProgressBar" name="progressBar">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="QPushButton" name="pushButton_3">
          <property name="text">
           <string>По умолчанию</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="text">
-          <string>Отправить в МК</string>
          </property>
         </widget>
        </item>

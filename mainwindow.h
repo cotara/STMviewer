@@ -21,6 +21,8 @@
 #include "settingsshadowsfinddialog.h"
 #include "maincontrolwidget.h"
 #include "managementwidget.h"
+
+#include "catchdatadialog.h"
 // answer status
 const unsigned short FAIL             = 0x0000;
 const unsigned short OK               = 0x0101;
@@ -140,11 +142,10 @@ private:
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
     QVector<double> diameter, diameterPlis;
-    QVector<double> tempPLISextremums1,tempPLISextremums2;
+    QVector<double> tempPLISextremums1{3735,3795,5135,5191},tempPLISextremums2{973,1035,3010,3078};
 
     int tableSize=100;
     bool m_online = false;
-
 
     //Работа с файлами
     QDir *dir;
@@ -152,6 +153,8 @@ private:
     QString filename;
     QFile *file1,*file2,*file3,*file4;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
+
+    QVector <QVector<double>> catchedData;
 
 };
 

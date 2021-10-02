@@ -26,6 +26,8 @@ CONFIG += c++11
 
 SOURCES += \
     asynchronbutton.cpp \
+    autofindwizard.cpp \
+    catchdatadialog.cpp \
     centerviewer.cpp \
     console.cpp \
     entervaluewidget.cpp \
@@ -49,6 +51,8 @@ SOURCES += \
 
 HEADERS += \
     asynchronbutton.h \
+    autofindwizard.h \
+    catchdatadialog.h \
     centerviewer.h \
     console.h \
     entervaluewidget.h \
@@ -71,6 +75,8 @@ HEADERS += \
 	types.h \
 
 FORMS += \
+        autofindwizard.ui \
+        catchdatadialog.ui \
         entervaluewidget.ui \
         mainwindow.ui \
         serialsettings.ui \

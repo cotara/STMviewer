@@ -8,7 +8,7 @@ class firFilter: public QWidget
     Q_OBJECT
 
 public:
-    firFilter(QList<double>& s);
+    firFilter(QVector<double>& s);
     ~firFilter();
     QByteArray toFilter(QByteArray &in,int len);
     QByteArray toButterFilter(QByteArray &in,int len);
@@ -17,8 +17,9 @@ public:
     QVector<double> shadowFind(QVector<double> dots);
     QVector<double> shadowFind(QVector<unsigned int> dots);
     QVector<double> diameterFind(QVector<double> shadowsCh1,QVector<double> shadowsCh2);
-    void updateSettings(QList<double>& s);
+    void updateSettings(QVector<double>& s);
     //double freqCalc(QList<double> dots,int len);
+
 
 private:
     QFile *file;
@@ -28,7 +29,6 @@ private:
     double la=0;
     double L=0;
     double p1=2.51087470;
-    double p3=0;
     double res=0;
 
     double Nx=0;
