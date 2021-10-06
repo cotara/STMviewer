@@ -39,7 +39,7 @@ private:
     double initla,initNx,initNy,initHx,initHy,initCx,initCy;
     double dla,dNx,dNy,dHx,dHy,dCx,dCy;
     double bestla,bestNx,bestNy,bestHx,bestHy,bestCx,bestCy;
-    double calcDiemeter(QVector<double> dots, int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy);
+    QVector<double> calcDiemeter(QVector<double> dots, int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy);
     double calcErrDiemeter(int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy);
     uint64_t  steps,currentStep=0;
     int etalonMkm = 0;

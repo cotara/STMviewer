@@ -19,6 +19,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
 
+    //Консоль
+    m_console = new Console(this);
+    m_console->setMinimumWidth(150);
+    m_console->hide();
 
     //Транспортный уровень SLIP протокола
     m_slip = new Slip(serial,m_console);
@@ -68,10 +72,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_table->hide();
     m_table->setMinimumWidth(150);
 
-    //Консоль
-    m_console = new Console(this);
-    m_console->setMinimumWidth(150);
-    m_console->hide();
+
 
     //Разделители
     QWidget *container = new QWidget;
@@ -170,16 +171,19 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
    ShadowSettings = new SettingsShadowsFindDialog(this);
-   //connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
+   connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
+
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
-   constructorTest();
+   //constructorTest();
 
    catchedData.resize(9);
    //Коннект от сбора данных
    connect(ShadowSettings->wizard->catchData,&catchDataDialog::buttonClicked,[=](int i){
        QVector<double> temp;
        temp = tempPLISextremums1 + tempPLISextremums2;
+       if(diameterPlis.size()>0)
+        temp.append(diameterPlis.at(0) + diameterPlis.at(1));
        if(catchedData.size()>=i){   //Проверяем, что в массиве есть место для данных
         catchedData[i-1]=temp;
         ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
@@ -607,9 +611,9 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
-                m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0)*1000 + diameterPlis.at(1)*1000));
-                m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)*1000));
-                m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)*1000));
+                m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
+                m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)));
+                m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)));
                 if(diameterPlis.at(0)<0){
                     int temp;
                     temp++;
@@ -652,7 +656,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     chCountRecieved++;                                                  //Получили канал
 
                     if(m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->isChecked()) {                                                      //Если нужна фильтрация
-                        QByteArray filtered = filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                        QByteArray filtered = filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH2In.insert(shotCountRecieved,filtered);
                     }
                 }
@@ -678,7 +682,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
                      chCountRecieved++;                                                  //Получили канал
                      if(m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
-                        QByteArray filtered =filter->toFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                        QByteArray filtered =filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH4In.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
                      }
                 }
@@ -800,7 +804,7 @@ void MainWindow::selectShot(int index){
         }
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-            m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0)*1000 + diameter.at(1)*1000));
+            m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0) + diameter.at(1)));
             m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameter.at(2)),static_cast<int>(diameter.at(3)));
             m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
 

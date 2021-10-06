@@ -34,12 +34,12 @@ void catchDataDialog::setButtonPushed(QVector <double> data, int i)
           file.close();
     }
     QString text;
-    for(int i = 0;i<data.size();i+=2)
+    for(int i = 0;i<data.size()-1;i+=2)
         text+=QString::number(data.at(i)) + " / " + QString::number(data.at(i+1)) + "\n";
-
-    if(data.size() == 8){//Если получены все экстремумы
+    text+=QString::number(data.last());
+    if(data.size() == 9){//Если получены все экстремумы
         if(data.at(0)<data.at(1) && data.at(1)<data.at(2) && data.at(2)<data.at(3)) //Если все экстремумы по порядку
-            if(data.at(4)<data.at(5) && data.at(5)<data.at(6) && data.at(6)<data.at(7)){
+            if(data.at(4)<data.at(5) && data.at(5)<data.at(6) && data.at(6)<data.at(7) && data.at(8)>0 ){
                 file.setFileName(":/qss/styleGreenButtons.css");                          //Красим кнопку зеленой
                 if(file.open(QFile::ReadOnly)){
                       style = file.readAll();

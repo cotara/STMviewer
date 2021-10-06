@@ -62,10 +62,10 @@ QByteArray firFilter::toFilter(QByteArray &in,int len){
 
 QByteArray firFilter::toButterFilter(QByteArray &in,int len){
     QByteArray out,outShifted;
-   const double x00=(unsigned char)in.at(0);
-    const double x01=(unsigned char)in.at(1);
-    const double x02=(unsigned char)in.at(2);
-    const double x03=(unsigned char)in.at(3);
+   const double x00=static_cast<unsigned char>(in.at(0));
+    const double x01=static_cast<unsigned char>(in.at(1));
+    const double x02=static_cast<unsigned char>(in.at(2));
+    const double x03=static_cast<unsigned char>(in.at(3));
     /*
     const short x00=(unsigned char)in.at(0);
     const short x01=(unsigned char)in.at(1);
@@ -77,11 +77,11 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
     //QVector<short>yOut={x00,x01,x02,x03};
     double Yx =0;
     for(int j=4;j<len;j++){
-          x0=  (unsigned char)in.at(j);
-          x1=  (unsigned char)in.at(j-1);
-          x2=  (unsigned char)in.at(j-2);
-          x3=  (unsigned char)in.at(j-3);
-          x4=  (unsigned char)in.at(j-4);
+          x0=  static_cast<unsigned char>(in.at(j));
+          x1=  static_cast<unsigned char>(in.at(j-1));
+          x2=  static_cast<unsigned char>(in.at(j-2));
+          x3=  static_cast<unsigned char>(in.at(j-3));
+          x4=  static_cast<unsigned char>(in.at(j-4));
           y1=  yOut.at(j-1);
           y2=  yOut.at(j-2);
           y3=  yOut.at(j-3);
@@ -102,7 +102,7 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
 }
 //В один проход
 QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
-    const int start= 100, stop = len-100;                          //Начало и конец поиска экстремумов
+    const int start= 200, stop = len-200;                          //Начало и конец поиска экстремумов
     int  backMinsIndex=0;                                                   //индекс спада в векторе минимумов
     unsigned char yMin11=255,yMin12=255,yMin21=255,yMin22=255,yCheckPoint,yCurrentMin, yLastMin1, yLastMin2;          //Искомые 4 точки (Y) и промежуточные экстремумы
     unsigned int xMin11=start,xMin12=start,xMin21=start,xMin22=start,xCurrentMin,xLastMin1, xLastMin2;       //Искомые 4 точки (X)

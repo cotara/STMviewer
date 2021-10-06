@@ -17,9 +17,9 @@ AutoFindWizard::AutoFindWizard(QWidget *parent, QVector<double> params) :
     init(params);
     connect(this,&AutoFindWizard::setProgress,ui->progressBar,&QProgressBar::setValue);
     connect(ui->etalonDiameterSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-                [=](double i){ etalonMkm = static_cast<int>(1000*i);});
+                [=](double i){ etalonMkm = static_cast<int>(500*i);});
 
-    etalonMkm = static_cast<int>(1000*ui->etalonDiameterSpinBox->value());
+    etalonMkm = static_cast<int>(500*ui->etalonDiameterSpinBox->value());//Получаем радиус
 }
 
 void AutoFindWizard::init(QVector<double> params)
@@ -185,7 +185,7 @@ int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
 }
 
 
-double AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy){
+QVector<double> AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy){
     QVector<double> x;
     double la = laV[ila];
     double Nx = NxV[iNx];
@@ -231,26 +231,55 @@ double AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int iNx,int iN
 
     double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(-atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)));
     double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(-atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)));
-
-    return Rx1+Ry1;
+    QVector<double> temp;
+    temp.append(Rx1);
+    temp.append(Ry1);
+    return temp;
 
 }
 
 double AutoFindWizard::calcErrDiemeter(int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy)
 {
-    double err0,err1,err2,err3,err4,err5,err6,err7,err8;
+    double err0,err1,err2,err3,err4,err5,err6,err7,err8,err9,err10,err11,err12,err13,err14,err15,err16,err17;
 
-    err0 = etalonMkm - calcDiemeter(allExtremums.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    err1 = etalonMkm - calcDiemeter(allExtremums.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    err2 = etalonMkm - calcDiemeter(allExtremums.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    err3 = etalonMkm - calcDiemeter(allExtremums.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    err4 = etalonMkm - calcDiemeter(allExtremums.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    err5 = etalonMkm - calcDiemeter(allExtremums.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    err6 = etalonMkm - calcDiemeter(allExtremums.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    err7 = etalonMkm - calcDiemeter(allExtremums.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    err8 = etalonMkm - calcDiemeter(allExtremums.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    QVector<double> temp;
+    temp = calcDiemeter(allExtremums.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err0 = etalonMkm - temp.at(0);
+    err1 = etalonMkm - temp.at(1);
 
-    double res= sqrt((err0*err0 + err1*err1 +err2*err2 +err3*err3 +err4*err4 +err5*err5 +err6*err6 +err7*err7 +err8*err8)/9);
+    temp = calcDiemeter(allExtremums.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err2 = etalonMkm - temp.at(0);
+    err3 = etalonMkm - temp.at(1);
+
+    temp = calcDiemeter(allExtremums.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err4 = etalonMkm - temp.at(0);
+    err5 = etalonMkm - temp.at(1);
+
+    temp = calcDiemeter(allExtremums.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err6 = etalonMkm - temp.at(0);
+    err7 = etalonMkm - temp.at(1);
+
+    temp = calcDiemeter(allExtremums.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err8 = etalonMkm - temp.at(0);
+    err9 = etalonMkm - temp.at(1);
+
+    temp = calcDiemeter(allExtremums.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err10 = etalonMkm - temp.at(0);
+    err11= etalonMkm - temp.at(1);
+
+    temp = calcDiemeter(allExtremums.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err12 = etalonMkm - temp.at(0);
+    err13 = etalonMkm - temp.at(1);
+
+    temp = calcDiemeter(allExtremums.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err14 = etalonMkm - temp.at(0);
+    err15 = etalonMkm - temp.at(1);
+
+    temp = calcDiemeter(allExtremums.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    err16 = etalonMkm - temp.at(0);
+    err17 = etalonMkm - temp.at(1);
+
+    double res= sqrt((err0*err0 + err1*err1 +err2*err2 +err3*err3 +err4*err4 +err5*err5 +err6*err6 +err7*err7 +err8*err8 +err9*err9 + err10*err10 +err11*err11 +err12*err12 +err13*err13 +err14*err14 +err15*err15 +err16*err16 +err17*err17)/18);
     return res;
 
 }
@@ -262,7 +291,7 @@ void AutoFindWizard::on_pushButton_clicked()
 {
     autoFindAlg();
 }
-
+//Сохранить в файл
 void AutoFindWizard::on_pushButton_2_clicked()
 {
     QVector<double> par {bestla,bestNx,bestNy,bestHx,bestHy,bestCx,bestCy};
