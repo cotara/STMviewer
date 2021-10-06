@@ -1,7 +1,7 @@
 #include "asynchronbutton.h"
 #include <QFile>
 
-AsynchronButton::AsynchronButton(QWidget *parent, int min, int max)
+AsynchronButton::AsynchronButton(QWidget *parent, int min, int max):QPushButton(parent)
 {
      enterDialog = new EnterValueWidget (this,min,max);
 

@@ -9,7 +9,7 @@ firFilter::firFilter(QVector<double> &s)
     file =  new QFile();
     file->setFileName("koeff.txt");
     if(!file->open(QIODevice::ReadOnly)){
-      qDebug()<<"Файл с коэффициентами не открывается";
+      qDebug()<<"koeff.txt сannot be opened";
       return;
     }
     QTextStream in(file);
@@ -20,6 +20,7 @@ firFilter::firFilter(QVector<double> &s)
         k++;
     }
     offset=k;//201
+
     updateSettings(s);
 
 
@@ -101,7 +102,7 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
 }
 //В один проход
 QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
-    const unsigned int start= 100, stop = len-100;                          //Начало и конец поиска экстремумов
+    const int start= 100, stop = len-100;                          //Начало и конец поиска экстремумов
     int  backMinsIndex=0;                                                   //индекс спада в векторе минимумов
     unsigned char yMin11=255,yMin12=255,yMin21=255,yMin22=255,yCheckPoint,yCurrentMin, yLastMin1, yLastMin2;          //Искомые 4 точки (Y) и промежуточные экстремумы
     unsigned int xMin11=start,xMin12=start,xMin21=start,xMin22=start,xCurrentMin,xLastMin1, xLastMin2;       //Искомые 4 точки (X)
@@ -289,12 +290,12 @@ QVector<double> firFilter::shadowFind(QVector<double> dots){
     double delta2 = dots.at(3)-dots.at(2);
 
 
-    double y1=la*L*L*p1/(4*delta1*delta1*res*res + la*L*p1);
-    double y2=la*L*L*p1/(4*delta2*delta2*res*res + la*L*p1);
+    double y1=la*Hx*Hx*p1/(4*delta1*delta1*res*res + la*Hx*p1);
+    double y2=la*Hy*Hy*p1/(4*delta2*delta2*res*res + la*Hy*p1);
 
 
-    double x01=dots.at(1)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
-    double x02=dots.at(2)-sqrt(la*L*(L-y2)*1.5/(2*y2))/res;
+    double x01=dots.at(1)+sqrt(la*Hy*(Hy-y1)*1.5/(2*y1))/res;
+    double x02=dots.at(2)-sqrt(la*Hy*(Hy-y2)*1.5/(2*y2))/res;
 
 
     x.append(x01);
@@ -310,11 +311,11 @@ QVector<double> firFilter::shadowFind(QVector<unsigned int> dots)
     double delta1 = dots.at(1)-dots.at(0);
     double delta2 = dots.at(3)-dots.at(2);
 
-    double y1=la*L*L*p1/(4*delta1*delta1*res*res + la*L*p1);
-    double y2=la*L*L*p1/(4*delta2*delta2*res*res + la*L*p1);
+    double y1=la*Hx*Hx*p1/(4*delta1*delta1*res*res + la*Hx*p1);
+    double y2=la*Hy*Hy*p1/(4*delta2*delta2*res*res + la*Hy*p1);
 
-    double x01=dots.at(1)+sqrt(la*L*(L-y1)*1.5/(2*y1))/res;
-    double x04=dots.at(2)-sqrt(la*L*(L-y2)*1.5/(2*y2))/res;
+    double x01=dots.at(1)+sqrt(la*Hx*(Hx-y1)*1.5/(2*y1))/res;
+    double x04=dots.at(2)-sqrt(la*Hy*(Hy-y2)*1.5/(2*y2))/res;
 
     x.append(x01);
     x.append(x04);
@@ -353,23 +354,18 @@ QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<doub
 
 void firFilter::updateSettings(QVector<double> &s)
 {
-    if(s.size()==9){
+    if(s.size()==7){
         la = s.at(0);
-        L = s.at(1);
-        res = s.at(2);
-        Nx = s.at(3);
-        Ny = s.at(4);
-        Hx = s.at(5);
-        Hy = s.at(6);
-        Cx = s.at(7);
-        Cy = s.at(8);
+        Nx = s.at(1);
+        Ny = s.at(2);
+        Hx = s.at(3);
+        Hy = s.at(4);
+        Cx = s.at(5);
+        Cy = s.at(6);
     }
     else
          QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
 }
-
-
-
 
 
 /*

@@ -24,18 +24,16 @@ public:
 
 private slots:
     void on_buttonBox_accepted();
-
     void on_buttonBox_rejected();
-
     void on_pushButton_3_clicked();
-
     void on_pushButton_clicked();
+    void updateSettingsStructSlot(QVector<double> &par);
 
 private:
     Ui::SettingsShadowsFindDialog *ui;
     QFile *file;
     QString filename = "ShadowSettings.txt";
-    QVector<double> paramsDouble{0};
+    QVector<double> paramsDouble;
     void defaultToFile();
     void writeToFile();
 

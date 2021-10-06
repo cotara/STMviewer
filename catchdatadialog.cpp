@@ -132,7 +132,7 @@ void catchDataDialog::clear()
 }
 
 //Проверяет пришел ли ответ на все 9 кнопок и если да, то отправляет сигнал, что можно идти дальше
-bool catchDataDialog::checkStatus()
+void catchDataDialog::checkStatus()
 {
     int st=0;
 

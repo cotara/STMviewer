@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>518</width>
-    <height>510</height>
+    <height>531</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -52,44 +52,6 @@
           </property>
           <property name="text">
            <string>la</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_2">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>20</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>L</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_6">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>20</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>res</string>
           </property>
          </widget>
         </item>
@@ -232,20 +194,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="LLabel">
-          <property name="text">
-           <string>0</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="resLabel">
-          <property name="text">
-           <string>0</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="NxLabel">
           <property name="text">
            <string>0</string>
@@ -330,47 +278,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QDoubleSpinBox" name="LSpinBox_2">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="decimals">
-           <number>1</number>
-          </property>
-          <property name="maximum">
-           <double>1000000.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.100000000000000</double>
-          </property>
-          <property name="value">
-           <double>0.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="resSpinBox_2">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="decimals">
-           <number>0</number>
-          </property>
-          <property name="maximum">
-           <double>10.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.000001000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QDoubleSpinBox" name="NxSpinBox_2">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -382,7 +289,7 @@
            <number>1</number>
           </property>
           <property name="maximum">
-           <double>10000.000000000000000</double>
+           <double>100000.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -398,7 +305,7 @@
            <number>1</number>
           </property>
           <property name="maximum">
-           <double>10000.000000000000000</double>
+           <double>100000.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -489,27 +396,7 @@
            <number>100</number>
           </property>
           <property name="value">
-           <number>2</number>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSpinBox" name="LRange">
-          <property name="maximum">
-           <number>100</number>
-          </property>
-          <property name="value">
-           <number>2</number>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSpinBox" name="resRange">
-          <property name="maximum">
-           <number>100</number>
-          </property>
-          <property name="value">
-           <number>2</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -519,7 +406,7 @@
            <number>100</number>
           </property>
           <property name="value">
-           <number>2</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -529,7 +416,7 @@
            <number>100</number>
           </property>
           <property name="value">
-           <number>2</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -539,7 +426,7 @@
            <number>100</number>
           </property>
           <property name="value">
-           <number>2</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -549,7 +436,7 @@
            <number>100</number>
           </property>
           <property name="value">
-           <number>2</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -559,7 +446,7 @@
            <number>100</number>
           </property>
           <property name="value">
-           <number>2</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -569,7 +456,7 @@
            <number>100</number>
           </property>
           <property name="value">
-           <number>2</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -593,6 +480,9 @@
         </property>
         <property name="singleStep">
          <double>0.010000000000000</double>
+        </property>
+        <property name="value">
+         <double>3.270000000000000</double>
         </property>
        </widget>
       </item>
@@ -649,11 +539,22 @@
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="mkSendButton">
-      <property name="text">
-       <string>Отправить в МК</string>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="text">
+         <string>Сохранить в файл</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="mkSendButton">
+        <property name="text">
+         <string>Отправить в МК</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>

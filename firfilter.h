@@ -26,11 +26,11 @@ private:
     double koefs[201];
     int offset=0;
     //shadowsFind constants:
-    double la=0;
-    double L=0;
     double p1=2.51087470;
-    double res=0;
+    double res=4;
+    //Параметры читаются из файла
 
+    double la=0;
     double Nx=0;
     double Ny=0;
     double Hx=0;

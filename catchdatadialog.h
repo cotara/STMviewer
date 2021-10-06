@@ -23,7 +23,7 @@ private:
     Ui::catchDataDialog *ui;
     QVector <bool> buttonStatus{false,false,false,false,false,false,false,false,false};
     bool mainStatus=false;
-    bool checkStatus();
+    void checkStatus();
 signals:
     void buttonClicked(int i);
     void dataCatched();

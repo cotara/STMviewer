@@ -170,7 +170,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
    ShadowSettings = new SettingsShadowsFindDialog(this);
-   connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
+   //connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
    constructorTest();
@@ -180,7 +180,7 @@ MainWindow::MainWindow(QWidget *parent) :
    connect(ShadowSettings->wizard->catchData,&catchDataDialog::buttonClicked,[=](int i){
        QVector<double> temp;
        temp = tempPLISextremums1 + tempPLISextremums2;
-       if(catchedData.size()>=i){
+       if(catchedData.size()>=i){   //Проверяем, что в массиве есть место для данных
         catchedData[i-1]=temp;
         ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
        }});

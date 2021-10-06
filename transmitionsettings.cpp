@@ -44,7 +44,7 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
 
 
     signalMapper = new QSignalMapper(this);
-    connect(signalMapper, QOverload<int>::of(&QSignalMapper::mapped), [=](int i){ chChooseChanged(i); });
+    connect(signalMapper, QOverload<int>::of(&QSignalMapper::mappedInt), [=](int i){ chChooseChanged(i); });
          signalMapper->setMapping(ch1CheckBox, 1);
          signalMapper->setMapping(ch2CheckBox, 2);
          signalMapper->setMapping(ch3CheckBox, 3);

@@ -7,13 +7,15 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
 {
     setObjectName("settingsshadowsfinddialog");
     ui->setupUi(this);
-    file = new QFile();
 
+    file = new QFile();
     file->setFileName(filename);
     updateSettingsStruct();     //Обновили настройки из файла
     fillFileads();              //Заполнили поля
 
     wizard = new AutoFindWizard(this,paramsDouble);
+    connect(wizard,&AutoFindWizard::saveBestParameters,this,&SettingsShadowsFindDialog::updateSettingsStructSlot);
+
 }
 
 SettingsShadowsFindDialog::~SettingsShadowsFindDialog(){
@@ -28,22 +30,18 @@ QVector<double> &SettingsShadowsFindDialog::getShadowFindSettings(){
 void SettingsShadowsFindDialog::fillFileads()
 {
     ui->laSpinBox->setValue(paramsDouble.at(0));
-    ui->LSpinBox->setValue(paramsDouble.at(1));
-    ui->resSpinBox->setValue(paramsDouble.at(2));
-    ui->NxSpinBox->setValue(paramsDouble.at(3));
-    ui->NySpinBox->setValue(paramsDouble.at(4));
-    ui->HxSpinBox->setValue(paramsDouble.at(5));
-    ui->HySpinBox->setValue(paramsDouble.at(6));
-    ui->CxSpinBox->setValue(paramsDouble.at(7));
-    ui->CySpinBox->setValue(paramsDouble.at(8));
+    ui->NxSpinBox->setValue(paramsDouble.at(1));
+    ui->NySpinBox->setValue(paramsDouble.at(2));
+    ui->HxSpinBox->setValue(paramsDouble.at(3));
+    ui->HySpinBox->setValue(paramsDouble.at(4));
+    ui->CxSpinBox->setValue(paramsDouble.at(5));
+    ui->CySpinBox->setValue(paramsDouble.at(6));
 }
 //ЗАПИСЫВАЕМ В ФАЙЛ ИЗ ПОЛЕЙ
 void SettingsShadowsFindDialog::writeToFile()
 {
     QString tempToWrite;
     tempToWrite =  "la=" +QString::number(ui->laSpinBox->value(),'g',10)+ '\n'+        //Здесь обрезает до 6 знаков после запятой
-                   "L=" + QString::number(ui->LSpinBox->value(),'g',10) + '\n'+
-                    "res=" + QString::number(ui->resSpinBox->value(),'g',10) + '\n'+
                     "Nx=" + QString::number(ui->NxSpinBox->value(),'g',10) + '\n'+
                     "Ny=" + QString::number(ui->NySpinBox->value(),'g',10) + '\n'+
                     "Hx=" + QString::number(ui->HxSpinBox->value(),'g',10) + '\n'+
@@ -62,6 +60,8 @@ void SettingsShadowsFindDialog::writeToFile()
         return;
     }
     file->close();
+
+    updateSettingsStruct();     //Обновили переменную из файла
 }
 
 //ОБНОВЛЯЕМ СТРУКТУРУ ИЗ ФАЙЛА
@@ -93,16 +93,19 @@ void SettingsShadowsFindDialog::updateSettingsStruct()
     }
     file->close();
 }
-
-
+//Слот, обновляющий структуру
+void SettingsShadowsFindDialog::updateSettingsStructSlot(QVector<double> &par)
+{
+    for (int k=0;k<paramsDouble.size();k++)
+        paramsDouble[k] = par.at(k);                    //Заполняем лист с настройками
+    fillFileads();                                      //Обновили и поля
+}
 
 void SettingsShadowsFindDialog::defaultToFile()
 {
 
     QString tempToWrite;
     tempToWrite =  "la=" +QString::number(0.905,'g',10)+ '\n'+        //Здесь обрезает до 6 знаков после запятой
-                   "L=" + QString::number(207400,'g',10) + '\n'+
-                    "res=" + QString::number(4,'g',10) + '\n'+
                     "Nx=" + QString::number(5320,'g',10) + '\n'+
                     "Ny=" + QString::number(5320,'g',10) + '\n'+
                     "Hx=" + QString::number(207400,'g',10) + '\n'+
@@ -127,7 +130,7 @@ void SettingsShadowsFindDialog::defaultToFile()
 }
 void SettingsShadowsFindDialog::on_buttonBox_accepted(){
     writeToFile();              //Записали из полей в файл
-    updateSettingsStruct();     //Обновили переменную из файла
+
     emit settingsChanged();
 }
 
@@ -142,5 +145,8 @@ void SettingsShadowsFindDialog::on_pushButton_3_clicked()
 
 void SettingsShadowsFindDialog::on_pushButton_clicked()
 {
+    wizard->init(paramsDouble);
     wizard->show();
 }
+
+
