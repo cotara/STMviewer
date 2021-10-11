@@ -3,6 +3,7 @@
 #include <cmath>
 #include <omp.h>
 #include <qdebug.h>
+#include <QMessageBox>
 AutoFindWizard::AutoFindWizard(QWidget *parent, QVector<double> params) :
     QWizard(parent),
     ui(new Ui::AutoFindWizard)
@@ -14,18 +15,34 @@ AutoFindWizard::AutoFindWizard(QWidget *parent, QVector<double> params) :
     ui->wizardPage1->setLayout(layout1);
     layout1->addWidget(catchData);
 
+
     init(params);
-    connect(this,&AutoFindWizard::setProgress,ui->progressBar,&QProgressBar::setValue);
-    connect(ui->etalonDiameterSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+    connect(this,&AutoFindWizard::setProgress,ui->progressBar,&QProgressBar::setValue);             //Прорессбар
+    connect(ui->etalonDiameterSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),        //Изменение эталонного диаметра, как радиус
                 [=](double i){ etalonMkm = static_cast<int>(500*i);});
 
-    etalonMkm = static_cast<int>(500*ui->etalonDiameterSpinBox->value());//Получаем радиус
+    etalonMkm = static_cast<int>(500*ui->etalonDiameterSpinBox->value());                           //Получаем радиус на старте
+
+    connect(ui->startFind, &QPushButton::clicked, [=]{
+        if(dataCatched)
+            autoFindAlg();
+        else
+            QMessageBox::warning(this, "Внимание!", "Подбор параметров невозможнен, так как не все точки были захвачены",QMessageBox::Ok);
+    });                            //Запуск алгоритма подбора параметров
+    connect(catchData,&catchDataDialog::dataCatched,[=]{dataCatched=true;});                        //Получаем сигнал, что все данные собраны
+    connect(catchData,&catchDataDialog::pointCatched,[=](QVector<double> data, int i){
+        allExtremums[i-1] = data;});
+
+    connect(ui->mkSendButton,&QPushButton::clicked,[=]{
+        on_pushButton_2_clicked(); //Приняли параметры
+        emit sendBestParameters();//Сигнал об отправке подобранных параметров в МК
+    });
 }
 
 void AutoFindWizard::init(QVector<double> params)
 {
     m_params=params;
-
+    //устанавливаем текущие параметры
     if(params.size() == 7){
         ui->laLabel->setText(QString::number(params.at(0),'g',10));
         ui->NxLabel->setText(QString::number(params.at(1),'g',10));
@@ -35,41 +52,54 @@ void AutoFindWizard::init(QVector<double> params)
         ui->CxLabel->setText(QString::number(params.at(5),'g',10));
         ui->CyLabel->setText(QString::number(params.at(6),'g',10));
     }
-    catchData->clear();
-    restart();
+    else{
+        ui->laLabel->clear();
+        ui->NxLabel->clear();
+        ui->NyLabel->clear();
+        ui->HxLabel->clear();
+        ui->HyLabel->clear();
+        ui->CxLabel->clear();
+        ui->CyLabel->clear();
+    }
+    //Чистим поля подобранных параметров
+    ui->laSpinBox_2->clear();
+    ui->NxSpinBox_2->clear();
+    ui->NySpinBox_2->clear();
+    ui->HxSpinBox_2->clear();
+    ui->HySpinBox_2->clear();
+    ui->CxSpinBox_2->clear();
+    ui->CySpinBox_2->clear();
+
+    catchData->clear();         //Очистка цветов и текста кнопок захвата данных
+    restart();                  //Перезапуск мастера
     allExtremums.clear();
+    allExtremums.resize(9);
+    dataCatched=false;
 }
 
 AutoFindWizard::~AutoFindWizard(){
     delete ui;
 }
-
+//Изменение страницы визарда
 void AutoFindWizard::on_AutoFindWizard_currentIdChanged(int id){
-   if(id == 1) {    //Мы перешли на страницу подбора
-       emit giveMeExtremums();
+   if(id == 1) {                    //Мы перешли на страницу подбора
+
    }
-
-}
-void AutoFindWizard::setExtremums(QVector<QVector<double> > &extr){
-    allExtremums = extr;
 }
 
-void AutoFindWizard::accept()
-{
+//Переопределенный Finish в визарде
+void AutoFindWizard::accept(){
     catchData->clear();
     QDialog::accept();
     restart();
 }
 
-
 //Алгоритм подбора параметров
 void AutoFindWizard::autoFindAlg()
 {
-
     if(allExtremums.size()!=9)
         return;
     //Начинаем поиск только если в наличии 9 валидных точек
-
     initla = m_params.at(0);
     initNx = m_params.at(1);
     initNy = m_params.at(2);
@@ -127,7 +157,7 @@ void AutoFindWizard::autoFindAlg()
     for (int tmp = 0;tmp<CyV.size();tmp++)
         CyV[tmp] = initCy + dCy*tmp;
 
-
+//Проверка, что распараллеливание подгрузилось
     #if defined(_OPENMP)
       qDebug() << "Compiled by an OpenMP-compliant implementation.\n";
       qDebug() <<  omp_get_num_threads();
@@ -184,7 +214,7 @@ int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
     ui->bestErr->setText(QString::number(bestErr,'g',10));
 }
 
-
+//Расчет радиусов по пачке экстремумов и параметров
 QVector<double> AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy){
     QVector<double> x;
     double la = laV[ila];
@@ -194,7 +224,6 @@ QVector<double> AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int i
     double Hy = HyV[iHy];
     double Cx = CxV[iCx];
     double Cy = CyV[iCy];
-
 
     double delta1 = dots.at(1)-dots.at(0);
     double delta2 = dots.at(3)-dots.at(2);
@@ -211,7 +240,6 @@ QVector<double> AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int i
 
     double x03=dots.at(5)+sqrt(la*Hx*(Hx-y3)*1.5/(2*y3))/res;
     double x04=dots.at(6)-sqrt(la*Hy*(Hy-y4)*1.5/(2*y4))/res;
-
 
     double Front1 = x01;
     double Spad1 = x02;
@@ -238,6 +266,7 @@ QVector<double> AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int i
 
 }
 
+//Расчет СКВ ошибки определения радиусов.
 double AutoFindWizard::calcErrDiemeter(int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy)
 {
     double err0,err1,err2,err3,err4,err5,err6,err7,err8,err9,err10,err11,err12,err13,err14,err15,err16,err17;
@@ -284,14 +313,7 @@ double AutoFindWizard::calcErrDiemeter(int ila,int iNx,int iNy,int iHx,int iHy,i
 
 }
 
-
-
-
-void AutoFindWizard::on_pushButton_clicked()
-{
-    autoFindAlg();
-}
-//Сохранить в файл
+//Принять настройки
 void AutoFindWizard::on_pushButton_2_clicked()
 {
     QVector<double> par {bestla,bestNx,bestNy,bestHx,bestHy,bestCx,bestCy};
@@ -303,6 +325,4 @@ void AutoFindWizard::on_pushButton_2_clicked()
     ui->HyLabel->setText(QString::number(bestHy,'g',10));
     ui->CxLabel->setText(QString::number(bestCx,'g',10));
     ui->CyLabel->setText(QString::number(bestCy,'g',10));
-
 }
-

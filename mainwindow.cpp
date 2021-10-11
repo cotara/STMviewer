@@ -7,6 +7,8 @@
 #include "statusbar.h"
 #include <QSplitter>
 
+#define TEST_MODE
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -18,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent) :
     serial = new QSerialPort();
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
+    m_GettingDiameterTimer=new QTimer(this);
+    connect(m_GettingDiameterTimer, &QTimer::timeout, this, &MainWindow::handlerGettingDiameterTimer);
 
     //Консоль
     m_console = new Console(this);
@@ -52,14 +56,11 @@ MainWindow::MainWindow(QWidget *parent) :
     m_MainControlWidget = new MainControlWidget(this);
     m_MainControlWidget->setMinimumWidth(250);
 
-    //Центр
-    viewer = new ShotViewer(this);
-    connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
-
     //Правая панель
     m_ManagementWidget = new ManagementWidget(this);
     m_ManagementWidget->setMinimumWidth(250);
     packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
+
 
     //Таблица
     m_table = new QTableWidget(this);
@@ -72,8 +73,60 @@ MainWindow::MainWindow(QWidget *parent) :
     m_table->hide();
     m_table->setMinimumWidth(150);
 
+    //ТАБЫ
+    m_tab = new QTabWidget(this);
+
+    //Центр
+    viewer = new ShotViewer(m_tab);
+    connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
+
+    diameterPlot = new QCustomPlot(m_tab);
+    diameterPlot->addGraph();
+
+    //Настройка CustomPlot
+    diameterPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    diameterPlot->axisRect()->setupFullAxesBox();
+
+    QFont legendFont = font();
+    legendFont.setPointSize(10);
+    diameterPlot->xAxis->setRangeLower(0);
+    diameterPlot->xAxis->setRangeUpper(5000);
+    diameterPlot->yAxis->setRangeLower(-2);
+    diameterPlot->yAxis->setRangeUpper(2);
+    diameterPlot->legend->setVisible(true);
+    diameterPlot->legend->setFont(legendFont);
+    diameterPlot->legend->setSelectedFont(legendFont);
+    diameterPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
+
+    // зумируется только выделенная ось
+    //connect(customPlot1, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress1(QMouseEvent*)));
+    //connect(customPlot1, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
 
 
+    // При зумировании одной оси зизменяется диапазон противоположной
+    //connect(customPlot1->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->xAxis2, SLOT(setRange(QCPRange)));
+    //connect(customPlot1->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->yAxis2, SLOT(setRange(QCPRange)));
+
+
+    m_tab->addTab(viewer, "Сигнал");
+    m_tab->addTab(diameterPlot, "Диаметр");
+    m_tab->setTabBarAutoHide(true);
+    connect(m_tab,&QTabWidget::currentChanged,[=](int index){
+        if(index==0){
+            m_ManagementWidget->m_plisSettings->setVisible(true);
+            m_ManagementWidget->m_TransmitionSettings->setVisible(true);
+            m_ManagementWidget->m_HistorySettings->setVisible(true);
+            m_ManagementWidget->m_DiameterTransmition->setVisible(false);
+        }
+        else if(index == 1){
+          m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setChecked(false);
+          m_ManagementWidget->m_plisSettings->setVisible(false);
+          m_ManagementWidget->m_TransmitionSettings->setVisible(false);
+          m_ManagementWidget->m_HistorySettings->setVisible(false);
+          m_ManagementWidget->m_DiameterTransmition->setVisible(true);
+        }
+    });
+    emit m_tab->currentChanged(m_tab->currentIndex());
     //Разделители
     QWidget *container = new QWidget;
     QSplitter *splitterV = new QSplitter(Qt::Vertical, this);
@@ -81,7 +134,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QVBoxLayout *qVBoxLayout  = new QVBoxLayout();
 
     splitterH->addWidget(m_MainControlWidget);
-    splitterH->addWidget(viewer);
+    splitterH->addWidget(m_tab);
     splitterH->addWidget(m_ManagementWidget);
     splitterH->addWidget(m_table);
     qVBoxLayout->addWidget(splitterH);
@@ -94,15 +147,16 @@ MainWindow::MainWindow(QWidget *parent) :
     splitterH->setStretchFactor(0,1);
     splitterH->setStretchFactor(1,40);
     splitterH->setStretchFactor(2,2);
-    //Коннекты от Настроек ПЛИС
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,this,&MainWindow::sendLazer1);
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,this,&MainWindow::sendLazer2);
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::saveSend,this,&MainWindow::sendSaveEeprom);
 
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderLeft,this,&MainWindow::sendBorderLeft);
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderRight,this,&MainWindow::sendBorderRight);
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH1,this,&MainWindow::sendCompCH1);
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,this,&MainWindow::sendCompCH2);
+    //Коннекты от Настроек ПЛИС
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,[=](int i){sendByteToMK(LAZER1_SET, static_cast<char>(i),"Set Lazer1 Setting: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,[=](int i){sendByteToMK(LAZER2_SET, static_cast<char>(i),"Set Lazer2 Setting: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::saveSend,[=]{sendByteToMK(LAZERS_SAVE, 0,"Save lazer's parameters to EEPROM: ");});//?? проверить работу
+
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderLeft,[=](int i){sendByteToMK(LEFT_BORDER_SET, static_cast<char>(i),"Set left border: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderRight,[=](int i){sendByteToMK(RIGHT_BORDER_SET, static_cast<char>(i),"Set right border: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH1,[=](int i){sendByteToMK(COMP_CH1_SET, static_cast<char>(i),"Set comp level CH1: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,[=](int i){sendByteToMK(COMP_CH2_SET, static_cast<char>(i),"Set comp level CH2: ");});
 
     //Коннекты от параметров передачи
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,this,&MainWindow::setPacketSize);
@@ -115,10 +169,55 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::shotSelected,this,&MainWindow::selectShot);
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::clearButtonClicked,this,&MainWindow::on_clearButton);
 
+    //Коннекты от графика диаметра
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::getDiameterChanged,[=](int state){
+        if(state){
+            m_GettingDiameterTimer->setInterval(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
+            m_GettingDiameterTimer->start();
+        }
+        else{
+            m_GettingDiameterTimer->stop();
+        }
+    });
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::reqFreqValueChanged,[=](int value){
+            m_GettingDiameterTimer->setInterval(1000/value);
+            //m_GettingDiameterTimer->start();
+    });
+
+
+    //Тулбар
+    tableSizeSpinbox = new QSpinBox(this);
+    tableSizeLabel = new QLabel("Размер таблицы",this);
+    tableSizeSpinbox->setRange(1,1000);
+    tableSizeSpinbox->setValue(tableSize);
+
+    ui->mainToolBar->addWidget(tableSizeLabel);
+    ui->mainToolBar->addWidget(tableSizeSpinbox);
+    tableSizeSpinbox->setEnabled(false);
+
     ui->ShowMainControl->setChecked(true);
     ui->ShowManagementPanel->setChecked(true);
     connect(ui->showConsole,&QAction::toggled,[=](bool i){if(i) m_console->show(); else m_console->hide();});
-    connect(ui->TableShow,&QAction::toggled,[=](bool i){if(i) m_table->show(); else m_table->hide();});
+    connect(ui->TableShow,&QAction::toggled,[=](bool i){
+        if(i) {
+            m_table->show();
+            tableSizeSpinbox->setEnabled(true);
+        } else {
+            m_table->hide();
+            tableSizeSpinbox->setEnabled(false);
+        }
+    });
+    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
+            tableSize = val;
+
+            if(m_table->rowCount()>=tableSize){
+                for(int i=0;i<tableSize;i++)
+                     m_table->showRow(i);
+                for(int i=tableSize;i<m_table->rowCount();i++)
+                    m_table->hideRow(i);
+            }
+    });
+
     connect(ui->ShowMainControl,&QAction::toggled,[=](bool i){if(i) m_MainControlWidget->show(); else m_MainControlWidget->hide();});
     connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) m_ManagementWidget->show(); else m_ManagementWidget->hide();});
     connect(ui->AutoRange,&QAction::triggered,viewer, &ShotViewer::autoScale);
@@ -127,35 +226,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QWidget* empty = new QWidget();
     empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
     ui->mainToolBar->insertWidget(ui->showConsole,empty);
-
-
-
-//    tableSizeLayout = new QHBoxLayout;
-//    tableSizeSpinbox = new QSpinBox;
-//    tableSizeLabel = new QLabel("Размер таблицы");
-
-
-//    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
-//            tableSize = val;
-
-//            if(m_table->rowCount()>=tableSize){
-//                for(int i=0;i<tableSize;i++)
-//                     m_table->showRow(i);
-//                for(int i=tableSize;i<m_table->rowCount();i++)
-//                    m_table->hideRow(i);
-//            }
-//    });
-//    connect(tableEnable, QOverload<int>::of(&QCheckBox::stateChanged),[=](int state){
-//            if(state){
-//                m_table->show();
-//                tableSizeSpinbox->setEnabled(true);
-//            }
-//            else{
-//                m_table->hide();
-//                tableSizeSpinbox->setEnabled(false);
-//            }
-//    });
-
 
     //Создание папки с логами, если ее нет.
     dir = new QDir(dirname);
@@ -171,24 +241,25 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
    ShadowSettings = new SettingsShadowsFindDialog(this);
-   connect (ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);
-
+   connect(ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);//Обновляем настройки в фильтре
+   connect(ShadowSettings, &SettingsShadowsFindDialog::sendSettingsToMK,[=]{
+       sendVectorToMK(NEWSHADFINDPAR,ShadowSettings->getShadowFindSettings(),"Новые параметры поиска диаметра отправлены в МК: ");//Засылаем настройки в МК
+   });
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
-   //constructorTest();
 
-   catchedData.resize(9);
-   //Коннект от сбора данных
+   //Сбор данных для подбора коэффициентов
    connect(ShadowSettings->wizard->catchData,&catchDataDialog::buttonClicked,[=](int i){
        QVector<double> temp;
        temp = tempPLISextremums1 + tempPLISextremums2;
        if(diameterPlis.size()>0)
         temp.append(diameterPlis.at(0) + diameterPlis.at(1));
-       if(catchedData.size()>=i){   //Проверяем, что в массиве есть место для данных
-        catchedData[i-1]=temp;
-        ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
-       }});
-   connect(ShadowSettings->wizard,&AutoFindWizard::giveMeExtremums,[=]{ShadowSettings->wizard->setExtremums(catchedData);});
+       ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
+   });
+
+#ifdef TEST_MODE
+   constructorTest();
+#endif
 
 }
 
@@ -246,6 +317,25 @@ void MainWindow::constructorTest(){
 
 }
 
+QByteArray MainWindow::generateBytes(int count)
+{
+    QVector<double> vector;
+    QByteArray data;
+    for (int i=0;i<count;i++)
+        vector.append(QRandomGenerator::global()->generateDouble());
+
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << vector;
+    //data.remove(0,4);
+//    data = QByteArray::fromRawData(
+//            reinterpret_cast<const char*>(vector.constData()),
+//            sizeof(double) * vector.size()
+//        );
+    //QByteArray img(reinterpret_cast<const char*>(vector.data()), vector.size());
+    return data;
+}
+
+
 //Настройки, коннекты
 void MainWindow::on_settings_triggered(){
     settings_ptr->show();
@@ -272,9 +362,8 @@ void MainWindow::on_connect_triggered()
         serial->readAll();
 
         m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->setEnabled(true);
-        if(channelsOrder!=0){
-            sendChannelOrder();
-        }
+        if(channelsOrder!=0)
+            sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
 
         m_ManagementWidget->m_plisSettings->lazer1Button->setEnabled(true);
         m_ManagementWidget->m_plisSettings->lazer2Button->setEnabled(true);
@@ -347,87 +436,30 @@ void MainWindow::on_disconnect_triggered(){
 
 }
 
-//Управление лазером
-void MainWindow::sendLazer1(int lazer1Par){
-    QByteArray data;
-    char msb,lsb;
-    data.append(LAZER1_SET);
-    msb=(0&0xFF00)>>8;
-    lsb=static_cast<char> (lazer1Par&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-    m_console->putData("Set Lazer1 Setting: ");
-    m_transp->sendPacket(data);
-}
-void MainWindow::sendLazer2(int lazer2Par){
-    QByteArray data;
-    char msb,lsb;
-    data.append(LAZER2_SET);
-    msb=(0&0xFF00)>>8;
-    lsb=static_cast<char> (lazer2Par&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-
-    m_console->putData("Set Lazer2 Setting: ");
-    m_transp->sendPacket(data);
-}
-void MainWindow::sendSaveEeprom()
-{
-    QByteArray data;
-    data.append(LAZERS_SAVE);
-    m_console->putData("Save lazer's parameters to EEPROM: ");
-    m_transp->sendPacket(data);
-}
-
-void MainWindow::sendBorderLeft(int leftBorderVal)
+void MainWindow::sendByteToMK(char dst, char dataByte, const QString &msg)
 {
     QByteArray data;
     char msb,lsb;
-    data.append(LEFT_BORDER_SET);
+    data.append(dst);
     msb=(0&0xFF00)>>8;
-    lsb=static_cast<char> (leftBorderVal&0x00FF);
+    lsb=static_cast<char> (dataByte&0x00FF);
     data.append(msb);
     data.append(lsb);
-    m_console->putData("Set left border: ");
+    m_console->putData(msg.toUtf8());
     m_transp->sendPacket(data);
 }
 
-void MainWindow::sendBorderRight(int rightBorderVal)
-{
+void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &msg){
+    conversation conv;
     QByteArray data;
-    char msb,lsb;
-    data.append(RIGHT_BORDER_SET);
-    msb=(0&0xFF00)>>8;
-    lsb=static_cast<char> (rightBorderVal&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-    m_console->putData("Set left border: ");
-    m_transp->sendPacket(data);
-}
+    data.append(dst);
+    for(double d:dataV){
+        conv.d=d;
+        for(int i=0;i<8;i++)
+        data.append(conv.ch[i]);
+    }
 
-void MainWindow::sendCompCH1(int compCH1Val)
-{
-    QByteArray data;
-    char msb,lsb;
-    data.append(COMP_CH1_SET);
-    msb=(0&0xFF00)>>8;
-    lsb=static_cast<char> (compCH1Val&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-    m_console->putData("Set left border: ");
-    m_transp->sendPacket(data);
-}
-
-void MainWindow::sendCompCH2(int compCH2Val)
-{
-    QByteArray data;
-    char msb,lsb;
-    data.append(COMP_CH2_SET);
-    msb=(0&0xFF00)>>8;
-    lsb=static_cast<char> (compCH2Val&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-    m_console->putData("Set left border: ");
+    m_console->putData(msg.toUtf8());
     m_transp->sendPacket(data);
 }
 
@@ -469,7 +501,7 @@ void MainWindow::incCountCh(int ch)
          m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setEnabled(true);
     else
         m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setEnabled(false);
-    sendChannelOrder();
+    sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
 }
 
 //Настройка разбиения данных на пакеты
@@ -549,6 +581,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     unsigned short value = static_cast<unsigned short>(bytes[1])*256+static_cast<unsigned short>(bytes[2]);
     int dataReady=-1;
     QString chName;
+    bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
+
     switch(cmd){
     case ASK_MCU:                                                           //Пришел ответ, mcu жив
         if (value == OK) {
@@ -566,7 +600,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
         countAvaibleDots=value;
-        bytes.remove(0, 3);
         if (value != NO_DATA_READY) {
             dataReady = value;
 
@@ -614,15 +647,10 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
                 m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)));
                 m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)));
-                if(diameterPlis.at(0)<0){
-                    int temp;
-                    temp++;
-                }
             }
 
-            if(m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->isChecked() || notYetFlag){                       //Если включен автозапрос данных или не вычитали все пачку каналов
+            if(m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->isChecked() || notYetFlag)                       //Если включен автозапрос данных или не вычитали все пачку каналов
                 manualGetShotButton();                                                  //Запрашиваем шот
-            }
         }
         else {
             dataReady = 0;
@@ -632,14 +660,14 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
         break;
 
+     case REQUEST_DIAMETER:
+        fromBytes(bytes);
+        plotDiameter();
+
+        break;
 
      case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
-            bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
-
-            //if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
-            //    writeToLogfileMeta(QString::number(value));
-
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
             statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
             currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
@@ -805,7 +833,7 @@ void MainWindow::selectShot(int index){
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
             m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0) + diameter.at(1)));
-            m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameter.at(2)),static_cast<int>(diameter.at(3)));
+            m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameter.at(2)/1000),static_cast<int>(diameter.at(3)/1000));
             m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
 
         }
@@ -869,37 +897,30 @@ void MainWindow::handlerTranspError() {
 void MainWindow::reSentInc(){
     statusBar->incReSent();
 }
-// Обработчик таймаута опроса состояние MCU (1 сек)
+// Обработчик таймаута опроса состояния MCU
 void MainWindow::handlerTimer() {
     statusBar->setInfo(m_transp->getQueueCount());
     QByteArray data;
-    if (m_online) {      
-        data.append(REQUEST_STATUS);
-        m_console->putData("SEND REQUEST_STATUS: ");
-        m_transp->sendPacket(data);
-        m_timer->stop();                                                        //Избегать многократного запроса статуса, если не пришел ответ на первый
+    if (m_online) {
+        sendByteToMK(REQUEST_STATUS,0,"SEND REQUEST_STATUS: ");
+        m_timer->stop();
     }
     else {
-        if (serial->isOpen()) {           
-            data.append(ASK_MCU);
-            m_console->putData("SEND ASK_MCU: ");
-            m_transp->sendPacket(data);
-        }
+        if (serial->isOpen())
+            sendByteToMK(ASK_MCU,0,"SEND ASK_MCU: ");
     }
 }
 
-void MainWindow::sendChannelOrder(){
-    //Отправка последовательности байт в плату
-    QByteArray data;
-    char msb,lsb;
-    data.append(static_cast<char> (CH_ORDER));
-    m_console->putData("SEND CH_ORDER: ");
-
-    msb=static_cast<char> ((channelsOrder&0xFF00)>>8);
-    lsb=static_cast<char> (channelsOrder&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-    m_transp->sendPacket(data);
+// Обработчик таймаута запроса диаметра
+void MainWindow::handlerGettingDiameterTimer(){
+#ifdef TEST_MODE
+    QByteArray randomBytes;
+    randomBytes = generateBytes(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
+    randomBytes.prepend(2,0);
+    randomBytes.prepend(REQUEST_DIAMETER);
+    handlerTranspAnswerReceive(randomBytes);
+#endif
+    //sendByteToMK(REQUEST_DIAMETER,0,"SEND REQUEST_DIAMETER: ");
 }
 
 void MainWindow::writeToLogfile(QString name)
@@ -964,11 +985,49 @@ void MainWindow::fillTable(QCPGraphDataContainer &dataMap)
 void MainWindow::on_ShdowSet_triggered()
 {
     ShadowSettings->updateSettingsStruct();
-    ShadowSettings->fillFileads();
     ShadowSettings->show();
 }
 
 void MainWindow::settingsChanged()
 {
-    filter->updateSettings(ShadowSettings->getShadowFindSettings());
+    filter->updateSettings(ShadowSettings->getShadowFindSettings());//Забрали обновленные настройки
+}
+
+QVector<double> MainWindow::fromBytes(QByteArray &bytes)
+{
+    QDataStream stream(bytes);
+    //stream.setByteOrder(QDataStream::LittleEndian);
+    //diameterKeys.clear();
+    //diametersFromMCU.clear();
+    //diametersFromMCU.resize(80);
+    //for(int i=0;i<80;i++)
+    //    stream >> diametersFromMCU[i];
+    stream >> diametersFromMCU;
+    for(int i=0;i<diametersFromMCU.size();i++)
+        diameterKeys.append(i);
+    return diametersFromMCU;
+}
+
+void MainWindow::plotDiameter()
+{
+    int size = diametersFromMCU.size();
+    diameterKeys.resize(size);
+    for(int i = 0;i<size; i++){
+        diameterKeys[i]=lastIndex++;
+    }
+    int overload = filled+size-5000;
+    if(overload>=0){
+        xDiameter.remove(0,overload);
+        yDiameter.remove(0,overload);
+        filled-=overload;
+    }
+    xDiameter.append(diameterKeys);
+    yDiameter.append(diametersFromMCU);
+    filled+=size;
+
+    diameterPlot->graph()->setData(xDiameter,yDiameter);
+    diameterPlot->xAxis->rescale();
+
+    diameterPlot->xAxis->setRange(diameterPlot->xAxis->range().upper, 5000, Qt::AlignRight);
+    diameterPlot->replot();
 }

@@ -30,6 +30,7 @@ SOURCES += \
     catchdatadialog.cpp \
     centerviewer.cpp \
     console.cpp \
+    diametertransmition.cpp \
     entervaluewidget.cpp \
     firfilter.cpp \
     historysettings.cpp \
@@ -55,6 +56,7 @@ HEADERS += \
     catchdatadialog.h \
     centerviewer.h \
     console.h \
+    diametertransmition.h \
     entervaluewidget.h \
     firfilter.h \
     historysettings.h \

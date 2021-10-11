@@ -21,8 +21,9 @@
 #include "settingsshadowsfinddialog.h"
 #include "maincontrolwidget.h"
 #include "managementwidget.h"
-
 #include "catchdatadialog.h"
+#include "qcustomplot/qcustomplot.h"
+#include <QRandomGenerator>
 // answer status
 const unsigned short FAIL             = 0x0000;
 const unsigned short OK               = 0x0101;
@@ -46,6 +47,8 @@ const unsigned short LEFT_BORDER_SET  = 0x13;
 const unsigned short RIGHT_BORDER_SET = 0x14;
 const unsigned short COMP_CH1_SET     = 0x15;
 const unsigned short COMP_CH2_SET     = 0x16;
+const unsigned short NEWSHADFINDPAR   = 0x17;
+const unsigned short REQUEST_DIAMETER = 0x20;
 
 class QSerialPort;
 class QTimer;
@@ -74,13 +77,8 @@ private slots:
     void on_settings_triggered();
     void on_connect_triggered();
     void on_disconnect_triggered();
-    void sendLazer1(int lazer1Par);
-    void sendLazer2(int lazer2Par);
-    void sendSaveEeprom();
-    void sendBorderLeft(int leftBorderVal);
-    void sendBorderRight(int leftBorderVal);
-    void sendCompCH1(int leftBorderVal);
-    void sendCompCH2(int leftBorderVal);
+    void sendByteToMK(char dst, char dataByte, const QString &msg);
+    void sendVectorToMK(char dst, QVector<double> dataV, const QString &msg);
     void setPacketSize(int n);
     void incCountCh(int);
     void manualGetShotButton();
@@ -95,7 +93,7 @@ private slots:
     void handlerTranspError();
     void reSentInc();
     void handlerTimer();
-    void sendChannelOrder();
+    void handlerGettingDiameterTimer();
 
     //Запись в файл
     void writeToLogfile(QString name);
@@ -106,25 +104,23 @@ private slots:
 
     //Изменение настроек расчетов
     void settingsChanged();
-
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
-
-    void constructorTest();
-
     QSerialPort *serial;
     Slip *m_slip;
     Transp *m_transp;
-    QTimer *m_timer;
+    QTimer *m_timer,*m_GettingDiameterTimer;
 
-
+    QVector <double> fromBytes(QByteArray &bytes);
     //Интерфейс
     QVBoxLayout *layoutV;
     MainControlWidget *m_MainControlWidget;
     ManagementWidget *m_ManagementWidget;
     QTableWidget *m_table;
     Console *m_console;
+    QTabWidget *m_tab;
+    QCustomPlot* diameterPlot;
     ShotViewer *viewer;
     firFilter *filter;
     SettingsShadowsFindDialog *ShadowSettings;
@@ -154,8 +150,17 @@ private:
     QFile *file1,*file2,*file3,*file4;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
 
-    QVector <QVector<double>> catchedData;
-
+    union conversation{
+        char ch[8];
+        double d;
+    };
+    QVector<double> diametersFromMCU,diameterKeys;
+    //Для тестов
+    void constructorTest();
+    QByteArray generateBytes(int count);
+    void plotDiameter();
+    QVector<double> xDiameter,yDiameter;
+    int filled = 0,lastIndex=0;
 };
 
 #endif // MAINWINDOW_H

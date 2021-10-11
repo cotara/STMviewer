@@ -27,6 +27,7 @@ private:
 signals:
     void buttonClicked(int i);
     void dataCatched();
+    void pointCatched(QVector<double> data, int position);
 };
 
 #endif // CATCHDATADIALOG_H

@@ -5,6 +5,7 @@
 #include "plissettings.h"
 #include "transmitionsettings.h"
 #include "historysettings.h"
+#include "diametertransmition.h"
 
 class ManagementWidget : public QWidget
 {
@@ -14,6 +15,7 @@ public:
     PlisSettings *m_plisSettings;
     TransmitionSettings *m_TransmitionSettings;
     HistorySettings *m_HistorySettings;
+    DiameterTransmition *m_DiameterTransmition;
 signals:
 
 private:

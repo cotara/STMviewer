@@ -36,9 +36,11 @@ private:
     QVector<double> paramsDouble;
     void defaultToFile();
     void writeToFile();
-
+    QByteArray readParamsFromFile();
+    QVector<double> defaultSettings{0.905,5320,5320,207400,207400,73400,73400};
 signals:
     void settingsChanged();
+    void sendSettingsToMK();
 
 };
 
