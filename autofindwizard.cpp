@@ -31,12 +31,14 @@ AutoFindWizard::AutoFindWizard(QWidget *parent, QVector<double> params) :
     });                            //Запуск алгоритма подбора параметров
     connect(catchData,&catchDataDialog::dataCatched,[=]{dataCatched=true;});                        //Получаем сигнал, что все данные собраны
     connect(catchData,&catchDataDialog::pointCatched,[=](QVector<double> data, int i){
-        allExtremums[i-1] = data;});
+        allExtremums[i-1] = data;});                                                            //
 
     connect(ui->mkSendButton,&QPushButton::clicked,[=]{
         on_pushButton_2_clicked(); //Приняли параметры
         emit sendBestParameters();//Сигнал об отправке подобранных параметров в МК
     });
+
+
 }
 
 void AutoFindWizard::init(QVector<double> params)
@@ -75,6 +77,38 @@ void AutoFindWizard::init(QVector<double> params)
     allExtremums.clear();
     allExtremums.resize(9);
     dataCatched=false;
+
+
+    //Для теста:
+    QVector <double> temp;
+    temp = {3865,3865,6185,6185,3865,3865,6185,6185};
+    allExtremums[0]=temp;
+
+    temp = {380,380,2707,2707,3942,3942,6108,6108};
+    allExtremums[1]=temp;
+
+    temp = {7343,7343,9670,9670,3776,3776,6274,6274};
+    allExtremums[2]=temp;
+
+    temp = {688,688,2860,2860,688,688,2860,2860};
+    allExtremums[3]=temp;
+
+    temp = {3942,3942,6108,6108,380,380,2707,2707};
+    allExtremums[4]=temp;
+
+    temp = {7190,7190,9362,9362,25,25,2530,2530};
+    allExtremums[5]=temp;
+
+    temp = {25,25,2530,2530,7190,7190,9362,9362};
+    allExtremums[6]=temp;
+
+    temp = {3776,3776,6274,6274,7343,7343,9670,9670};
+    allExtremums[7]=temp;
+
+    temp = {7520,7520,10025,10025,7520,7520,10025,10025};
+    allExtremums[8]=temp;
+    dataCatched=true;
+
 }
 
 AutoFindWizard::~AutoFindWizard(){
