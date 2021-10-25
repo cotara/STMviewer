@@ -69,6 +69,7 @@
     </property>
     <addaction name="ShdowSet"/>
     <addaction name="AutoRange"/>
+    <addaction name="SaveLog"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -211,6 +212,15 @@
    </property>
    <property name="toolTip">
     <string>Автомасштаб</string>
+   </property>
+  </action>
+  <action name="SaveLog">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/028-diagram.png</normaloff>:/1/Resources/028-diagram.png</iconset>
+   </property>
+   <property name="text">
+    <string>Сохранить историю в файл</string>
    </property>
   </action>
  </widget>

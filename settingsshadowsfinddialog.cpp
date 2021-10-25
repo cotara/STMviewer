@@ -123,6 +123,7 @@ void SettingsShadowsFindDialog::updateSettingsStructSlot(QVector<double> &par)
 void SettingsShadowsFindDialog::defaultToFile(){
 
     updateSettingsStructSlot(defaultSettings);
+    writeToFile();
 }
 
 //Нажали ОК
