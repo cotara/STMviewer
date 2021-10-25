@@ -7,6 +7,7 @@
 #include "statusbar.h"
 #include <QSplitter>
 
+
 #define TEST_MODE
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -61,7 +62,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_ManagementWidget->setMinimumWidth(250);
     packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
 
-
     //Таблица
     m_table = new QTableWidget(this);
     m_table->setColumnCount(2);
@@ -102,11 +102,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //connect(customPlot1, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress1(QMouseEvent*)));
     //connect(customPlot1, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
 
-
     // При зумировании одной оси зизменяется диапазон противоположной
     //connect(customPlot1->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->xAxis2, SLOT(setRange(QCPRange)));
     //connect(customPlot1->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->yAxis2, SLOT(setRange(QCPRange)));
-
 
     m_tab->addTab(viewer, "Сигнал");
     m_tab->addTab(diameterPlot, "Диаметр");
@@ -227,6 +225,10 @@ MainWindow::MainWindow(QWidget *parent) :
     empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
     ui->mainToolBar->insertWidget(ui->showConsole,empty);
 
+    //Логгирование
+    log = new SaveLog(this);
+    connect(log,&SaveLog::SaveToFolder,[=](QString &dirname){saveHistory(dirname);});
+    connect(ui->SaveLog,&QAction::triggered,[=]{log->show();});
     //Создание папки с логами, если ее нет.
     dir = new QDir(dirname);
     if (!dir->exists()) {
@@ -238,7 +240,6 @@ MainWindow::MainWindow(QWidget *parent) :
     file2 = new QFile();
     file3 = new QFile();
     file4 = new QFile();
-
 
    ShadowSettings = new SettingsShadowsFindDialog(this);
    connect(ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);//Обновляем настройки в фильтре
@@ -980,17 +981,17 @@ void MainWindow::fillTable(QCPGraphDataContainer &dataMap)
         m_table->hideRow(i);
 }
 
-
-
-void MainWindow::on_ShdowSet_triggered()
-{
+void MainWindow::on_ShdowSet_triggered(){
     ShadowSettings->updateSettingsStruct();
     ShadowSettings->show();
 }
 
-void MainWindow::settingsChanged()
-{
+void MainWindow::settingsChanged(){
     filter->updateSettings(ShadowSettings->getShadowFindSettings());//Забрали обновленные настройки
+}
+
+void MainWindow::saveHistory(QString &dirname){
+
 }
 
 QVector<double> MainWindow::fromBytes(QByteArray &bytes)

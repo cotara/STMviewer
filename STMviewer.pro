@@ -40,6 +40,7 @@ SOURCES += \
     managementwidget.cpp \
     plissettings.cpp \
     resultswidget.cpp \
+    savelog.cpp \
     serialsettings.cpp \
     qcustomplot/qcustomplot.cpp \
     settingsshadowsfinddialog.cpp \
@@ -65,6 +66,7 @@ HEADERS += \
     managementwidget.h \
     plissettings.h \
     resultswidget.h \
+    savelog.h \
     serialsettings.h \
     qcustomplot/qcustomplot.h \
     settingsshadowsfinddialog.h \
@@ -81,6 +83,7 @@ FORMS += \
         catchdatadialog.ui \
         entervaluewidget.ui \
         mainwindow.ui \
+        savelog.ui \
         serialsettings.ui \
         settingsshadowsfinddialog.ui
 

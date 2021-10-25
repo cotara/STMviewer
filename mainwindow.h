@@ -24,6 +24,7 @@
 #include "catchdatadialog.h"
 #include "qcustomplot/qcustomplot.h"
 #include <QRandomGenerator>
+#include "savelog.h"
 // answer status
 const unsigned short FAIL             = 0x0000;
 const unsigned short OK               = 0x0101;
@@ -104,6 +105,9 @@ private slots:
 
     //Изменение настроек расчетов
     void settingsChanged();
+
+    //Запись лога
+    void saveHistory(QString &dirname);
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
@@ -125,6 +129,7 @@ private:
     firFilter *filter;
     SettingsShadowsFindDialog *ShadowSettings;
     StatusBar *statusBar;
+    SaveLog *log;
 
     QLabel *tableSizeLabel;
     QSpinBox  *tableSizeSpinbox;
