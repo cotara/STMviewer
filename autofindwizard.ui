@@ -491,6 +491,9 @@
         <property name="text">
          <string>Подобрать коэффициенты</string>
         </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
      </layout>

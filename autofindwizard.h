@@ -19,11 +19,16 @@ public:
     catchDataDialog *catchData;
     void setExtremums(QVector<QVector<double>> &extr);
     void accept() override;
+    void reject() override;
     void init(QVector<double> params);
+    void closeEvent(QCloseEvent *iEvent) override;
 
 private slots:
     void on_AutoFindWizard_currentIdChanged(int id);
     void on_pushButton_2_clicked();
+
+
+    void on_startFind_clicked(bool checked);
 
 private:
     QVBoxLayout *layout1;
@@ -43,7 +48,9 @@ private:
     int etalonMkm = 0;
     QVector <double> laV,NxV,NyV,HxV,HyV,CxV,CyV;
     //int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
-    bool dataCatched=false;
+    bool dataCatched=false;//Данные на всех 9 точках собраны (могут быть невалидны)
+    bool stopPressed=true;//остановка процесса подбора
+    int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
 signals:
     void setProgress(int progress);
     void saveBestParameters(QVector<double> &par);

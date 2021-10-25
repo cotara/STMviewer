@@ -23,12 +23,6 @@ AutoFindWizard::AutoFindWizard(QWidget *parent, QVector<double> params) :
 
     etalonMkm = static_cast<int>(500*ui->etalonDiameterSpinBox->value());                           //Получаем радиус на старте
 
-    connect(ui->startFind, &QPushButton::clicked, [=]{
-        if(dataCatched)
-            autoFindAlg();
-        else
-            QMessageBox::warning(this, "Внимание!", "Подбор параметров невозможнен, так как не все точки были захвачены",QMessageBox::Ok);
-    });                            //Запуск алгоритма подбора параметров
     connect(catchData,&catchDataDialog::dataCatched,[=]{dataCatched=true;});                        //Получаем сигнал, что все данные собраны
     connect(catchData,&catchDataDialog::pointCatched,[=](QVector<double> data, int i){
         allExtremums[i-1] = data;});                                                            //
@@ -72,11 +66,18 @@ void AutoFindWizard::init(QVector<double> params)
     ui->CxSpinBox_2->clear();
     ui->CySpinBox_2->clear();
 
+    ui->resultDiameter->clear();
+    ui->bestErr->clear();
+    ui->progressBar->reset();
+    ui->startFind->setChecked(false);
+    ui->startFind->setChecked(false);
+
     catchData->clear();         //Очистка цветов и текста кнопок захвата данных
     restart();                  //Перезапуск мастера
     allExtremums.clear();
     allExtremums.resize(9);
     dataCatched=false;
+    ui->startFind->setText("Подобрать");
 
     allFronts.clear();
     allFronts.resize(9);
@@ -126,9 +127,22 @@ void AutoFindWizard::on_AutoFindWizard_currentIdChanged(int id){
 void AutoFindWizard::accept(){
     catchData->clear();
     QDialog::accept();
-    restart();
+    stopPressed=true;
 }
 
+void AutoFindWizard::reject(){
+    catchData->clear();
+    QDialog::reject();
+    stopPressed=true;
+}
+void AutoFindWizard::closeEvent(QCloseEvent* iEvent)
+{
+  // ignore close event
+  //iEvent->ignore();
+    catchData->clear();
+    QDialog::reject();
+    stopPressed=true;
+}
 //Алгоритм подбора параметров
 void AutoFindWizard::autoFindAlg()
 {
@@ -200,10 +214,11 @@ void AutoFindWizard::autoFindAlg()
       double start;
       double end;
       start = omp_get_wtime();
-int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
-#pragma omp parallel  private(err,ila,iNx,iNy, iHx,iHy,iCx,iCy)
-   {
-    #pragma omp  for //nowait//ordered //schedule(static)
+
+
+//#pragma omp parallel  private(err,ila,iNx,iNy, iHx,iHy,iCx,iCy)
+   //{
+    #pragma omp parallel for private(err,ila,iNx,iNy, iHx,iHy,iCx,iCy) //nowait//ordered //schedule(static)
     for ( iCy = 0;iCy<(ui->CyRange->value())*2+1;iCy++){
         for ( iCx = 0;iCx<(ui->CxRange->value())*2+1;iCx++){
             for ( iHy = 0;iHy<(ui->HyRange->value())*2+1;iHy++){
@@ -224,6 +239,7 @@ int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
                                     bestCx = CxV[iCx];
                                     bestCy = CyV[iCy];
                                 }
+
                                 if(err<1.5){
                                     qDebug() << " Ошибка: " << err;
                                     qDebug() << " NxV: " << NxV[iNx];
@@ -233,9 +249,17 @@ int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
                                     qDebug() << " CxV: " << CxV[iCx];
                                     qDebug() << " CyV: " << CyV[iCy];
                                     qDebug() << " \n";
-
                                 }
-
+                                if(stopPressed){
+                                    ila = ui->laRange->value()*2+1;
+                                    iNx = ui->NxRange->value()*2+1;
+                                    iNy = ui->NyRange->value()*2+1;
+                                    iHx = ui->HxRange->value()*2+1;
+                                    iHy = ui->HyRange->value()*2+1;
+                                    iCx = ui->CxRange->value()*2+1;
+                                    iCy = ui->CyRange->value()*2+1;
+                                    currentStep = steps*100;
+                                }
                             }
                         }
                     }
@@ -245,7 +269,7 @@ int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
             }
         }
     }
-}
+  //}
     qDebug() << " Количество потоков: " << omp_get_num_threads();
     end = omp_get_wtime();
     qDebug() << "work-time: " << end-start;
@@ -441,3 +465,22 @@ void AutoFindWizard::on_pushButton_2_clicked()
     ui->CxLabel->setText(QString::number(bestCx,'g',10));
     ui->CyLabel->setText(QString::number(bestCy,'g',10));
 }
+
+
+void AutoFindWizard::on_startFind_clicked(bool checked){
+    if(dataCatched){
+        if(checked){
+             stopPressed=false;
+             ui->startFind->setText("Остановить");
+             autoFindAlg();
+        }
+        else{
+           stopPressed = true;
+           ui->startFind->setText("Подобрать");
+        }
+
+    }
+    else
+        QMessageBox::warning(this, "Внимание!", "Подбор параметров невозможнен, так как не все точки были захвачены",QMessageBox::Ok);
+}
+
