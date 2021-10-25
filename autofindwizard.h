@@ -30,12 +30,14 @@ private:
     Ui::AutoFindWizard *ui;
     QVector<double> m_params;
     QVector<QVector<double>> allExtremums;
+    QVector<QVector<double>> allFronts;
     void autoFindAlg();
     double res=4, p1=2.51087470;
     double initla,initNx,initNy,initHx,initHy,initCx,initCy;
     double dla,dNx,dNy,dHx,dHy,dCx,dCy;
     double bestla=0,bestNx=0,bestNy=0,bestHx=0,bestHy=0,bestCx=0,bestCy=0;
     QVector<double> calcDiemeter(QVector<double> dots, int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy);
+    QVector<double> calcDiemeter2(QVector<double> dots, int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy);
     double calcErrDiemeter(int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy);
     uint64_t  steps,currentStep=0;
     int etalonMkm = 0;

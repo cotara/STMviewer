@@ -78,35 +78,36 @@ void AutoFindWizard::init(QVector<double> params)
     allExtremums.resize(9);
     dataCatched=false;
 
-
+    allFronts.clear();
+    allFronts.resize(9);
     //Для теста:
     QVector <double> temp;
-    temp = {3865,3865,6185,6185,3865,3865,6185,6185};
-    allExtremums[0]=temp;
+    temp = {3865,6185,3865,6185};
+    allFronts[0]=temp;
 
-    temp = {380,380,2707,2707,3942,3942,6108,6108};
-    allExtremums[1]=temp;
+    temp = {380,2707,3942,6108};
+    allFronts[1]=temp;
 
-    temp = {7343,7343,9670,9670,3776,3776,6274,6274};
-    allExtremums[2]=temp;
+    temp = {7343,9670,3776,6274};
+    allFronts[2]=temp;
 
-    temp = {688,688,2860,2860,688,688,2860,2860};
-    allExtremums[3]=temp;
+    temp = {688,2860,688,2860};
+    allFronts[3]=temp;
 
-    temp = {3942,3942,6108,6108,380,380,2707,2707};
-    allExtremums[4]=temp;
+    temp = {3942,6108,380,2707};
+    allFronts[4]=temp;
 
-    temp = {7190,7190,9362,9362,25,25,2530,2530};
-    allExtremums[5]=temp;
+    temp = {7190,9362,25,2530};
+    allFronts[5]=temp;
 
-    temp = {25,25,2530,2530,7190,7190,9362,9362};
-    allExtremums[6]=temp;
+    temp = {25,2530,7190,9362};
+    allFronts[6]=temp;
 
-    temp = {3776,3776,6274,6274,7343,7343,9670,9670};
-    allExtremums[7]=temp;
+    temp = {3776,6274,7343,9670};
+    allFronts[7]=temp;
 
-    temp = {7520,7520,10025,10025,7520,7520,10025,10025};
-    allExtremums[8]=temp;
+    temp = {7520,10025,7520,10025};
+    allFronts[8]=temp;
     dataCatched=true;
 
 }
@@ -194,7 +195,6 @@ void AutoFindWizard::autoFindAlg()
 //Проверка, что распараллеливание подгрузилось
     #if defined(_OPENMP)
       qDebug() << "Compiled by an OpenMP-compliant implementation.\n";
-      qDebug() <<  omp_get_num_threads();
     #endif
         //omp_set_num_threads(2);
       double start;
@@ -224,6 +224,18 @@ int ila=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
                                     bestCx = CxV[iCx];
                                     bestCy = CyV[iCy];
                                 }
+                                if(err<1.5){
+                                    qDebug() << " Ошибка: " << err;
+                                    qDebug() << " NxV: " << NxV[iNx];
+                                    qDebug() << " NyV: " << NyV[iNy];
+                                    qDebug() << " HxV: " << HxV[iHx];
+                                    qDebug() << " HyV: " << HyV[iHy];
+                                    qDebug() << " CxV: " << CxV[iCx];
+                                    qDebug() << " CyV: " << CyV[iCy];
+                                    qDebug() << " \n";
+
+                                }
+
                             }
                         }
                     }
@@ -280,10 +292,17 @@ QVector<double> AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int i
     double Front2 = x03;
     double Spad2 = x04;
 
-    double  X11 = (-Front1+ Nx)*res+Cx;
-    double  X21 = (-Spad1+ Nx)*res+Cx;
-    double  Y11 = (-Front2+Ny)*res+Cy;
-    double  Y21 = (-Spad2+Ny)*res+Cy;
+    //для данных с экселя
+    double  X11 = -(-Front1+ Nx)*res+Cx;
+    double  X21 = -(-Spad1+ Nx)*res+Cx;
+    double  Y11 = -(-Front2+Ny)*res+Cy;
+    double  Y21 = -(-Spad2+Ny)*res+Cy;
+
+    //Для реальных данных
+    //    double  X11 = (-Front1+ Nx)*res+Cx;
+    //    double  X21 = (-Spad1+ Nx)*res+Cx;
+    //    double  Y11 = (-Front2+Ny)*res+Cy;
+    //    double  Y21 = (-Spad2+Ny)*res+Cy;
 
     double  X01 =    Hx*tan(0.5*(atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)))+Cx ;
     double  Y01 =    Hy*tan(0.5*(atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)))+Cy ;
@@ -291,54 +310,116 @@ QVector<double> AutoFindWizard::calcDiemeter(QVector<double> dots, int ila,int i
     double  Ex01 =(Cx*Hy*Y01 + Hx*Hy*X01 - Hy*X01*Y01)/(Hx*Hy - Cx*Cy - X01*Y01 + Cy*X01 + Cx*Y01);
     double  Ey01 =(Hx*Cy*X01 + Hx*Hy*Y01 - Hx*X01*Y01)/(Hx*Hy - Cx*Cy - X01*Y01 + Cy*X01 + Cx*Y01);
 
-    double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(-atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)));
-    double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(-atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)));
+    //Для данных с эксельки
+    double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(atan((X21-Cx)/Hx)-atan((X11-Cx)/Hx)));
+    double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(atan((Y21-Cy)/Hy)-atan((Y11-Cy)/Hy)));
+
+    //Для реальных данных
+    //double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(-atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)));
+    //double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(-atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)));
+
     QVector<double> temp;
     temp.append(Rx1);
     temp.append(Ry1);
     return temp;
 
 }
+//Расчет радиусов по пачке экстремумов и параметров
+QVector<double> AutoFindWizard::calcDiemeter2(QVector<double> dots, int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy){
+    QVector<double> x;
+    double la = laV[ila];
+    double Nx = NxV[iNx];
+    double Ny = NyV[iNy];
+    double Hx = HxV[iHx];
+    double Hy = HyV[iHy];
+    double Cx = CxV[iCx];
+    double Cy = CyV[iCy];
 
+    double Front1 = dots.at(0);
+    double Spad1 = dots.at(1);
+    double Front2 = dots.at(2);
+    double Spad2 = dots.at(3);
+
+    //для данных с экселя
+    double  X11 = -(-Front1+ Nx)*res+Cx;
+    double  X21 = -(-Spad1+ Nx)*res+Cx;
+    double  Y11 = -(-Front2+Ny)*res+Cy;
+    double  Y21 = -(-Spad2+Ny)*res+Cy;
+
+    //Для реальных данных
+    //    double  X11 = (-Front1+ Nx)*res+Cx;
+    //    double  X21 = (-Spad1+ Nx)*res+Cx;
+    //    double  Y11 = (-Front2+Ny)*res+Cy;
+    //    double  Y21 = (-Spad2+Ny)*res+Cy;
+
+    double  X01 =    Hx*tan(0.5*(atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)))+Cx ;
+    double  Y01 =    Hy*tan(0.5*(atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)))+Cy ;
+
+    double  Ex01 =(Cx*Hy*Y01 + Hx*Hy*X01 - Hy*X01*Y01)/(Hx*Hy - Cx*Cy - X01*Y01 + Cy*X01 + Cx*Y01);
+    double  Ey01 =(Hx*Cy*X01 + Hx*Hy*Y01 - Hx*X01*Y01)/(Hx*Hy - Cx*Cy - X01*Y01 + Cy*X01 + Cx*Y01);
+
+    //Для данных с эксельки
+    double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(atan((X21-Cx)/Hx)-atan((X11-Cx)/Hx)));
+    double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(atan((Y21-Cy)/Hy)-atan((Y11-Cy)/Hy)));
+
+    //Для реальных данных
+    //double Rx1 = sqrt((Ex01-Cx)*(Ex01-Cx)+(Hx-Ey01)*(Hx-Ey01))*sin(0.5*(-atan((X21-Cx)/Hx)+atan((X11-Cx)/Hx)));
+    //double Ry1 = sqrt((Ey01-Cy)*(Ey01-Cy)+(Hy-Ex01)*(Hy-Ex01))*sin(0.5*(-atan((Y21-Cy)/Hy)+atan((Y11-Cy)/Hy)));
+
+    QVector<double> temp;
+    temp.append(Rx1);
+    temp.append(Ry1);
+    return temp;
+
+}
 //Расчет СКВ ошибки определения радиусов.
 double AutoFindWizard::calcErrDiemeter(int ila,int iNx,int iNy,int iHx,int iHy,int iCx,int iCy)
 {
     double err0,err1,err2,err3,err4,err5,err6,err7,err8,err9,err10,err11,err12,err13,err14,err15,err16,err17;
 
     QVector<double> temp;
-    temp = calcDiemeter(allExtremums.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err0 = etalonMkm - temp.at(0);
     err1 = etalonMkm - temp.at(1);
 
-    temp = calcDiemeter(allExtremums.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err2 = etalonMkm - temp.at(0);
     err3 = etalonMkm - temp.at(1);
 
-    temp = calcDiemeter(allExtremums.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err4 = etalonMkm - temp.at(0);
     err5 = etalonMkm - temp.at(1);
 
-    temp = calcDiemeter(allExtremums.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err6 = etalonMkm - temp.at(0);
     err7 = etalonMkm - temp.at(1);
 
-    temp = calcDiemeter(allExtremums.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err8 = etalonMkm - temp.at(0);
     err9 = etalonMkm - temp.at(1);
 
-    temp = calcDiemeter(allExtremums.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err10 = etalonMkm - temp.at(0);
     err11= etalonMkm - temp.at(1);
 
-    temp = calcDiemeter(allExtremums.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err12 = etalonMkm - temp.at(0);
     err13 = etalonMkm - temp.at(1);
 
-    temp = calcDiemeter(allExtremums.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err14 = etalonMkm - temp.at(0);
     err15 = etalonMkm - temp.at(1);
 
-    temp = calcDiemeter(allExtremums.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter(allExtremums.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter2(allFronts.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err16 = etalonMkm - temp.at(0);
     err17 = etalonMkm - temp.at(1);
 
