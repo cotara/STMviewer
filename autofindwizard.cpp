@@ -83,32 +83,58 @@ void AutoFindWizard::init(QVector<double> params)
     allFronts.resize(9);
     //Для теста:
     QVector <double> temp;
-    temp = {3865,6185,3865,6185};
-    allFronts[0]=temp;
+//    temp = {3865,6185,3865,6185};
+//    allFronts[0]=temp;
 
-    temp = {380,2707,3942,6108};
-    allFronts[1]=temp;
+//    temp = {380,2707,3942,6108};
+//    allFronts[1]=temp;
 
-    temp = {7343,9670,3776,6274};
-    allFronts[2]=temp;
+//    temp = {7343,9670,3776,6274};
+//    allFronts[2]=temp;
 
-    temp = {688,2860,688,2860};
-    allFronts[3]=temp;
+//    temp = {688,2860,688,2860};
+//    allFronts[3]=temp;
 
-    temp = {3942,6108,380,2707};
-    allFronts[4]=temp;
+//    temp = {3942,6108,380,2707};
+//    allFronts[4]=temp;
 
-    temp = {7190,9362,25,2530};
-    allFronts[5]=temp;
+//    temp = {7190,9362,25,2530};
+//    allFronts[5]=temp;
 
-    temp = {25,2530,7190,9362};
-    allFronts[6]=temp;
+//    temp = {25,2530,7190,9362};
+//    allFronts[6]=temp;
 
-    temp = {3776,6274,7343,9670};
-    allFronts[7]=temp;
+//    temp = {3776,6274,7343,9670};
+//    allFronts[7]=temp;
 
-    temp = {7520,10025,7520,10025};
-    allFronts[8]=temp;
+//    temp = {7520,10025,7520,10025};
+//    allFronts[8]=temp;
+        temp = {6704 ,8853 ,5807 ,7927 };
+        allFronts[0]=temp;
+
+        temp = {4329 ,6472 ,6836 ,9071 };
+        allFronts[1]=temp;
+
+        temp = {2559 ,4694 ,7060 ,9392 };
+        allFronts[2]=temp;
+
+        temp = {897 ,3168 ,3942 ,6370 };
+        allFronts[3]=temp;
+
+        temp = {2402 ,4790 ,1697 ,4015 };
+        allFronts[4]=temp;
+
+        temp = {4668 ,7054 ,1418 ,3635 };
+        allFronts[5]=temp;
+
+        temp = {6784 ,9121 ,2104 ,4239 };
+        allFronts[6]=temp;
+
+        temp = {7747,9975 ,4203 ,6291 };
+        allFronts[7]=temp;
+
+        temp = {4635,6883,4558,6783};
+        allFronts[8]=temp;
     dataCatched=true;
 
 }

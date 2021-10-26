@@ -8,7 +8,7 @@
 #include <QSplitter>
 
 
-#define TEST_MODE
+//#define TEST_MODE
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -695,8 +695,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         qDebug() << "Attantion! Dublicate CH2";
                     }
                    chName="CH1_F";
-                   //currentShot=currentShot.mid(20);                                 //Смещение отфильтрованного сигнала из плисы
-                   //currentShot.append(20,0);
+                   currentShot=currentShot.mid(70);                                 //Смещение отфильтрованного сигнала из плисы
+                   currentShot.append(70,0);
                    shotsCH2.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
                    chCountRecieved++;
@@ -721,8 +721,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH4";
                      }
                      chName="CH2_F";
-                     //currentShot=currentShot.mid(20);                                 //Смещение отфильтрованного сигнала из плисы
-                     //currentShot.append(20,0);
+                     currentShot=currentShot.mid(70);                                 //Смещение отфильтрованного сигнала из плисы
+                     currentShot.append(70,0);
                      shotsCH4.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
                      chCountRecieved++;                                                  //Получили канал
