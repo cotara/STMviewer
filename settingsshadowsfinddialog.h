@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QDebug>
 #include "autofindwizard.h"
+#include <QShortcut>
 
 namespace Ui {
 class SettingsShadowsFindDialog;
@@ -28,6 +29,7 @@ private slots:
     void on_pushButton_3_clicked();
     void on_pushButton_clicked();
     void updateSettingsStructSlot(QVector<double> &par);
+    void slotShortcutF5();
 
 private:
     Ui::SettingsShadowsFindDialog *ui;
@@ -38,6 +40,7 @@ private:
     void writeToFile();
     QByteArray readParamsFromFile();
     QVector<double> defaultSettings{0.905,5320,5320,207400,207400,73400,73400};
+    QShortcut       *keyF5;    // объект горячей клавиши F11
 signals:
     void settingsChanged();
     void sendSettingsToMK();

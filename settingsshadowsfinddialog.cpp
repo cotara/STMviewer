@@ -14,6 +14,12 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
     paramsDouble.resize(7);
     updateSettingsStruct();     //Обновили структуру из файла
 
+    ui->pushButton->setVisible(false);
+    ui->pushButton_3->setToolTip("Восставновить параметры по умолчанию");
+    ui->buttonBox->setToolTip("Сохранить настройки в файл");
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setToolTip("Сохранить параметры в файл");
+    ui->buttonBox->button(QDialogButtonBox::Cancel)->setToolTip("Закрыть, не сохраняя параметры в файл");
+
     wizard = new AutoFindWizard(this,paramsDouble);
     connect(wizard,&AutoFindWizard::saveBestParameters,this,&SettingsShadowsFindDialog::updateSettingsStructSlot);
     connect(ui->laSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ paramsDouble[0] = i; emit settingsChanged();});
@@ -25,6 +31,12 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
     connect(ui->CySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ paramsDouble[6] = i; emit settingsChanged();});
 
     connect(wizard,&AutoFindWizard::sendBestParameters,this,&SettingsShadowsFindDialog::sendSettingsToMK);
+
+    keyF5 = new QShortcut(this);   // Инициализируем объект
+    keyF5->setKey(Qt::Key_F5);    // Устанавливаем код клавиши
+    // цепляем обработчик нажатия клавиши
+    connect(keyF5, SIGNAL(activated()), this, SLOT(slotShortcutF5()));
+
 }
 
 SettingsShadowsFindDialog::~SettingsShadowsFindDialog(){
@@ -123,7 +135,7 @@ void SettingsShadowsFindDialog::updateSettingsStructSlot(QVector<double> &par)
 void SettingsShadowsFindDialog::defaultToFile(){
 
     updateSettingsStructSlot(defaultSettings);
-    writeToFile();
+    //writeToFile();
 }
 
 //Нажали ОК
@@ -145,4 +157,8 @@ void SettingsShadowsFindDialog::on_pushButton_3_clicked(){
 void SettingsShadowsFindDialog::on_pushButton_clicked(){
     wizard->init(paramsDouble);
     wizard->show();
+}
+//Секретная клавиша, открывающая автоподбор
+void SettingsShadowsFindDialog::slotShortcutF5(){
+    on_pushButton_clicked();
 }

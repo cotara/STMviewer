@@ -1,6 +1,7 @@
 #include "entervaluewidget.h"
 #include "ui_entervaluewidget.h"
 #include <QPushButton>
+#include <QFile>
 
 EnterValueWidget::EnterValueWidget(QWidget *parent, int min, int max) :
     QDialog(parent),
@@ -14,6 +15,7 @@ EnterValueWidget::EnterValueWidget(QWidget *parent, int min, int max) :
     ui->spinBox->setMinimum(min);
     ui->spinBox->setMaximum(max);
     ui->spinBox->setFocus();
+    ui->spinBox->setSingleStep(1);
 }
 
 EnterValueWidget::~EnterValueWidget()
@@ -25,8 +27,18 @@ void EnterValueWidget::on_buttonBox_accepted()
 {
    if(ui->spinBox->value()!=oldValue){
        emit valueChanged();
+       emit sendValue(ui->spinBox->value());
        oldValue = ui->spinBox->value();
+       //Чтобы этот диалог, являющийся частью  асинхронной кнопки имел обычные кнопки внутри себя
+       QFile file(":/qss/styleWhiteButtons.css");
+       if(file.open(QFile::ReadOnly))
+             this->setStyleSheet(file.readAll());
    }
-   emit sendValue(ui->spinBox->value());
-
+   ui->spinBox->setFocus();
 }
+
+void EnterValueWidget::on_buttonBox_rejected()
+{
+    ui->spinBox->setFocus();
+}
+

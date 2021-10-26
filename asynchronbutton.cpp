@@ -12,8 +12,7 @@ AsynchronButton::AsynchronButton(QWidget *parent, int min, int max):QPushButton(
 
      connect(enterDialog,&EnterValueWidget::valueChanged,[=]{
          QFile file(":/qss/styleYelowButtons.css");
-           if(file.open(QFile::ReadOnly)){
-               QByteArray style = file.readAll();
-               this->setStyleSheet(style);
-         }});
+           if(file.open(QFile::ReadOnly))
+               setStyleSheet(file.readAll());
+         });
 }

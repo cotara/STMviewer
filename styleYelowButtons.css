@@ -3,8 +3,8 @@
 */
 
 QPushButton{
-    background: yellow;
-    color: white;
+    background: #FFE73D;
+    color: #003AA3;
     border-radius:4px;
     border:1px solid #5CA4FF;
     min-height:25px;
