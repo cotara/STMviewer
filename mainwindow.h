@@ -80,12 +80,10 @@ private slots:
     void on_disconnect_triggered();
     void sendByteToMK(char dst, char dataByte, const QString &msg);
     void sendVectorToMK(char dst, QVector<double> dataV, const QString &msg);
-    void setPacketSize(int n);
     void incCountCh(int);
     void manualGetShotButton();
     void getPacketFromMCU(unsigned short n);
     void autoGetCheckBoxChanged(int);
-    void autoSaveShotCheked(bool);
     void selectShot(int index);
     void on_clearButton();
 
@@ -97,7 +95,6 @@ private slots:
     void handlerGettingDiameterTimer();
 
     //Запись в файл
-    void writeToLogfile(QString name);
     void writeToLogfileMeta(QString name);
     //отрисовка таблицы
     void fillTable(QCPGraphDataContainer &dataMap);
@@ -138,7 +135,7 @@ private:
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH2In,shotsCH3,shotsCH4,shotsCH4In;
     QByteArray currentShot;
     int chCountChecked=0,shotCountRecieved=0,chCountRecieved=0;                               //Текущее количество отмеченных каналов и текущее количество принятых шотов
-    short packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
+    int packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
     int countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
@@ -150,11 +147,11 @@ private:
 
     //Работа с файлами
     QDir *dir;
-    QString dirname = "log/3.27";
+    QString dirnameDefault = "log";
     QString filename;
-    QFile *file1,*file2,*file3,*file4;
+    QFile *file;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
-
+    QByteArray endChannelLine = QByteArray::fromRawData("\xFE\x00\xFE\x00", 4);
     union conversation{
         char ch[8];
         double d;

@@ -15,7 +15,6 @@ EnterValueWidget::EnterValueWidget(QWidget *parent, int min, int max) :
     ui->spinBox->setMinimum(min);
     ui->spinBox->setMaximum(max);
     ui->spinBox->setFocus();
-    ui->spinBox->setSingleStep(1);
 }
 
 EnterValueWidget::~EnterValueWidget()

@@ -107,4 +107,11 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
               lazer2Button->setStyleSheet(style);
         }});
     saveButton->setObjectName("saveButton");
+
+    lazer1Button->setEnabled(false);
+    lazer2Button->setEnabled(false);
+    borderLeftButton->setEnabled(false);
+    borderRightButton->setEnabled(false);
+    compCH1Button->setEnabled(false);
+    compCH2Button->setEnabled(false);
 }

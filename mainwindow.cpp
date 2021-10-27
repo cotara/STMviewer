@@ -157,13 +157,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,[=](int i){sendByteToMK(COMP_CH2_SET, static_cast<char>(i),"Set comp level CH2: ");});
 
     //Коннекты от параметров передачи
-    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,this,&MainWindow::setPacketSize);
+    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,[=](int n) {packetSize=n;});
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::chChooseChanged,this,&MainWindow::incCountCh);
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::getButtonClicked,this,&MainWindow::manualGetShotButton);
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::autoGetCheckBoxChanged,this,&MainWindow::autoGetCheckBoxChanged);
 
     //Коннекты от истории
-    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::autoSaveShotCheked,this,&MainWindow::autoSaveShotCheked);
+    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::saveHistoryPushed,[=]{saveHistory(dirnameDefault);});
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::shotSelected,this,&MainWindow::selectShot);
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::clearButtonClicked,this,&MainWindow::on_clearButton);
 
@@ -230,16 +230,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(log,&SaveLog::SaveToFolder,[=](QString &dirname){saveHistory(dirname);});
     connect(ui->SaveLog,&QAction::triggered,[=]{log->show();});
     //Создание папки с логами, если ее нет.
-    dir = new QDir(dirname);
+    dir = new QDir(dirnameDefault);
     if (!dir->exists()) {
-        dir->mkdir(dirname);
+        dir->mkdir(dirnameDefault);
     }
     dir->setFilter( QDir::NoDotAndDotDot);
 
-    file1 = new QFile();
-    file2 = new QFile();
-    file3 = new QFile();
-    file4 = new QFile();
+    file= new QFile();
 
    ShadowSettings = new SettingsShadowsFindDialog(this);
    connect(ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);//Обновляем настройки в фильтре
@@ -277,7 +274,7 @@ void MainWindow::constructorTest(){
     tempFile = new QFile();
 
     filename = "2021_09_16__19_35_37_CH1";
-    tempFile->setFileName(dirname + "/" + filename);
+    tempFile->setFileName(dirnameDefault + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
         return;
@@ -287,7 +284,7 @@ void MainWindow::constructorTest(){
     tempFile->close();
 
     filename = "2021_09_16__19_35_37_CH2";
-    tempFile->setFileName(dirname + "/" + filename);
+    tempFile->setFileName(dirnameDefault + "/" + filename);
     if(!tempFile->open(QIODevice::ReadOnly)){
         qDebug() << "tempFile can`t be open";
         return;
@@ -317,9 +314,8 @@ void MainWindow::constructorTest(){
     }
 
 }
-
-QByteArray MainWindow::generateBytes(int count)
-{
+// Генеринует count случайных байт
+QByteArray MainWindow::generateBytes(int count){
     QVector<double> vector;
     QByteArray data;
     for (int i=0;i<count;i++)
@@ -327,15 +323,8 @@ QByteArray MainWindow::generateBytes(int count)
 
     QDataStream stream(&data, QIODevice::WriteOnly);
     stream << vector;
-    //data.remove(0,4);
-//    data = QByteArray::fromRawData(
-//            reinterpret_cast<const char*>(vector.constData()),
-//            sizeof(double) * vector.size()
-//        );
-    //QByteArray img(reinterpret_cast<const char*>(vector.data()), vector.size());
     return data;
 }
-
 
 //Настройки, коннекты
 void MainWindow::on_settings_triggered(){
@@ -362,28 +351,30 @@ void MainWindow::on_connect_triggered()
         m_transp->clearQueue();
         serial->readAll();
 
-        m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->setEnabled(true);
+        m_ManagementWidget->m_HistorySettings->saveHistoryButton->setEnabled(true);
         if(channelsOrder!=0)
             sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
-
-        m_ManagementWidget->m_plisSettings->lazer1Button->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->lazer2Button->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->saveButton->setEnabled(true);
-
-
+        //Включаем галки приема-передачи
         m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(true);
-
+        //Сбрасываем галки приема-передачи
         m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setChecked(false);
         m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setChecked(false);
         m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setChecked(false);
         m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setChecked(false);
         m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setChecked(false);
         m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setChecked(false);
+        //Включаем кнопки управления настройками ПЛИС
+        m_ManagementWidget->m_plisSettings->lazer1Button->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->lazer2Button->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->borderLeftButton->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->borderRightButton->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->compCH1Button->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(true);
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
@@ -416,8 +407,7 @@ void MainWindow::on_disconnect_triggered(){
     emit dataReadyUpdate(-1);
     currentShot.clear();
 
-    m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->setEnabled(false);
-    m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->setChecked(false);
+    m_ManagementWidget->m_HistorySettings->saveHistoryButton->setEnabled(false);
 
     //Вырубаем автополучение на всякий
     m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);
@@ -432,7 +422,10 @@ void MainWindow::on_disconnect_triggered(){
 
     m_ManagementWidget->m_plisSettings->lazer1Button->setEnabled(false);
     m_ManagementWidget->m_plisSettings->lazer2Button->setEnabled(false);
-    m_ManagementWidget->m_plisSettings->saveButton->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->borderLeftButton->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->borderRightButton->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->compCH1Button->setEnabled(false);
+    m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(false);
 
 
 }
@@ -503,11 +496,6 @@ void MainWindow::incCountCh(int ch)
     else
         m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setEnabled(false);
     sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
-}
-
-//Настройка разбиения данных на пакеты
-void MainWindow::setPacketSize(int n){
-    packetSize=n;
 }
 
 //Запрость у MCU пакет длины n с канала ch
@@ -620,7 +608,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_MainControlWidget->m_resultWidget->extr3Ch2->setText("   Экстр3: " + QString::number(tempPLISextremums2.at(2)));
             m_MainControlWidget->m_resultWidget->extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
             bytes.remove(0, 16);
-
+            //16 байт - ошибки и значения параметров ПЛИС
             m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(0),1);   //Младшие значащие байты
             m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(2),2);
             m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4))));
@@ -633,7 +621,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             if(tempPLISextremums1.size()==4){
                 shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
-
                 m_MainControlWidget->m_resultWidget->shad1Ch1->setText("   Тень1: " + QString::number(shadowsCh1Plis.at(0)));
                 m_MainControlWidget->m_resultWidget->shad2Ch1->setText("   Тень2: " + QString::number(shadowsCh1Plis.at(1)));
             }
@@ -642,14 +629,12 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 m_MainControlWidget->m_resultWidget->shad1Ch2->setText("   Тень1: " + QString::number(shadowsCh2Plis.at(0)));
                 m_MainControlWidget->m_resultWidget->shad2Ch2->setText("   Тень2: " + QString::number(shadowsCh2Plis.at(1)));
             }
-
             if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
                 m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
                 m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)));
                 m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)));
             }
-
             if(m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->isChecked() || notYetFlag)                       //Если включен автозапрос данных или не вычитали все пачку каналов
                 manualGetShotButton();                                                  //Запрашиваем шот
         }
@@ -664,36 +649,35 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
      case REQUEST_DIAMETER:
         fromBytes(bytes);
         plotDiameter();
-
         break;
 
      case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
-            statusBar->setDownloadBarValue(countRecievedDots);                              //Прогресс бар апгрейд
+            statusBar->setDownloadBarValue(countRecievedDots);                          //Прогресс бар апгрейд
             currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
-            if(countRecievedDots>=countWaitingDots){                                  //Приняли канал целиком
+            if(countRecievedDots>=countWaitingDots){                                    //Приняли канал целиком
                 //Кладем принятый шот в соответствующий мап
                 if (value == CH1){
-                     if(shotsCH1.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
+                    if(shotsCH1.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
                          shotCountRecieved++;                                           //Начинаем следующую пачку
                          qDebug() << "Attantion! Dublicate CH1";
-                     }
+                    }
                     chName="CH1_NF";
-                    shotsCH1.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
+                    shotsCH1.insert(shotCountRecieved,currentShot);                     //Добавили пришедший канал в мап с текущим индексом
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
                     chCountRecieved++;                                                  //Получили канал
 
-                    if(m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->isChecked()) {                                                      //Если нужна фильтрация
+                    if(m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->isChecked()) {                //Если нужна фильтрация (внутренняя)
                         QByteArray filtered = filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH2In.insert(shotCountRecieved,filtered);
                     }
                 }
                 else if(value == CH2){
-                    if(shotsCH2.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
+                   if(shotsCH2.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
                         shotCountRecieved++;                                           //Начинаем следующую пачку
                         qDebug() << "Attantion! Dublicate CH2";
-                    }
+                   }
                    chName="CH1_F";
                    currentShot=currentShot.mid(70);                                 //Смещение отфильтрованного сигнала из плисы
                    currentShot.append(70,0);
@@ -729,8 +713,10 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 }
 
                 //Если включено автосохранение в файл
-                if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
-                    writeToLogfile(chName);
+                //if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
+                //    writeToLogfile(chName);
+
+
                 //Обнуляем всякое
                 countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
@@ -774,8 +760,6 @@ void MainWindow::selectShot(int index){
         if(shotsCH1.contains(shotNum)){
             ch = shotsCH1[shotNum];
             viewer->addUserGraph(ch,ch.size(),1);
-
-
         }
         if(shotsCH2.contains(shotNum)){
             ch = shotsCH2[shotNum];
@@ -786,16 +770,16 @@ void MainWindow::selectShot(int index){
 
             viewer->addLines(shadowsCh1,1,2);
         }
-        if(shotsCH2In.contains(shotNum)){
+        if(shotsCH2In.contains(shotNum)){                                                           //Добавление на график внутреннего отфильтрованного сигнала с экстремумами и тенями
             ch = shotsCH2In[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
-            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
+            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());                  //Поиск экстремумов
             viewer->addDots(dots,1);
             QVector <unsigned int> xDots;
             for (int i = 0;i<4;i++){
                 xDots.append(dots.at(i).at(0));
             }
-            shadowsCh1 = filter->shadowFind(xDots);
+            shadowsCh1 = filter->shadowFind(xDots);                                                 //Поиск теней
             m_MainControlWidget->m_resultWidget->leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
             m_MainControlWidget->m_resultWidget->rightShadow1Label->setText("   Прав. тень: " +QString::number(shadowsCh1.at(1)));
         }
@@ -836,46 +820,7 @@ void MainWindow::selectShot(int index){
             m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0) + diameter.at(1)));
             m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameter.at(2)/1000),static_cast<int>(diameter.at(3)/1000));
             m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
-
         }
-    }
-}
-
-//Автосохранение
-void MainWindow::autoSaveShotCheked(bool en)
-{
-    if(en){
-        if(m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->isChecked()){
-            filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1";
-            file1->setFileName(dirname + "/" + filename);
-            file1->open(QIODevice::WriteOnly);
-        }
-        if(m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->isChecked()){
-            filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH1F";
-            file2->setFileName(dirname + "/" + filename);
-            file2->open(QIODevice::WriteOnly);
-        }
-
-        if(m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->isChecked()){
-            filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2";
-            file3->setFileName(dirname + "/" + filename);
-            file3->open(QIODevice::WriteOnly);
-        }
-        if(m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->isChecked()){
-            filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+"_CH2F";
-            file4->setFileName(dirname + "/" + filename);
-            file4->open(QIODevice::WriteOnly);
-        }
-    }
-    else{
-       if(file1->isOpen())
-        file1->close();
-       if(file2->isOpen())
-        file2->close();
-       if(file3->isOpen())
-        file3->close();
-       if(file4->isOpen())
-        file4->close();
     }
 }
 
@@ -924,39 +869,9 @@ void MainWindow::handlerGettingDiameterTimer(){
     //sendByteToMK(REQUEST_DIAMETER,0,"SEND REQUEST_DIAMETER: ");
 }
 
-void MainWindow::writeToLogfile(QString name)
-{
-    if (dirname.isEmpty()){
-        QMessageBox::critical(nullptr,"Ошибка!","Директория для сохранения данных отсутствует!");
-    }
-    else{
-        if(name=="CH1_NF"){
-            file1->write(currentShot,currentShot.size());
-            file1->write(endShotLine,endShotLine.size());   //Чтобы отличать шот друг от друга
-            file1->flush();
-        }
-        else if(name=="CH1_F"){
-            file2->write(currentShot,currentShot.size());
-            file2->write(endShotLine,endShotLine.size());
-            file2->flush();
-        }
-        else if(name=="CH2_NF"){
-            file3->write(currentShot,currentShot.size());
-            file3->write(endShotLine,endShotLine.size());
-            file3->flush();
-        }
-        else if(name=="CH2_F"){
-            file4->write(currentShot,currentShot.size());
-            file4->write(endShotLine,endShotLine.size());
-            file4->flush();
-        }
-    }
-}
-
-void MainWindow::writeToLogfileMeta(QString name)
-{
+void MainWindow::writeToLogfileMeta(QString name){
     QFile tempFile;
-    tempFile.setFileName(dirname + "/" + QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+ name);
+    tempFile.setFileName(dirnameDefault + "/" + QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+ name);
     tempFile.open(QIODevice::WriteOnly);
     tempFile.write(currentShot,32);
     tempFile.write(endShotLine,endShotLine.size());
@@ -964,8 +879,7 @@ void MainWindow::writeToLogfileMeta(QString name)
     tempFile.close();
 }
 
-void MainWindow::fillTable(QCPGraphDataContainer &dataMap)
-{
+void MainWindow::fillTable(QCPGraphDataContainer &dataMap){
     QCPGraphDataContainer::const_iterator begin = dataMap.begin();
     QCPGraphDataContainer::const_iterator end = dataMap.end();
     m_table->setRowCount(0);
@@ -992,6 +906,35 @@ void MainWindow::settingsChanged(){
 
 void MainWindow::saveHistory(QString &dirname){
 
+    QByteArray zeroBytes(100,0),dataBytes;
+    QMap <int,QByteArray> tempMap;
+    QList<QMap<int,QByteArray>> dataList;
+    filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss");
+    file->setFileName(dirname + "/" + filename);
+
+    if(!file->open(QIODevice::ReadWrite)){
+        QMessageBox::warning(this, "Внимание!", "Файл для сохранения истории не может быть открыт",QMessageBox::Ok);
+        return;
+    }
+
+    dataList.append(shotsCH1);
+    dataList.append(shotsCH2);
+    dataList.append(shotsCH3);
+    dataList.append(shotsCH4);
+    for(int j = 0; j<4;j++){
+        tempMap = dataList.at(j);
+        for (int i = 0;i<tempMap.size();i++) {
+            if(tempMap.contains(i)){
+               dataBytes = tempMap[i];
+               file->write(dataBytes);
+            }
+            else
+               file->write(zeroBytes);
+            file->write(endShotLine);       //Разделение между шотами одного канала
+        }
+        file->write(endChannelLine);        //Разделение между каналами
+    }
+    file->close();
 }
 
 QVector<double> MainWindow::fromBytes(QByteArray &bytes)

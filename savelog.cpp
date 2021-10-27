@@ -17,8 +17,10 @@ SaveLog::~SaveLog()
 
 void SaveLog::on_toolButton_clicked()
 {
-    //if (log == nullptr)
-    //    log = new GreenHouseLog();
-    dirname = QFileDialog::getExistingDirectory(this, "Сохранить лог в... ") + "/";
+    dirname = QFileDialog::getExistingDirectory(this, "Сохранить лог в... ");
     ui->SaveLogsLabel->setText(dirname);
+}
+
+void SaveLog::on_buttonBox_accepted(){
+    emit SaveToFolder(dirname);
 }

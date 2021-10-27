@@ -9,7 +9,7 @@ Transp::Transp(Slip *slip) : m_slip(slip) {
     connect(m_slip, &Slip::serialPortClosed,this,&Transp::slipSerialButtonDisconnected);
 
     timeout = new QTimer;
-    timeout->setInterval(500);
+    timeout->setInterval(1000);
 
     connect(timeout, &QTimer::timeout, this, &Transp::timeoutHandler);
 
@@ -42,9 +42,9 @@ void Transp::sendPacket(const QByteArray &bytes) {
     uint16_t crc = crc16(buff, length.in - 2);
     buff.append(static_cast<char>(crc & 0xFF));
     buff.append(static_cast<char>(crc >> 8));
-    sendQueue.enqueue(buff);
+    sendQueue.enqueue(buff);//Добавили пакет в конец очереди для отправки
 
-    if (!waitACK) {
+    if (!waitACK) {         //Если не ожидаем ответа, то можно отправлять текущий пакет
         waitACK = 1;
         m_slip->sendPacket(buff);
         timeout->start();
@@ -64,16 +64,16 @@ void Transp::clearQueue()
 void Transp::slipPacketReceive(QByteArray &bytes) {
     if (waitACK) {
         if (checkCrc16(bytes)) {
-            if (getid(bytes).in == getid(sendQueue.head()).in) {
-                sendQueue.dequeue();
+            if (getid(bytes).in == getid(sendQueue.head()).in) {//Если id в пришедшем пакете совпадает с id отправленного
                 timeout->stop();
                 repeatCount = 0;
-                bytes.remove(0, 4);
-                bytes.remove(bytes.size() - 2, 2);
+                bytes.remove(0, 4);                             //Удаляем заголовок
+                bytes.remove(bytes.size() - 2, 2);              //Удаляем CRC
                 emit answerReceive(bytes);
-                if (!sendQueue.isEmpty()) {
+                sendQueue.dequeue();                            //Удаляем пакет из очереди. Он зачтен
+                if (!sendQueue.isEmpty()) {                     //Если на отправку еще что-то есть
+                    m_slip->sendPacket(sendQueue.head());       //
                     waitACK = 1;
-                    m_slip->sendPacket(sendQueue.head());
                     timeout->start();
                 } else
                     waitACK = 0;
@@ -95,10 +95,10 @@ void Transp::timeoutHandler() {
         waitACK = 0;
         emit transpError();
     } else {
-        qDebug() << "repeat send";
         m_slip->sendPacket(sendQueue.head());
         emit reSentInc();
         repeatCount++;
+        qDebug() << "repeat send" <<repeatCount;
     }
 }
 

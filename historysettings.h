@@ -16,12 +16,12 @@ public:
     HistorySettings(QWidget *parent);
 
     QVBoxLayout *layout;
-    QCheckBox *autoSaveShotCheckBox;
+    QPushButton *saveHistoryButton;
     QComboBox *shotsComboBox;
     QPushButton *clearButton;
 
 signals:
-    void autoSaveShotCheked(int);
+    void saveHistoryPushed(int);
     void shotSelected(int);
     void clearButtonClicked(bool);
 

@@ -9,11 +9,11 @@ HistorySettings::HistorySettings(QWidget *parent) : QGroupBox(parent)
 
 
     //Настройки логирования
-    autoSaveShotCheckBox = new QCheckBox("Авто-сохранение снимка");
+    saveHistoryButton = new QPushButton("Авто-сохранение снимка");
 
-    connect(autoSaveShotCheckBox,&QCheckBox::stateChanged,this,&HistorySettings::autoSaveShotCheked);
-    autoSaveShotCheckBox->setEnabled(false);
-    layout->addWidget(autoSaveShotCheckBox);
+    connect(saveHistoryButton,&QPushButton::clicked,this,&HistorySettings::saveHistoryPushed);
+    saveHistoryButton->setEnabled(false);
+    layout->addWidget(saveHistoryButton);
 
     //История
     shotsComboBox = new QComboBox;
