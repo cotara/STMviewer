@@ -519,13 +519,23 @@ void MainWindow::autoGetCheckBoxChanged(int st)
         m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(false);
         m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);
     }
+
+
     else {
         m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
+
+        chCountRecieved = 0;
+        shotCountRecieved++;                                                //Увеличиваем счетчик пачек
+        m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(shotCountRecieved-1));
+        m_ManagementWidget->m_HistorySettings->shotsComboBox->setCurrentIndex(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()-1);
+        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);//Если не стоит автополучение, то можно разблокировать кнопку
     }
+
+
 }
 
 /////////////////////////////////////////////////////ОСНОВНЫЕ МЕТОДЫ///////////////////////////////////////////////////////////
@@ -722,7 +732,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
                 statusBar->setInfo(m_transp->getQueueCount());                          //Обновляем статус бар
 
-                if (chCountRecieved == chCountChecked){                                 //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
+                if (chCountRecieved >= chCountChecked){                                 //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
                     m_console->putData("\n\n");
                     chCountRecieved=0;
                     shotCountRecieved++;                                                //Увеличиваем счетчик пачек
@@ -788,8 +798,6 @@ void MainWindow::selectShot(int index){
         if(shotsCH3.contains(shotNum)){
             ch = shotsCH3[shotNum];
             viewer->addUserGraph(ch,ch.size(),3);
-
-
         }
         if(shotsCH4.contains(shotNum)){
             ch = shotsCH4[shotNum];
@@ -815,6 +823,8 @@ void MainWindow::selectShot(int index){
             m_MainControlWidget->m_resultWidget->rightShadow2Label->setText("   Прав. тень: " + QString::number(shadowsCh2.at(1)));
 
         }
+        viewer->replotGraphs(ShotViewer::AllCH);
+        //Расчет диаметра
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
             m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0) + diameter.at(1)));

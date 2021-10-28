@@ -121,12 +121,12 @@ void ShotViewer::showGraphs(int state){
 void ShotViewer::clearGraphs(int state){
     if(state & CH1){
             customPlot1->clearGraphs();
-            customPlot1->replot();
+            //customPlot1->replot();
 
     }
     if(state & CH2){
             customPlot2->clearGraphs();
-            customPlot2->replot();
+            //customPlot2->replot();
     }
 }
 
@@ -159,7 +159,7 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         }
         graphPen.setColor(color);
         customPlot1->graph()->setPen(graphPen);
-        customPlot1->replot();
+        //customPlot1->replot();
     }
     else if(ch==3 || ch==4){
         customPlot2->addGraph();
@@ -174,7 +174,7 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         }
         graphPen.setColor(color);
         customPlot2->graph()->setPen(graphPen);
-        customPlot2->replot();
+        //customPlot2->replot();
     }
 }
 void ShotViewer::addDots(QVector<QVector<double> > dots, int ch){
@@ -194,7 +194,7 @@ void ShotViewer::addDots(QVector<QVector<double> > dots, int ch){
            customPlot1->graph()->setLineStyle((QCPGraph::LineStyle::lsNone));
            customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
            customPlot1->graph()->setName(QString("Канал 1. Экстремумы"));
-           customPlot1->replot();
+           //customPlot1->replot();
         }
         else if(ch==2){
            customPlot2->addGraph();
@@ -202,7 +202,7 @@ void ShotViewer::addDots(QVector<QVector<double> > dots, int ch){
            customPlot2->graph()->setLineStyle((QCPGraph::LineStyle)0);
            customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
            customPlot2->graph()->setName(QString("Канал 2. Экстремумы"));
-           customPlot2->replot();
+           //customPlot2->replot();
        }
     }
 }
@@ -225,7 +225,7 @@ void ShotViewer::addDots(QVector<QVector<unsigned int> > dots, int ch){
            customPlot1->graph()->setLineStyle((QCPGraph::LineStyle::lsNone));
            customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
            customPlot1->graph()->setName(QString("Канал 1. Экстремумы"));
-           customPlot1->replot();
+           //customPlot1->replot();
         }
         else if(ch==2){
            customPlot2->addGraph();
@@ -233,7 +233,7 @@ void ShotViewer::addDots(QVector<QVector<unsigned int> > dots, int ch){
            customPlot2->graph()->setLineStyle((QCPGraph::LineStyle)0);
            customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
            customPlot2->graph()->setName(QString("Канал 2. Экстремумы"));
-           customPlot2->replot();
+           //customPlot2->replot();
        }
     }
 }
@@ -268,7 +268,7 @@ void ShotViewer::addLines(QVector<double> dots, int ch,int w){
            customPlot1->legend->removeItem(customPlot1->legend->itemCount()-1);
            customPlot1->graph()->setPen(graphPen);
         }
-           customPlot1->replot();
+           //customPlot1->replot();
       }
     else if(ch==2){
 //           textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
@@ -289,7 +289,7 @@ void ShotViewer::addLines(QVector<double> dots, int ch,int w){
            customPlot2->legend->removeItem(customPlot2->legend->itemCount()-1);
            customPlot2->graph()->setPen(graphPen);
         }
-           customPlot2->replot();
+           //customPlot2->replot();
       }
 
 }
@@ -318,7 +318,7 @@ void ShotViewer::addLines2(QVector<double> dots, int ch, int w){
            customPlot1->legend->removeItem(customPlot1->legend->itemCount()-1);
            customPlot1->graph()->setPen(graphPen);
         }
-           customPlot1->replot();
+           //customPlot1->replot();
       }
     else if(ch==2){
         for(int i = 0; i<dots.size();i++){
@@ -335,9 +335,17 @@ void ShotViewer::addLines2(QVector<double> dots, int ch, int w){
            customPlot2->legend->removeItem(customPlot2->legend->itemCount()-1);
            customPlot2->graph()->setPen(graphPen);
         }
-           customPlot2->replot();
+           //customPlot2->replot();
       }
 
+}
+
+void ShotViewer::replotGraphs(int state)
+{
+    if(state & CH1)
+        customPlot1->replot();
+    if(state & CH2)
+        customPlot2->replot();
 }
 void ShotViewer::titleDoubleClick1(QMouseEvent* event)
 {

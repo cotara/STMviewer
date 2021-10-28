@@ -15,12 +15,13 @@ enum {
 
 Slip::Slip(QSerialPort *serial, Console *console) : serialPort(serial), slipConsole(console) {
     connect(serialPort, &QSerialPort::readyRead, [this]() {
+        //qDebug() << serialPort->bytesAvailable();
         QByteArray bytes = serialPort->readAll();
         for (char i : bytes) {
             new_rx_byte(i);
         }
     });
-    //connect(serialPort,&QSerialPort::errorOccurred,this,&Slip::slipSerialError);
+    connect(serialPort,&QSerialPort::errorOccurred,this,&Slip::slipSerialError);
 }
 
 void Slip::sendPacket(const QByteArray &bytes) {

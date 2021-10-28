@@ -26,7 +26,7 @@ public:
     void addDots(QVector<QVector<unsigned int>> dots, int ch);
     void addLines(QVector<double> dots, int ch, int w);
     void addLines2(QVector<double> dots, int ch, int w);
-
+    void replotGraphs(int state);
 signals:
     void graph_selected(QCPGraphDataContainer &dataMap);
 
