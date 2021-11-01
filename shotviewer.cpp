@@ -14,7 +14,6 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     layoutV->addWidget(customPlot1);
     layoutV->addWidget(customPlot2);
 
-
     customPlot1->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     customPlot2->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
@@ -51,19 +50,6 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     customPlot2->legend->setFont(legendFont);
     customPlot2->legend->setSelectedFont(legendFont);
     customPlot2->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
-
-    tracer1 = new QCPItemTracer(customPlot1);
-    tracer1->setStyle(QCPItemTracer::tsCircle);
-    tracer1->setPen(QPen(Qt::black));
-    tracer1->setBrush(Qt::black);
-    tracer1->setSize(7);
-
-    tracer2 = new QCPItemTracer(customPlot2);
-    tracer2->setStyle(QCPItemTracer::tsCircle);
-    tracer2->setPen(QPen(Qt::black));
-    tracer2->setBrush(Qt::black);
-    tracer2->setSize(7);
-
 
     // Выделение одной оси, ведет к выделению противоположной
     connect(customPlot1, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged1()));
@@ -103,7 +89,6 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
 
     textLabel1 = new QCPItemText(customPlot1);
     textLabel2 = new QCPItemText(customPlot2);
-
 }
 
 void ShotViewer::showGraphs(int state){
@@ -121,12 +106,17 @@ void ShotViewer::showGraphs(int state){
 void ShotViewer::clearGraphs(int state){
     if(state & CH1){
             customPlot1->clearGraphs();
-            //customPlot1->replot();
-
+            if(tracer1!=nullptr){
+                delete tracer1;
+                tracer1=nullptr;
+            }
     }
     if(state & CH2){
             customPlot2->clearGraphs();
-            //customPlot2->replot();
+            if(tracer2!=nullptr){
+                delete tracer2;
+                tracer2=nullptr;
+            }
     }
 }
 
@@ -159,7 +149,6 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         }
         graphPen.setColor(color);
         customPlot1->graph()->setPen(graphPen);
-        //customPlot1->replot();
     }
     else if(ch==3 || ch==4){
         customPlot2->addGraph();
@@ -174,7 +163,6 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         }
         graphPen.setColor(color);
         customPlot2->graph()->setPen(graphPen);
-        //customPlot2->replot();
     }
 }
 void ShotViewer::addDots(QVector<QVector<double> > dots, int ch){
@@ -194,7 +182,6 @@ void ShotViewer::addDots(QVector<QVector<double> > dots, int ch){
            customPlot1->graph()->setLineStyle((QCPGraph::LineStyle::lsNone));
            customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
            customPlot1->graph()->setName(QString("Канал 1. Экстремумы"));
-           //customPlot1->replot();
         }
         else if(ch==2){
            customPlot2->addGraph();
@@ -202,7 +189,6 @@ void ShotViewer::addDots(QVector<QVector<double> > dots, int ch){
            customPlot2->graph()->setLineStyle((QCPGraph::LineStyle)0);
            customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
            customPlot2->graph()->setName(QString("Канал 2. Экстремумы"));
-           //customPlot2->replot();
        }
     }
 }
@@ -225,7 +211,6 @@ void ShotViewer::addDots(QVector<QVector<unsigned int> > dots, int ch){
            customPlot1->graph()->setLineStyle((QCPGraph::LineStyle::lsNone));
            customPlot1->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
            customPlot1->graph()->setName(QString("Канал 1. Экстремумы"));
-           //customPlot1->replot();
         }
         else if(ch==2){
            customPlot2->addGraph();
@@ -233,7 +218,6 @@ void ShotViewer::addDots(QVector<QVector<unsigned int> > dots, int ch){
            customPlot2->graph()->setLineStyle((QCPGraph::LineStyle)0);
            customPlot2->graph()->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,color, 8));
            customPlot2->graph()->setName(QString("Канал 2. Экстремумы"));
-           //customPlot2->replot();
        }
     }
 }
@@ -268,7 +252,6 @@ void ShotViewer::addLines(QVector<double> dots, int ch,int w){
            customPlot1->legend->removeItem(customPlot1->legend->itemCount()-1);
            customPlot1->graph()->setPen(graphPen);
         }
-           //customPlot1->replot();
       }
     else if(ch==2){
 //           textLabel2->setPositionAlignment(Qt::AlignTop|Qt::AlignHCenter);
@@ -289,7 +272,6 @@ void ShotViewer::addLines(QVector<double> dots, int ch,int w){
            customPlot2->legend->removeItem(customPlot2->legend->itemCount()-1);
            customPlot2->graph()->setPen(graphPen);
         }
-           //customPlot2->replot();
       }
 
 }
@@ -318,7 +300,6 @@ void ShotViewer::addLines2(QVector<double> dots, int ch, int w){
            customPlot1->legend->removeItem(customPlot1->legend->itemCount()-1);
            customPlot1->graph()->setPen(graphPen);
         }
-           //customPlot1->replot();
       }
     else if(ch==2){
         for(int i = 0; i<dots.size();i++){
@@ -335,9 +316,7 @@ void ShotViewer::addLines2(QVector<double> dots, int ch, int w){
            customPlot2->legend->removeItem(customPlot2->legend->itemCount()-1);
            customPlot2->graph()->setPen(graphPen);
         }
-           //customPlot2->replot();
       }
-
 }
 
 void ShotViewer::replotGraphs(int state)
@@ -595,67 +574,64 @@ void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QM
   //ui->statusBar->showMessage(message, 2500);
   mTag1->updatePosition(dataValue);
   mTag1->setText(QString::number(dataValue));*/
+    if(tracer1==nullptr){
+        tracer1 = new QCPItemTracer(customPlot1);
+        tracer1->setStyle(QCPItemTracer::tsCircle);
+        tracer1->setPen(QPen(Qt::black));
+        tracer1->setBrush(Qt::black);
+        tracer1->setSize(7);
+    }
+    tracer1->setGraph(customPlot1->selectedGraphs().first());
+    //int y = plottable->interface1D()->dataMainValue(dataIndex);
+    //QToolTip::showText(currentMousePosition,QString("%1 , %2").arg(dataIndex).arg(y));
+    int coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
+    tracer1->setGraphKey(coordX);
+    tracer1->updatePosition();
+    //int coordY = customPlot1->yAxis->pixelToCoord(event->pos().y());
+    QToolTip::showText(currentMousePosition,QString::number(tracer1->position->key()) + "," + QString::number(tracer1->position->value()));
+    //QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
 
-        tracer1->setGraph(customPlot1->selectedGraphs().first());
+    //QString name = plottable->name();
+    //QSharedPointer<QCPGraphDataContainer> dataMap = customPlot1->selectedGraphs().first()->data();
+    QCPGraphDataContainer dataMap2 = *(customPlot1->selectedGraphs().first()->data());
+    //const QCPRange range = customPlot1->xAxis->range();
+    //QCPDataContainer <QCPGraphData> *graphData = dataMap.data();
 
-        //int y = plottable->interface1D()->dataMainValue(dataIndex);
-        //QToolTip::showText(currentMousePosition,QString("%1 , %2").arg(dataIndex).arg(y));
-        int coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
-        tracer1->setGraphKey(coordX);
-        tracer1->updatePosition();
-        //int coordY = customPlot1->yAxis->pixelToCoord(event->pos().y());
-        QToolTip::showText(currentMousePosition,QString::number(tracer1->position->key()) + "," + QString::number(tracer1->position->value()));
-        //QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
-
-        //QString name = plottable->name();
-        //QSharedPointer<QCPGraphDataContainer> dataMap = customPlot1->selectedGraphs().first()->data();
-        QCPGraphDataContainer dataMap2 = *(customPlot1->selectedGraphs().first()->data());
-        //const QCPRange range = customPlot1->xAxis->range();
-
-        //QCPDataContainer <QCPGraphData> *graphData = dataMap.data();
-
-
-        //QCPGraph *mGraph = customPlot1->selectedGraphs().first();
-        //QCPGraphDataContainer::const_iterator begin = dataMap->at(customPlot1->xAxis->range().lower);
-        //QCPGraphDataContainer::const_iterator end = dataMap->at(customPlot1->xAxis->range().upper);
-        dataMap2.removeBefore(customPlot1->xAxis->range().lower);
-        dataMap2.removeAfter(customPlot1->xAxis->range().upper);
-        //QCPGraphDataContainer::const_iterator begin = dataMap->begin();
-        //QCPGraphDataContainer::const_iterator end = dataMap->end();
-        //for (QCPGraphDataContainer::const_iterator it=begin; it!=end; ++it)
-        //{
-          // iterator "it" will go through all selected data points, as an example, we calculate the value average
-           //val =  it->value;
-        //}
+    //QCPGraph *mGraph = customPlot1->selectedGraphs().first();
+    //QCPGraphDataContainer::const_iterator begin = dataMap->at(customPlot1->xAxis->range().lower);
+    //QCPGraphDataContainer::const_iterator end = dataMap->at(customPlot1->xAxis->range().upper);
+    dataMap2.removeBefore(customPlot1->xAxis->range().lower);
+    dataMap2.removeAfter(customPlot1->xAxis->range().upper);
+    //QCPGraphDataContainer::const_iterator begin = dataMap->begin();
+    //QCPGraphDataContainer::const_iterator end = dataMap->end();
+    //for (QCPGraphDataContainer::const_iterator it=begin; it!=end; ++it)
+    //{
+      // iterator "it" will go through all selected data points, as an example, we calculate the value average
+       //val =  it->value;
+    //}
 
         emit graph_selected(dataMap2);
-//Использование трейсера
-//        QCPItemTracer *tracer = new QCPItemTracer;
-//        tracer->setGraph(graph);
-
-//        double getValueByKey(double key)
-//        {
-//            tracer->setGraphKey(key);
-//            return tracer->position->value();
-//        }
 }
 void ShotViewer::graphClicked2(QCPAbstractPlottable *plottable, int dataIndex,QMouseEvent* event){
-        //int y = plottable->interface1D()->dataMainValue(dataIndex);
-        //QToolTip::showText(currentMousePosition,QString("%1 , %2").arg(dataIndex).arg(y));
-        tracer2->setGraph(customPlot2->selectedGraphs().first());
 
-        int coordX = customPlot2->xAxis->pixelToCoord(event->pos().x());
-        tracer2->setGraphKey(coordX);
-        tracer2->updatePosition();
-        QToolTip::showText(currentMousePosition,QString::number(tracer2->position->key()) + "," + QString::number(tracer2->position->value()));
+    if(tracer2==nullptr){
+        tracer2 = new QCPItemTracer(customPlot2);
+        tracer2->setStyle(QCPItemTracer::tsCircle);
+        tracer2->setPen(QPen(Qt::black));
+        tracer2->setBrush(Qt::black);
+        tracer2->setSize(7);
+    }
+    tracer2->setGraph(customPlot2->selectedGraphs().first());
 
-        //int coordY = customPlot2->yAxis->pixelToCoord(event->pos().y());
-        //QToolTip::showText(currentMousePosition,QString::number(coordX) + "," + QString::number(coordY));
+    int coordX = customPlot2->xAxis->pixelToCoord(event->pos().x());
+    tracer2->setGraphKey(coordX);
+    tracer2->updatePosition();
+    QToolTip::showText(currentMousePosition,QString::number(tracer2->position->key()) + "," + QString::number(tracer2->position->value()));
 
-        QCPGraphDataContainer dataMap2 = *(customPlot2->selectedGraphs().first()->data());
-        dataMap2.removeBefore(customPlot2->xAxis->range().lower);
-        dataMap2.removeAfter(customPlot2->xAxis->range().upper);
-        emit graph_selected(dataMap2);
+    QCPGraphDataContainer dataMap2 = *(customPlot2->selectedGraphs().first()->data());
+    dataMap2.removeBefore(customPlot2->xAxis->range().lower);
+    dataMap2.removeAfter(customPlot2->xAxis->range().upper);
+    emit graph_selected(dataMap2);
 }
 void ShotViewer::autoScale(){
         customPlot1->rescaleAxes();

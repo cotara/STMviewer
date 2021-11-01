@@ -57,6 +57,10 @@ QPushButton:disabled{
     background: #E0E0E0;
     color: #969696;
 }
+QPushButton:checked{
+    background: #FFE73D;
+    color: #003AA3;
+}
 QCheckBox{
     font-family: SFUIText-Bold;
     font-size:14px;

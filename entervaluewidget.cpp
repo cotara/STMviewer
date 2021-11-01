@@ -22,6 +22,10 @@ EnterValueWidget::~EnterValueWidget()
     delete ui;
 }
 
+void EnterValueWidget::setSpinBox(int n){
+    ui->spinBox->setValue(n);
+}
+
 void EnterValueWidget::on_buttonBox_accepted()
 {
    if(ui->spinBox->value()!=oldValue){

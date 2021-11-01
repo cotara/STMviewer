@@ -53,6 +53,6 @@ private:
         QCustomPlot *customPlot1, *customPlot2;
         QPoint currentMousePosition;
         QCPItemText *textLabel1,*textLabel2;
-        QCPItemTracer *tracer1,*tracer2;
+        QCPItemTracer *tracer1=nullptr,*tracer2=nullptr;
 };
 #endif // SHOTVIEWER_H

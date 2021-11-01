@@ -447,48 +447,48 @@ double AutoFindWizard::calcErrDiemeter(int ila,int iNx,int iNy,int iHx,int iHy,i
     double err0,err1,err2,err3,err4,err5,err6,err7,err8,err9,err10,err11,err12,err13,err14,err15,err16,err17;
 
     QVector<double> temp;
-    //temp = calcDiemeter(allExtremums.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(0),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err0 = etalonMkm - temp.at(0);
     err1 = etalonMkm - temp.at(1);
 
-    //temp = calcDiemeter(allExtremums.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(1),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err2 = etalonMkm - temp.at(0);
     err3 = etalonMkm - temp.at(1);
 
-    //temp = calcDiemeter(allExtremums.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(2),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err4 = etalonMkm - temp.at(0);
     err5 = etalonMkm - temp.at(1);
 
-    //temp = calcDiemeter(allExtremums.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(3),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err6 = etalonMkm - temp.at(0);
     err7 = etalonMkm - temp.at(1);
 
-    //temp = calcDiemeter(allExtremums.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(4),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err8 = etalonMkm - temp.at(0);
     err9 = etalonMkm - temp.at(1);
 
-    //temp = calcDiemeter(allExtremums.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(5),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err10 = etalonMkm - temp.at(0);
     err11= etalonMkm - temp.at(1);
 
-    //temp = calcDiemeter(allExtremums.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(6),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err12 = etalonMkm - temp.at(0);
     err13 = etalonMkm - temp.at(1);
 
-    //temp = calcDiemeter(allExtremums.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(7),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err14 = etalonMkm - temp.at(0);
     err15 = etalonMkm - temp.at(1);
 
-    //temp = calcDiemeter(allExtremums.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
-    temp = calcDiemeter2(allFronts.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    temp = calcDiemeter(allExtremums.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
+    //temp = calcDiemeter2(allFronts.at(8),ila,iNx,iNy,iHx,iHy,iCx,iCy);
     err16 = etalonMkm - temp.at(0);
     err17 = etalonMkm - temp.at(1);
 

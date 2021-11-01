@@ -16,8 +16,8 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный");
     ch4InCheckBox = new QCheckBox("Канал 2. Фильтрованный*");
 
-    getButton = new QPushButton("Получить снимок");
-    autoGetCheckBox = new QCheckBox("Авто-получение по готовности");
+    getButton = new QPushButton("Получать сигнал");
+    getButton->setCheckable(true);
 
     layout->addWidget(packetSizeLabel);
     layout->addWidget(packetSizeSpinbox);
@@ -34,7 +34,6 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     ch4CheckBox->setEnabled(false);
     ch4InCheckBox->setEnabled(false);
     layout->addWidget(getButton);
-    layout->addWidget(autoGetCheckBox);
 
     packetSizeSpinbox->setRange(50,15000);
     packetSizeSpinbox->setValue(11000);
@@ -58,6 +57,4 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     getButton->setEnabled(false);
     connect(getButton,&QPushButton::clicked,this, &TransmitionSettings::getButtonClicked);
 
-    autoGetCheckBox->setEnabled(false);
-    connect(autoGetCheckBox,&QCheckBox::stateChanged,this, &TransmitionSettings::autoGetCheckBoxChanged);
 }

@@ -14,6 +14,7 @@ class EnterValueWidget : public QDialog
 public:
     explicit EnterValueWidget(QWidget *parent = nullptr, int min=0, int max=255);
     ~EnterValueWidget();
+    void setSpinBox(int n);
 
 private:
     Ui::EnterValueWidget *ui;

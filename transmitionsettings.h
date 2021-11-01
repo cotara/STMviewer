@@ -16,7 +16,6 @@ class TransmitionSettings : public QGroupBox
 public:
     TransmitionSettings(QWidget *parent);
     QVBoxLayout *layout;
-    QCheckBox *autoGetCheckBox;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox,*ch2InCheckBox, *ch4InCheckBox;
     QSpinBox *packetSizeSpinbox;
     QPushButton *getButton;
@@ -26,7 +25,7 @@ public:
 signals:
     void setPacketSize(int);
     void chChooseChanged(int);
-    void getButtonClicked();
+    void getButtonClicked(bool);
     void autoGetCheckBoxChanged(int);
 };
 

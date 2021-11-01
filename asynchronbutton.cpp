@@ -5,7 +5,7 @@ AsynchronButton::AsynchronButton(QWidget *parent, int min, int max):QPushButton(
 {
      enterDialog = new EnterValueWidget (this,min,max);
 
-     connect(this,&QPushButton::clicked, [=]{enterDialog->show();});
+     connect(this,&QPushButton::clicked, [=]{enterDialog->show();enterDialog->setSpinBox(this->text().toInt());});
 
      connect(enterDialog,&EnterValueWidget::sendValue, [=](int i)
          {emit sendValue(i);});
@@ -16,3 +16,4 @@ AsynchronButton::AsynchronButton(QWidget *parent, int min, int max):QPushButton(
                setStyleSheet(file.readAll());
          });
 }
+

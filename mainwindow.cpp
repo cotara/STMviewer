@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Правая панель
     m_ManagementWidget = new ManagementWidget(this);
-    m_ManagementWidget->setMinimumWidth(250);
+    m_ManagementWidget->setMinimumWidth(270);
     packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
 
     //Таблица
@@ -98,14 +98,6 @@ MainWindow::MainWindow(QWidget *parent) :
     diameterPlot->legend->setSelectedFont(legendFont);
     diameterPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
 
-    // зумируется только выделенная ось
-    //connect(customPlot1, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(mousePress1(QMouseEvent*)));
-    //connect(customPlot1, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
-
-    // При зумировании одной оси зизменяется диапазон противоположной
-    //connect(customPlot1->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->xAxis2, SLOT(setRange(QCPRange)));
-    //connect(customPlot1->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlot1->yAxis2, SLOT(setRange(QCPRange)));
-
     m_tab->addTab(viewer, "Сигнал");
     m_tab->addTab(diameterPlot, "Диаметр");
     m_tab->setTabBarAutoHide(true);
@@ -117,7 +109,6 @@ MainWindow::MainWindow(QWidget *parent) :
             m_ManagementWidget->m_DiameterTransmition->setVisible(false);
         }
         else if(index == 1){
-          m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setChecked(false);
           m_ManagementWidget->m_plisSettings->setVisible(false);
           m_ManagementWidget->m_TransmitionSettings->setVisible(false);
           m_ManagementWidget->m_HistorySettings->setVisible(false);
@@ -158,9 +149,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Коннекты от параметров передачи
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,[=](int n) {packetSize=n;});
-    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::chChooseChanged,this,&MainWindow::incCountCh);
-    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::getButtonClicked,this,&MainWindow::manualGetShotButton);
-    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::autoGetCheckBoxChanged,this,&MainWindow::autoGetCheckBoxChanged);
+    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::chChooseChanged,this,&MainWindow::chOrderSend);
+    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::getButtonClicked,this,&MainWindow::getButtonClicked);
 
     //Коннекты от истории
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::saveHistoryPushed,[=]{saveHistory(dirnameDefault);});
@@ -411,7 +401,7 @@ void MainWindow::on_disconnect_triggered(){
 
     //Вырубаем автополучение на всякий
     m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);
-    m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setChecked(false);
+    m_ManagementWidget->m_TransmitionSettings->getButton->setChecked(false);
 
     m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(false);
     m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(false);
@@ -426,8 +416,6 @@ void MainWindow::on_disconnect_triggered(){
     m_ManagementWidget->m_plisSettings->borderRightButton->setEnabled(false);
     m_ManagementWidget->m_plisSettings->compCH1Button->setEnabled(false);
     m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(false);
-
-
 }
 
 void MainWindow::sendByteToMK(char dst, char dataByte, const QString &msg)
@@ -444,7 +432,7 @@ void MainWindow::sendByteToMK(char dst, char dataByte, const QString &msg)
 }
 
 void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &msg){
-    conversation conv;
+    conversation_t conv;
     QByteArray data;
     data.append(dst);
     for(double d:dataV){
@@ -458,7 +446,7 @@ void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &
 }
 
 //Подсчет количества отмеченных каналов
-void MainWindow::incCountCh(int ch)
+void MainWindow::chOrderSend(int ch)
 {
     switch (ch){
     case 1:
@@ -486,16 +474,17 @@ void MainWindow::incCountCh(int ch)
           channelsOrder&=~0x08;
         break;
     }
-    chCountChecked=0;
+    sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
+}
+
+int MainWindow::countCheckedCH()
+{
+    int chCountChecked=0;
     for (int i=0;i<4;i++){
         if(channelsOrder&(1<<i))
             chCountChecked++;
     }
-    if(chCountChecked)
-         m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setEnabled(true);
-    else
-        m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->setEnabled(false);
-    sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
+    return chCountChecked;
 }
 
 //Запрость у MCU пакет длины n с канала ch
@@ -510,32 +499,29 @@ void MainWindow::getPacketFromMCU(unsigned short n)
     data.append(lsb);
     m_transp->sendPacket(data);
 }
-void MainWindow::autoGetCheckBoxChanged(int st)
+void MainWindow::getButtonClicked(bool checked)
 {
-    if(st){
+    if(checked){
+        notYetFlag = countCheckedCH();  //На старте передачи запоминаем сколько надо ждать каналов
+        if(notYetFlag==0){
+            statusBar->setMessageBar("Внимание!, Не выбрано ни одного канала!");
+            QMessageBox::warning(this, "Внимание!", "Не выбрано ни одного канала!",QMessageBox::Ok);
+            m_ManagementWidget->m_TransmitionSettings->getButton->setChecked(false);
+            return;
+        }
         m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(false);
         m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(false);
         m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(false);
         m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(false);
-        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);
     }
-
-
     else {
-        m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
-
-        chCountRecieved = 0;
-        shotCountRecieved++;                                                //Увеличиваем счетчик пачек
-        m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(shotCountRecieved-1));
-        m_ManagementWidget->m_HistorySettings->shotsComboBox->setCurrentIndex(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()-1);
-        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);//Если не стоит автополучение, то можно разблокировать кнопку
+        if(notYetFlag==0){//Если передача всех каналов пачки завершена
+            m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
+            m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
+            m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
+            m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
+         }
     }
-
-
 }
 
 /////////////////////////////////////////////////////ОСНОВНЫЕ МЕТОДЫ///////////////////////////////////////////////////////////
@@ -551,20 +537,12 @@ void MainWindow::autoGetCheckBoxChanged(int st)
 void MainWindow::manualGetShotButton(){
     statusBar->setMessageBar("");
     if(countAvaibleDots){
-        if (!m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->isChecked() && !m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->isChecked()
-            && !m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->isChecked() && !m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->isChecked()){
-            statusBar->setMessageBar("ОШИБКА!, Не выбрано ни одного канала!");
-            return;
-        }
-        m_timer->stop();
-        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);                                                   //Защита от двойного нажатия кнопки
+        m_timer->stop();                                              //Останавливаем запрос статусов
         m_console->putData("REQUEST_POINTS: ");
-        countWaitingDots = countAvaibleDots;                                             //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
+        countWaitingDots = countAvaibleDots;                          //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
         statusBar->setDownloadBarRange(countAvaibleDots);
         statusBar->setDownloadBarValue(0);
-        if(notYetFlag == 0)
-            notYetFlag = chCountChecked;
-        while (countAvaibleDots>0){                                                                          //Отправляем запрос несоклько раз по packetSize точек.
+        while (countAvaibleDots>0){                                   //Отправляем запрос несоклько раз по packetSize точек.
             getPacketFromMCU(countAvaibleDots>packetSize?packetSize:countAvaibleDots);
             countAvaibleDots-=packetSize;
         }
@@ -577,7 +555,9 @@ void MainWindow::manualGetShotButton(){
 //Обработка входящих пакетов
 void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     unsigned char cmd = static_cast<unsigned char>(bytes[0]);
-    unsigned short value = static_cast<unsigned short>(bytes[1])*256+static_cast<unsigned short>(bytes[2]);
+    charToShort.ch[0]=bytes[2];
+    charToShort.ch[1]=bytes[1];
+    unsigned short value = charToShort.sh;
     int dataReady=-1;
     QString chName;
     bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
@@ -598,16 +578,21 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
     case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
-        countAvaibleDots=value;
+
         if (value != NO_DATA_READY) {
             dataReady = value;
+            countAvaibleDots=value;
 
             //Забираем 16 байт метаданных
             tempPLISextremums2.clear();
             tempPLISextremums1.clear();
             for(int i=0;i<8;i+=2){
-                tempPLISextremums2.prepend(static_cast <unsigned char> (bytes.at(i+1))*256+static_cast <unsigned char>(bytes.at(i))+0);
-                tempPLISextremums1.prepend(static_cast <unsigned char> (bytes.at(i+9))*256+static_cast <unsigned char>(bytes.at(i+8))+0);
+                charToShort.ch[0] = bytes.at(i);
+                charToShort.ch[1] = bytes.at(i+1);
+                tempPLISextremums2.prepend(charToShort.sh);
+                charToShort.ch[0] = bytes.at(i+8);
+                charToShort.ch[1] = bytes.at(i+9);
+                tempPLISextremums1.prepend(charToShort.sh);
             }
             m_MainControlWidget->m_resultWidget->extr1Ch1->setText("   Экстр1: " + QString::number(tempPLISextremums1.at(0)));
             m_MainControlWidget->m_resultWidget->extr2Ch1->setText("   Экстр2: " + QString::number(tempPLISextremums1.at(1)));
@@ -621,12 +606,31 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             //16 байт - ошибки и значения параметров ПЛИС
             m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(0),1);   //Младшие значащие байты
             m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(2),2);
-            m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(static_cast <unsigned char> (bytes.at(5))*256+static_cast <unsigned char>(bytes.at(4))));
-            m_ManagementWidget->m_plisSettings->lazer2Button->setText(QString::number(static_cast <unsigned char> (bytes.at(7))*256+static_cast <unsigned char>(bytes.at(6))));
-            m_ManagementWidget->m_plisSettings->borderLeftButton->setText(QString::number(static_cast <unsigned char> (bytes.at(9))*256+static_cast <unsigned char>(bytes.at(8))));
-            m_ManagementWidget->m_plisSettings->borderRightButton->setText(QString::number(static_cast <unsigned char> (bytes.at(11))*256+static_cast <unsigned char>(bytes.at(10))));
-            m_ManagementWidget->m_plisSettings->compCH1Button->setText(QString::number(static_cast <unsigned char> (bytes.at(13))*256+static_cast <unsigned char>(bytes.at(12))));
-            m_ManagementWidget->m_plisSettings->compCH2Button->setText(QString::number(static_cast <unsigned char> (bytes.at(15))*256+static_cast <unsigned char>(bytes.at(14))));
+
+            charToShort.ch[0] = bytes.at(4);
+            charToShort.ch[1] = bytes.at(5);
+            m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(charToShort.sh));
+
+            charToShort.ch[0] = bytes.at(6);
+            charToShort.ch[1] = bytes.at(7);
+            m_ManagementWidget->m_plisSettings->lazer2Button->setText(QString::number(charToShort.sh));
+
+            charToShort.ch[0] = bytes.at(8);
+            charToShort.ch[1] = bytes.at(9);
+            m_ManagementWidget->m_plisSettings->borderLeftButton->setText(QString::number(charToShort.sh));
+
+            charToShort.ch[0] = bytes.at(10);
+            charToShort.ch[1] = bytes.at(11);
+            m_ManagementWidget->m_plisSettings->borderRightButton->setText(QString::number(charToShort.sh));
+
+            charToShort.ch[0] = bytes.at(12);
+            charToShort.ch[1] = bytes.at(13);
+            m_ManagementWidget->m_plisSettings->compCH1Button->setText(QString::number(charToShort.sh));
+
+            charToShort.ch[0] = bytes.at(14);
+            charToShort.ch[1] = bytes.at(15);
+            m_ManagementWidget->m_plisSettings->compCH2Button->setText(QString::number(charToShort.sh));
+
             bytes.remove(0, 16);
 
             if(tempPLISextremums1.size()==4){
@@ -642,10 +646,12 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
                 m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
+                m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2),'f',0) + ", " + QString::number(diameterPlis.at(3),'f',0));
                 m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)));
                 m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)));
+                m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameterPlis.at(2)/1000),static_cast<int>(diameterPlis.at(3)/1000));
             }
-            if(m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->isChecked() || notYetFlag)                       //Если включен автозапрос данных или не вычитали все пачку каналов
+            if(notYetFlag)                                                             //Если есть непринятые каналы
                 manualGetShotButton();                                                  //Запрашиваем шот
         }
         else {
@@ -676,7 +682,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     chName="CH1_NF";
                     shotsCH1.insert(shotCountRecieved,currentShot);                     //Добавили пришедший канал в мап с текущим индексом
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
-                    chCountRecieved++;                                                  //Получили канал
 
                     if(m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->isChecked()) {                //Если нужна фильтрация (внутренняя)
                         QByteArray filtered = filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
@@ -689,11 +694,10 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         qDebug() << "Attantion! Dublicate CH2";
                    }
                    chName="CH1_F";
-                   currentShot=currentShot.mid(70);                                 //Смещение отфильтрованного сигнала из плисы
-                   currentShot.append(70,0);
+                   currentShot=currentShot.mid(38);                                 //Смещение отфильтрованного сигнала из плисы
+                   currentShot.append(38,0);
                    shotsCH2.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
-                   chCountRecieved++;
                 }
                 else if(value == CH3){
                      if(shotsCH3.contains(shotCountRecieved)) {
@@ -703,7 +707,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                      chName="CH2_NF";
                      shotsCH3.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
-                     chCountRecieved++;                                                  //Получили канал
                      if(m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
                         QByteArray filtered =filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
                         shotsCH4In.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
@@ -715,32 +718,26 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH4";
                      }
                      chName="CH2_F";
-                     currentShot=currentShot.mid(70);                                 //Смещение отфильтрованного сигнала из плисы
-                     currentShot.append(70,0);
+                     currentShot=currentShot.mid(38);                                 //Смещение отфильтрованного сигнала из плисы
+                     currentShot.append(38,0);
                      shotsCH4.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
-                     chCountRecieved++;                                                  //Получили канал
                 }
-
-                //Если включено автосохранение в файл
-                //if(m_ManagementWidget->m_HistorySettings->autoSaveShotCheckBox->isChecked())
-                //    writeToLogfile(chName);
-
 
                 //Обнуляем всякое
                 countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
                 statusBar->setInfo(m_transp->getQueueCount());                          //Обновляем статус бар
 
-                if (chCountRecieved >= chCountChecked){                                 //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
+                if (notYetFlag==0){                                                     //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
                     m_console->putData("\n\n");
-                    chCountRecieved=0;
                     shotCountRecieved++;                                                //Увеличиваем счетчик пачек
                     m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(shotCountRecieved-1));
-                    //shotsComboBox->setCurrentIndex(shotCountRecieved-1);
                     m_ManagementWidget->m_HistorySettings->shotsComboBox->setCurrentIndex(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()-1);
-                    if (!m_ManagementWidget->m_TransmitionSettings->autoGetCheckBox->isChecked())                                  //Если не стоит автополучение, то можно разблокировать кнопку
-                        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
+                    if(m_ManagementWidget->m_TransmitionSettings->getButton->isChecked()) //Если кнопка все еще нажата
+                        getButtonClicked(true);                                           //Вызываем слот нажатия кнопки и инициации получения новой пачки
+                    else
+                        getButtonClicked(false);                                          //Иначе обнуляем все счетчики, разблокируем чекбоксы и т.д.
                 }
                 m_timer->start();                                                       //Стартуем таймер опроса статуса
             }
@@ -778,7 +775,7 @@ void MainWindow::selectShot(int index){
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},1,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Button->text().toInt())},1,3);
 
-            viewer->addLines(shadowsCh1,1,2);
+
         }
         if(shotsCH2In.contains(shotNum)){                                                           //Добавление на график внутреннего отфильтрованного сигнала с экстремумами и тенями
             ch = shotsCH2In[shotNum];
@@ -792,6 +789,7 @@ void MainWindow::selectShot(int index){
             shadowsCh1 = filter->shadowFind(xDots);                                                 //Поиск теней
             m_MainControlWidget->m_resultWidget->leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
             m_MainControlWidget->m_resultWidget->rightShadow1Label->setText("   Прав. тень: " +QString::number(shadowsCh1.at(1)));
+            viewer->addLines(shadowsCh1,1,2);
         }
 
         //Второй канал
@@ -805,8 +803,6 @@ void MainWindow::selectShot(int index){
             viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Button->text().toInt())},2,3);
-
-            viewer->addLines(shadowsCh2,2,2);
         }
         if(shotsCH4In.contains(shotNum)){
             ch = shotsCH4In[shotNum];
@@ -818,7 +814,7 @@ void MainWindow::selectShot(int index){
                 xDots.append(dots.at(i).at(0));
             }
             shadowsCh2 = filter->shadowFind(xDots);
-
+            viewer->addLines(shadowsCh2,2,2);
             m_MainControlWidget->m_resultWidget->leftShadow2Label->setText("   Лев. тень: " + QString::number(shadowsCh2.at(0)));
             m_MainControlWidget->m_resultWidget->rightShadow2Label->setText("   Прав. тень: " + QString::number(shadowsCh2.at(1)));
 
@@ -829,7 +825,7 @@ void MainWindow::selectShot(int index){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
             m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0) + diameter.at(1)));
             m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameter.at(2)/1000),static_cast<int>(diameter.at(3)/1000));
-            m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(1)) + ", " + QString::number(diameter.at(2)));
+            m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(2)) + ", " + QString::number(diameter.at(3)));
         }
     }
 }
@@ -843,6 +839,7 @@ void MainWindow::on_clearButton(){
     shotsCH4.clear();
     m_ManagementWidget->m_HistorySettings->shotsComboBox->clear();
     viewer->clearGraphs(ShotViewer::AllCH);
+    viewer->replotGraphs(ShotViewer::AllCH);
 }
 
 //Обработка ошибок SLIP

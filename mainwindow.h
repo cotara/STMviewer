@@ -80,10 +80,11 @@ private slots:
     void on_disconnect_triggered();
     void sendByteToMK(char dst, char dataByte, const QString &msg);
     void sendVectorToMK(char dst, QVector<double> dataV, const QString &msg);
-    void incCountCh(int);
+    void chOrderSend(int);
+    int countCheckedCH(void);
     void manualGetShotButton();
     void getPacketFromMCU(unsigned short n);
-    void autoGetCheckBoxChanged(int);
+    void getButtonClicked(bool checked);
     void selectShot(int index);
     void on_clearButton();
 
@@ -134,7 +135,7 @@ private:
     //Переменные
     QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH2In,shotsCH3,shotsCH4,shotsCH4In;
     QByteArray currentShot;
-    int chCountChecked=0,shotCountRecieved=0,chCountRecieved=0;                               //Текущее количество отмеченных каналов и текущее количество принятых шотов
+    int shotCountRecieved=0;                                        //Текущее количество отмеченных каналов и текущее количество принятых шотов
     int packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
     int countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
@@ -152,10 +153,15 @@ private:
     QFile *file;
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
     QByteArray endChannelLine = QByteArray::fromRawData("\xFE\x00\xFE\x00", 4);
-    union conversation{
+    union conversation_t{
         char ch[8];
         double d;
     };
+    union charToShort_t{
+        char ch[2];
+        unsigned short sh;
+    };
+    charToShort_t charToShort;
     QVector<double> diametersFromMCU,diameterKeys;
     //Для тестов
     void constructorTest();
