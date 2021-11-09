@@ -18,8 +18,6 @@ public:
 private slots:
     void on_toolButton_clicked();
 
-    void on_buttonBox_accepted();
-
 private:
     Ui::SaveLog *ui;
     QString dirname;

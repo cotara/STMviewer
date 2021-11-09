@@ -104,8 +104,10 @@ private slots:
     //Изменение настроек расчетов
     void settingsChanged();
 
-    //Запись лога
-    void saveHistory(QString &dirname);
+
+    void saveHistory(QString &dirname);     //Запись лога
+    void on_action_triggered();             //Чтение лога
+
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
@@ -164,7 +166,6 @@ private:
     charToShort_t charToShort;
     QVector<double> diametersFromMCU,diameterKeys;
     //Для тестов
-    void constructorTest();
     QByteArray generateBytes(int count);
     void plotDiameter();
     QVector<double> xDiameter,yDiameter;

@@ -259,51 +259,7 @@ MainWindow::~MainWindow(){
     delete m_timer;
     delete viewer;
 }
-void MainWindow::constructorTest(){
-    QFile *tempFile;                                                            //Файл лога
-    tempFile = new QFile();
 
-    filename = "2021_09_16__19_35_37_CH1";
-    tempFile->setFileName(dirnameDefault + "/" + filename);
-    if(!tempFile->open(QIODevice::ReadOnly)){
-        qDebug() << "tempFile can`t be open";
-        return;
-    }
-    QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
-    QList<QByteArray> list_tempCH1=tempBuf.split(0xFF);                                    //разделяем кадры
-    tempFile->close();
-
-    filename = "2021_09_16__19_35_37_CH2";
-    tempFile->setFileName(dirnameDefault + "/" + filename);
-    if(!tempFile->open(QIODevice::ReadOnly)){
-        qDebug() << "tempFile can`t be open";
-        return;
-    }
-    tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
-    QList<QByteArray> list_tempCH2=tempBuf.split(0xFF);                                    //разделяем кадры
-    tempFile->close();
-
-    QByteArray tempBuf2;
-    QByteArray filtered;
-    int k=0;
-    for(int i=0;i<list_tempCH2.size();i+=2){
-        tempBuf2 = list_tempCH1.at(i);
-        if(tempBuf2.size()>10){
-            shotsCH1.insert(k,tempBuf2);
-            //shotsCH2.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
-            shotsCH2In.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
-        }
-        tempBuf2 = list_tempCH2.at(i);
-        if(tempBuf2.size()>10){
-            shotsCH3.insert(k,tempBuf2);
-            //shotsCH4.insert(k,filter->toFilter(tempBuf2,tempBuf2.size()));
-            shotsCH4In.insert(k,filter->toButterFilter(tempBuf2,tempBuf2.size()));
-        }
-        k++;
-        m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(i));
-    }
-
-}
 // Генеринует count случайных байт
 QByteArray MainWindow::generateBytes(int count){
     QVector<double> vector;
@@ -928,9 +884,20 @@ void MainWindow::saveHistory(QString &dirname){
     dataList.append(shotsCH2);
     dataList.append(shotsCH3);
     dataList.append(shotsCH4);
+    QVector<int> lastKeys;
+    lastKeys.append(shotsCH1.lastKey());
+    lastKeys.append(shotsCH2.lastKey());
+    lastKeys.append(shotsCH3.lastKey());
+    lastKeys.append(shotsCH4.lastKey());
+    int maxLastKey=0;
+    for(int i=0;i<4;i++)
+        if(lastKeys.at(i)>maxLastKey)
+            maxLastKey = lastKeys.at(i);
+
+
     for(int j = 0; j<4;j++){
         tempMap = dataList.at(j);
-        for (int i = 0;i<tempMap.size();i++) {
+        for (int i = 0;i<maxLastKey;i++) {
             if(tempMap.contains(i)){
                dataBytes = tempMap[i];
                file->write(dataBytes);
@@ -982,3 +949,48 @@ void MainWindow::plotDiameter()
     diameterPlot->xAxis->setRange(diameterPlot->xAxis->range().upper, 5000, Qt::AlignRight);
     diameterPlot->replot();
 }
+
+
+void MainWindow::on_action_triggered()
+{
+    QString filename = QFileDialog::getOpenFileName(this, "Открыть историю... ");
+    //QString filename = "C:\qt_pr\STMviewer\build-STMviewer-Desktop_Qt_5_15_2_MinGW_64_bit-Debug\log\2021_10_29__19_17_34";
+    QFile *tempFile = new QFile();                                                            //Файл лога
+
+    tempFile->setFileName(filename);
+    if(!tempFile->open(QIODevice::ReadOnly)){
+        qDebug() << "tempFile can`t be open";
+        return;
+    }
+    QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
+    tempFile->close();
+    QByteArray chAll;
+    int line;
+    QMap<int,QMap<int,QByteArray>> channels;
+
+    for(int i=0;i<4;i++){
+        line = tempBuf.indexOf(endChannelLine);                 //индекс вхождения строки окончания канала
+        chAll = tempBuf.left(line);                             //Взяли весь первый канал
+        tempBuf.remove(0,chAll.size()+endChannelLine.size());   //Удалили первый канал из общего буфера
+
+        int n=0;
+        QMap<int,QByteArray> shots;
+        while(chAll.size()!=0){
+            int endShot = chAll.indexOf(endShotLine);                   //бьем канал на шоты
+            shots.insert(n,chAll.left(endShot));                        //Вставляем первый шот во временный мап
+            chAll.remove(0,shots[n].size()+endChannelLine.size());      //Удаляем шот и линию окончания из канала
+            n++;
+        }
+        channels.insert(i,shots);
+    }
+
+    shotsCH1 = channels[0];
+    shotsCH2 = channels[1];
+    shotsCH3 = channels[2];
+    shotsCH4 = channels[3];
+
+    for(int i = 0; i<shotsCH1.size();i++)
+        m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(i));
+
+}
+

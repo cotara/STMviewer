@@ -20,7 +20,3 @@ void SaveLog::on_toolButton_clicked()
     dirname = QFileDialog::getExistingDirectory(this, "Сохранить лог в... ");
     ui->SaveLogsLabel->setText(dirname);
 }
-
-void SaveLog::on_buttonBox_accepted(){
-    emit SaveToFolder(dirname);
-}

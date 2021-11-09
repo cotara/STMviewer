@@ -70,6 +70,7 @@
     <addaction name="ShdowSet"/>
     <addaction name="AutoRange"/>
     <addaction name="SaveLog"/>
+    <addaction name="action"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -97,6 +98,9 @@
    <addaction name="connect"/>
    <addaction name="disconnect"/>
    <addaction name="settings"/>
+   <addaction name="separator"/>
+   <addaction name="SaveLog"/>
+   <addaction name="action"/>
    <addaction name="separator"/>
    <addaction name="ShdowSet"/>
    <addaction name="AutoRange"/>
@@ -217,10 +221,19 @@
   <action name="SaveLog">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/1/Resources/028-diagram.png</normaloff>:/1/Resources/028-diagram.png</iconset>
+     <normaloff>:/1/Resources/floppy-disk.png</normaloff>:/1/Resources/floppy-disk.png</iconset>
    </property>
    <property name="text">
     <string>Сохранить историю в файл</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/1/Resources/open.png</normaloff>:/1/Resources/open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Открыть файл истории</string>
    </property>
   </action>
  </widget>
