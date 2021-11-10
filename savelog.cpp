@@ -8,6 +8,8 @@ SaveLog::SaveLog(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->buttonBox,&QDialogButtonBox::accepted,[=]{emit SaveToFolder(dirname);});
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Сохранить");
+    ui->buttonBox->button(QDialogButtonBox::Cancel)->setText("Отмена");
 }
 
 SaveLog::~SaveLog()

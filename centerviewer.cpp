@@ -7,17 +7,17 @@ centerViewer::centerViewer(QWidget *parent): QWidget(parent) {
 
 }
 
-void centerViewer::setCoord(int x, int y)
+void centerViewer::setCoord(double x, double y)
 {
     xPos=x;
     yPos=y;
     repaint();
 }
 
-void centerViewer::setDiam(int x, int y)
+void centerViewer::setRad(double x,double y)
 {
-    xDiam=x;
-    yDiam=y;
+    xRad=x;
+    yRad=y;
 }
 
 
@@ -27,21 +27,22 @@ void centerViewer::paintEvent(QPaintEvent *e) {
 
   QPainter qp(this);
   addCircle(&qp);
-  paintPosition(&qp,static_cast<int>(xPos),static_cast<int>(yPos));
+  paintPosition(&qp,xPos,yPos,xRad,yRad);
 }
 void centerViewer::addCircle(QPainter *qp)
 {
-    //qp->translate(width() / 2, height() / 2);
+
     qp->setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::FlatCap));
 
     qp->drawEllipse(0, 0, 100, 100);
     qp->drawLine(45,50,55,50);
     qp->drawLine(50,45,50,55);
 }
-void centerViewer::paintPosition(QPainter *qp,int x, int y)
+void centerViewer::paintPosition(QPainter *qp,double x, double y,double xRad, double yRad)
 {
+    QPointF m_point(5*x + 50, 5*y + 50);
     qp->setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap));
     QBrush brush(Qt::red,Qt::SolidPattern);
     qp->setBrush(brush);
-    qp->drawEllipse(50+x*5, 50+y*5, 5, 5);
+    qp->drawEllipse(m_point, 5*xRad, 5*yRad);
 }

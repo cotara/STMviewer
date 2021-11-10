@@ -366,7 +366,7 @@ void MainWindow::on_disconnect_triggered(){
     m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(false);
 }
 
-void MainWindow::sendByteToMK(char dst, char dataByte, const QString &msg)
+void MainWindow::sendByteToMK(char dst, int dataByte, const QString &msg)
 {
     QByteArray data;
     char msb,lsb;
@@ -444,7 +444,7 @@ int MainWindow::countCheckedCH()
 }
 
 //Запрость у MCU пакет длины n с канала ch
-void MainWindow::getPacketFromMCU(unsigned short n)
+void MainWindow::getPacketFromMCU(int n)
 {
     QByteArray data;
     char msb,lsb;
@@ -605,7 +605,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2),'f',0) + ", " + QString::number(diameterPlis.at(3),'f',0));
                 m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)));
                 m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)));
-                m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameterPlis.at(2)/1000),static_cast<int>(diameterPlis.at(3)/1000));
+                m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
+                m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
             }
             if(notYetFlag)                                                             //Если есть непринятые каналы
                 manualGetShotButton();                                                  //Запрашиваем шот
@@ -636,6 +637,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH1";
                     }
                     chName="CH1_NF";
+                    currentShot=currentShot.mid(16);                                    //Смещение влево
+                    currentShot.append(16,0);
                     shotsCH1.insert(shotCountRecieved,currentShot);                     //Добавили пришедший канал в мап с текущим индексом
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
 
@@ -661,6 +664,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH3";
                      }
                      chName="CH2_NF";
+                     currentShot=currentShot.mid(16);                                    //Смещение влево
+                     currentShot.append(16,0);
                      shotsCH3.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
                      if(m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
@@ -780,7 +785,8 @@ void MainWindow::selectShot(){
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
             m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0) + diameter.at(1)));
-            m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(static_cast<int>(diameter.at(2)/1000),static_cast<int>(diameter.at(3)/1000));
+            m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameter.at(2)/1000,diameter.at(3)/1000);
+            m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameter.at(0)/1000,diameter.at(1)/1000);
             m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(2)) + ", " + QString::number(diameter.at(3)));
         }
     }
@@ -862,9 +868,14 @@ void MainWindow::saveHistory(QString &dirname){
     QByteArray zeroBytes(100,0),dataBytes;
     QMap <int,QByteArray> tempMap;
     QList<QMap<int,QByteArray>> dataList;
+    qint64 error=0;
     filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss");
     file->setFileName(dirname + "/" + filename);
 
+    if(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()==0){
+        QMessageBox::warning(this, "Внимание!", "История пуста. Примите новые сигналы для их сохранения",QMessageBox::Ok);
+        return;
+    }
     if(!file->open(QIODevice::ReadWrite)){
         QMessageBox::warning(this, "Внимание!", "Файл для сохранения истории не может быть открыт",QMessageBox::Ok);
         return;
@@ -875,10 +886,10 @@ void MainWindow::saveHistory(QString &dirname){
     dataList.append(shotsCH3);
     dataList.append(shotsCH4);
     QVector<int> lastKeys;
-    lastKeys.append(shotsCH1.lastKey());
-    lastKeys.append(shotsCH2.lastKey());
-    lastKeys.append(shotsCH3.lastKey());
-    lastKeys.append(shotsCH4.lastKey());
+    lastKeys.append(shotsCH1.isEmpty()?0:shotsCH1.lastKey());
+    lastKeys.append(shotsCH2.isEmpty()?0:shotsCH2.lastKey());
+    lastKeys.append(shotsCH3.isEmpty()?0:shotsCH3.lastKey());
+    lastKeys.append(shotsCH4.isEmpty()?0:shotsCH4.lastKey());
     int maxLastKey=0;
     for(int i=0;i<4;i++)
         if(lastKeys.at(i)>maxLastKey)
@@ -889,15 +900,23 @@ void MainWindow::saveHistory(QString &dirname){
         for (int i = 0;i<maxLastKey;i++) {
             if(tempMap.contains(i)){
                dataBytes = tempMap[i];
-               file->write(dataBytes);
+               if(file->write(dataBytes)<0)
+               error++;
             }
             else
-               file->write(zeroBytes);
-            file->write(endShotLine);       //Разделение между шотами одного канала
+                if(file->write(zeroBytes)<0)
+                    error++;
+            if(file->write(endShotLine)<0)       //Разделение между шотами одного канала
+                error++;
         }
-        file->write(endChannelLine);        //Разделение между каналами
+        if(file->write(endChannelLine)<0)        //Разделение между каналами
+            error++;
     }
     file->close();
+    if(error>0)
+        QMessageBox::warning(this, "Внимание!", " При записи лога произошло "+ QString::number(error) + "ошибок!",QMessageBox::Ok);
+    else
+        QMessageBox::information(this, "Успешно!", "Данные успешно записаны в файл " + dirname + "/" + filename,QMessageBox::Ok);
 }
 
 // Обработчик таймаута запроса диаметра

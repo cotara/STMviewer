@@ -9,7 +9,7 @@ Transp::Transp(Slip *slip) : m_slip(slip) {
     connect(m_slip, &Slip::serialPortClosed,this,&Transp::slipSerialButtonDisconnected);
 
     timeout = new QTimer;
-    timeout->setInterval(5000);
+    timeout->setInterval(1000);
 
     connect(timeout, &QTimer::timeout, this, &Transp::timeoutHandler);
 
