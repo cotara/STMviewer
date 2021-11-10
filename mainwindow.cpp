@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     diameterPlot = new QCustomPlot(m_tab);
     diameterPlot->addGraph();
 
-    //Настройка CustomPlot
+    //ПОСТРОЕНИЕ ДИАМЕТРА
     diameterPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
     diameterPlot->axisRect()->setupFullAxesBox();
 
@@ -172,7 +172,6 @@ MainWindow::MainWindow(QWidget *parent) :
             //m_GettingDiameterTimer->start();
     });
 
-
     //Тулбар
     tableSizeSpinbox = new QSpinBox(this);
     tableSizeLabel = new QLabel("Размер таблицы",this);
@@ -244,11 +243,6 @@ MainWindow::MainWindow(QWidget *parent) :
         temp.append(diameterPlis.at(0) + diameterPlis.at(1));
        ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
    });
-
-#ifdef TEST_MODE
-   constructorTest();
-#endif
-
 }
 
 MainWindow::~MainWindow(){
@@ -303,10 +297,8 @@ void MainWindow::on_connect_triggered()
         //Включаем галки приема-передачи
         m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
         m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(true);
         //Сбрасываем галки приема-передачи
         m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setChecked(false);
         m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setChecked(false);
@@ -406,10 +398,14 @@ void MainWindow::chOrderSend(int ch)
 {
     switch (ch){
     case 1:
-       if(m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->isChecked())
+       if(m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->isChecked()){
            channelsOrder|=0x01;
-       else
+           m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(true);
+       }
+       else{
           channelsOrder&=~0x01;
+          m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(false);
+       }
         break;
     case 2:
        if(m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->isChecked())
@@ -418,10 +414,14 @@ void MainWindow::chOrderSend(int ch)
           channelsOrder&=~0x02;
         break;
     case 3:
-       if(m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->isChecked())
+       if(m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->isChecked()){
            channelsOrder|=0x04;
-       else
+           m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(true);
+       }
+       else{
           channelsOrder&=~0x04;
+          m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(false);
+       }
         break;
     case 4:
        if(m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->isChecked())
@@ -714,7 +714,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 }
 
 //Выбрать шот из списка
-void MainWindow::selectShot(int index){
+void MainWindow::selectShot(){
     if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
         QByteArray ch;
         int shotNum = m_ManagementWidget->m_HistorySettings->shotsComboBox->currentText().toInt();
@@ -820,17 +820,7 @@ void MainWindow::handlerTimer() {
     }
 }
 
-// Обработчик таймаута запроса диаметра
-void MainWindow::handlerGettingDiameterTimer(){
-#ifdef TEST_MODE
-    QByteArray randomBytes;
-    randomBytes = generateBytes(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
-    randomBytes.prepend(2,0);
-    randomBytes.prepend(REQUEST_DIAMETER);
-    handlerTranspAnswerReceive(randomBytes);
-#endif
-    //sendByteToMK(REQUEST_DIAMETER,0,"SEND REQUEST_DIAMETER: ");
-}
+
 
 void MainWindow::writeToLogfileMeta(QString name){
     QFile tempFile;
@@ -894,7 +884,6 @@ void MainWindow::saveHistory(QString &dirname){
         if(lastKeys.at(i)>maxLastKey)
             maxLastKey = lastKeys.at(i);
 
-
     for(int j = 0; j<4;j++){
         tempMap = dataList.at(j);
         for (int i = 0;i<maxLastKey;i++) {
@@ -909,6 +898,18 @@ void MainWindow::saveHistory(QString &dirname){
         file->write(endChannelLine);        //Разделение между каналами
     }
     file->close();
+}
+
+// Обработчик таймаута запроса диаметра
+void MainWindow::handlerGettingDiameterTimer(){
+
+    QByteArray randomBytes;
+    randomBytes = generateBytes(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
+    randomBytes.prepend(2,0);
+    randomBytes.prepend(REQUEST_DIAMETER);
+    handlerTranspAnswerReceive(randomBytes);
+
+    //sendByteToMK(REQUEST_DIAMETER,0,"SEND REQUEST_DIAMETER: ");
 }
 
 QVector<double> MainWindow::fromBytes(QByteArray &bytes)
@@ -950,7 +951,7 @@ void MainWindow::plotDiameter()
     diameterPlot->replot();
 }
 
-
+//Открытие истории
 void MainWindow::on_action_triggered()
 {
     QString filename = QFileDialog::getOpenFileName(this, "Открыть историю... ");

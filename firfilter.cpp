@@ -102,9 +102,8 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
 }
 //В один проход
 QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
-    const int start= 200, stop = len-200;                          //Начало и конец поиска экстремумов
-    int  backMinsIndex=0;                                                   //индекс спада в векторе минимумов
-    unsigned char yMin11=255,yMin12=255,yMin21=255,yMin22=255,yCheckPoint,yCurrentMin, yLastMin1, yLastMin2;          //Искомые 4 точки (Y) и промежуточные экстремумы
+    const int start= 200, stop = len-200;                                   //Начало и конец поиска экстремумов
+    unsigned char yMin11=255,yMin12=255,yMin21=255,yMin22=255,yCurrentMin, yLastMin1, yLastMin2;          //Искомые 4 точки (Y) и промежуточные экстремумы
     unsigned int xMin11=start,xMin12=start,xMin21=start,xMin22=start,xCurrentMin,xLastMin1, xLastMin2;       //Искомые 4 точки (X)
     unsigned int  xStartStraight=0;                                         //Начало прямого участка (X)
     unsigned char ch,chPrev,up=0,down=0,upMax=0,downMax=0;                  //Текущее и предыдущее значение сигнала
@@ -113,7 +112,6 @@ QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
     unsigned int state = 1;                                                 //0- straight, 1 = falling; 2 - rising;
 
     chPrev=in.at(start);                                                    // Запоминаем первую точку
-    yCheckPoint=chPrev;                                                     //Запоминаем первый псевдоэкстемум
     for(int j=start+1;j<stop;j++){                                          //Идем по всем точкам
        ch=in.at(j);                                                         //Берем новую точку
        if(ch==chPrev) {                                                     //Если сигнал не изменился

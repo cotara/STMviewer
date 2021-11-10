@@ -21,7 +21,7 @@ public:
     void accept() override;
     void reject() override;
     void init(QVector<double> params);
-    void closeEvent(QCloseEvent *iEvent) override;
+    void closeEvent(QCloseEvent *) override;
 
 private slots:
     void on_AutoFindWizard_currentIdChanged(int id);

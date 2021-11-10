@@ -15,7 +15,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     reqFreqSpinbox = new QSpinBox(this);
     windowSizeLabel = new QLabel ("Окно фильтра", this);
     averageLabel = new QLabel ("Усреднение фильтра", this);
-    reqFreqLabel = new QLabel ("Периодичность запросов, с", this);
+    reqFreqLabel = new QLabel ("Периодичность запросов, раз/с", this);
 
     gettingDiameterCheckbox->setText("Получать диаметр");
     medianFilterCheckbox->setText("Медианный фильтр");

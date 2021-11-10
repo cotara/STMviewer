@@ -40,8 +40,8 @@ private slots:
     void mousePress2(QMouseEvent*);
     void mouseWheel1();
     void mouseWheel2();
-    void graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QMouseEvent*);
-    void graphClicked2(QCPAbstractPlottable *plottable, int dataIndex,QMouseEvent*);
+    void graphClicked1(QCPAbstractPlottable *, int ,QMouseEvent*);
+    void graphClicked2(QCPAbstractPlottable *, int, QMouseEvent*);
     void graphDoubleClicked1();
     void graphDoubleClicked2();
     void showPointToolTip(QMouseEvent*);

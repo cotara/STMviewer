@@ -426,10 +426,9 @@ void ShotViewer::selectionChanged2(){
   }
 }
 
-void ShotViewer::mousePress1(QMouseEvent* event){
+void ShotViewer::mousePress1(QMouseEvent* ){
   // if an axis is selected, only allow the direction of that axis to be dragged
   // if no axis is selected, both directions may be dragged
-   double coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
 
   if (customPlot1->xAxis->selectedParts().testFlag(QCPAxis::spAxis)){
     customPlot1->axisRect()->setRangeDrag(customPlot1->xAxis->orientation());
@@ -458,7 +457,7 @@ void ShotViewer::mousePress1(QMouseEvent* event){
   }
 
 }
-void ShotViewer::mousePress2(QMouseEvent* event){
+void ShotViewer::mousePress2(QMouseEvent* ){
   // if an axis is selected, only allow the direction of that axis to be dragged
   // if no axis is selected, both directions may be dragged
 
@@ -566,7 +565,7 @@ void ShotViewer::graphDoubleClicked2(){
 
 }
 
-void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QMouseEvent* event){
+void ShotViewer::graphClicked1(QCPAbstractPlottable *, int ,QMouseEvent* event){
   // since we know we only have QCPGraphs in the plot, we can immediately access interface1D()
   // usually it's better to first check whether interface1D() returns non-zero, and only then use it.
   /*double dataValue = plottable->interface1D()->dataMainValue(dataIndex);
@@ -612,7 +611,7 @@ void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QM
 
         emit graph_selected(dataMap2);
 }
-void ShotViewer::graphClicked2(QCPAbstractPlottable *plottable, int dataIndex,QMouseEvent* event){
+void ShotViewer::graphClicked2(QCPAbstractPlottable *, int ,QMouseEvent* event){
 
     if(tracer2==nullptr){
         tracer2 = new QCPItemTracer(customPlot2);

@@ -85,7 +85,7 @@ private slots:
     void manualGetShotButton();
     void getPacketFromMCU(unsigned short n);
     void getButtonClicked(bool checked);
-    void selectShot(int index);
+    void selectShot();
     void on_clearButton();
 
     //Slip handlers
