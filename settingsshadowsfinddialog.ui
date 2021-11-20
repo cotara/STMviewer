@@ -324,6 +324,13 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="sendToMKButton">
+         <property name="text">
+          <string>Отправить в МК</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
     </layout>

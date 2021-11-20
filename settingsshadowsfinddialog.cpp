@@ -31,6 +31,7 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
     connect(ui->CySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ paramsDouble[6] = i; emit settingsChanged();});
 
     connect(wizard,&AutoFindWizard::sendBestParameters,this,&SettingsShadowsFindDialog::sendSettingsToMK);
+    connect(ui->sendToMKButton,&QPushButton::clicked,this,&SettingsShadowsFindDialog::sendSettingsToMK);
 
     keyF5 = new QShortcut(this);   // Инициализируем объект
     keyF5->setKey(Qt::Key_F5);    // Устанавливаем код клавиши

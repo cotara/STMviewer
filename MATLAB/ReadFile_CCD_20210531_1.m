@@ -16,13 +16,16 @@ while(i<=len)
         k=k+1;
         i=i+4;
         j=0;
+        
     else
         j=j+1;
         shots(k+1,j)=V(i);
     end
     i=i+1;
 end
-%surf(shots);
+tempShot = shots(1,:);
+plot(tempShot);
+surf(shots);
 fclose('all')
 Fs=10e6;
 dt=1/Fs;
