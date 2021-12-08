@@ -49,7 +49,7 @@ const char RIGHT_BORDER_SET = 0x14;
 const char COMP_CH1_SET     = 0x15;
 const char COMP_CH2_SET     = 0x16;
 const char NEWSHADFINDPAR   = 0x17;
-const char REQUEST_DIAMETER = 0x20;
+const char REQUEST_DIAMETER = 0x72;
 
 class QSerialPort;
 class QTimer;
@@ -164,7 +164,7 @@ private:
         unsigned short sh;
     };
     charToShort_t charToShort;
-    QVector<double> diametersFromMCU,diameterKeys;
+    QVector<double> shadowsFromMCU,diametersFromMCU,diameterKeys;
     //Для тестов
     QByteArray generateBytes(int count);
     void plotDiameter();

@@ -620,9 +620,21 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         break;
 
      case REQUEST_DIAMETER:
-        fromBytes(bytes);
+        //fromBytes(bytes);//Генерирование рандомных байтов
+        diametersFromMCU.clear();
+        shadowsFromMCU.clear();
+        for(int i=0; i<bytes.size();i+=2){
+            int num = static_cast<unsigned char>(bytes.at(i)) + static_cast<unsigned char>(bytes.at(i+1))*256;
+            shadowsFromMCU.append(num);//Front`,Spad1,Front2,Spad2
+        }
+        for(int i = 0;i<shadowsFromMCU.size();i+=4)
+            diametersFromMCU.append(filter->diameterFind(QVector<double>{shadowsFromMCU.at(i),shadowsFromMCU.at(i+1)},QVector<double>{shadowsFromMCU.at(2),shadowsFromMCU.at(3)}).at(0));
+
+        //m_console->putData(bytes);
         plotDiameter();
+
         break;
+
 
      case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
@@ -922,13 +934,13 @@ void MainWindow::saveHistory(QString &dirname){
 // Обработчик таймаута запроса диаметра
 void MainWindow::handlerGettingDiameterTimer(){
 
-    QByteArray randomBytes;
-    randomBytes = generateBytes(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
-    randomBytes.prepend(2,0);
-    randomBytes.prepend(REQUEST_DIAMETER);
-    handlerTranspAnswerReceive(randomBytes);
+    //QByteArray randomBytes;
+    //randomBytes = generateBytes(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
+    //randomBytes.prepend(2,0);
+    //randomBytes.prepend(REQUEST_DIAMETER);
+    //handlerTranspAnswerReceive(randomBytes);
 
-    //sendByteToMK(REQUEST_DIAMETER,0,"SEND REQUEST_DIAMETER: ");
+    sendByteToMK(REQUEST_DIAMETER,0,"SEND REQUEST_DIAMETER: ");
 }
 
 QVector<double> MainWindow::fromBytes(QByteArray &bytes)
