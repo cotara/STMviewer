@@ -362,7 +362,11 @@ void firFilter::updateSettings(QVector<double> &s)
         Cy = s.at(6);
     }
     else
-         QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
+        QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
+}
+
+QVector<double> firFilter::medianFilter(QVector<double> data, int window, int average){
+    return data;
 }
 
 
