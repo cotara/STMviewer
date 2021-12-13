@@ -144,10 +144,10 @@ private:
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
     QVector<double> diameter, diameterPlis;
     QVector<double> tempPLISextremums1{3735,3795,5135,5191},tempPLISextremums2{973,1035,3010,3078};
-
+    int xWindowDiameter = 5000;
     int tableSize=100;
     bool m_online = false;
-
+    QCPGraph *r1=nullptr,*r2=nullptr,*c1=nullptr,*c2=nullptr,*m1=nullptr,*m2=nullptr;
     //Работа с файлами
     QDir *dir;
     QString dirnameDefault = "log";
@@ -164,11 +164,11 @@ private:
         unsigned short sh;
     };
     charToShort_t charToShort;
-    QVector<double> shadowsFromMCU,diametersFromMCU,diameterKeys;
+    QVector<double> shadowsFromMCU,r1FromMCU,r2FromMCU,c1FromMCU,c2FromMCU,diameterKeys;
     //Для тестов
     QByteArray generateBytes(int count);
     void plotDiameter();
-    QVector<double> xDiameter,yDiameter;
+    QVector<double> xDiameter,yr1,yr2,yc1,yc2,ym1,ym2;
     int filled = 0,lastIndex=0;
 };
 
