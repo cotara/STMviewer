@@ -610,31 +610,40 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
       //Получили данные с диаметром
      case REQUEST_DIAMETER:
-        r1FromMCU.clear();
-        r2FromMCU.clear();
-        c1FromMCU.clear();
-        c2FromMCU.clear();
-        shadowsFromMCU.clear();
-        for(int i=0; i<bytes.size();i+=2){
-            int num = static_cast<unsigned char>(bytes.at(i)) + static_cast<unsigned char>(bytes.at(i+1))*256;
-            shadowsFromMCU.append(num);//Front,Spad1,Front2,Spad2
-        }
+        if(value!=0){
+            r1FromMCU.clear();
+            r2FromMCU.clear();
+            c1FromMCU.clear();
+            c2FromMCU.clear();
+            shadowsFromMCU.clear();
+            for(int i=0; i<bytes.size();i+=2){
+                int num = static_cast<unsigned char>(bytes.at(i)) + static_cast<unsigned char>(bytes.at(i+1))*256;
+                shadowsFromMCU.append(num);//Front,Spad1,Front2,Spad2
+            }
 
-        for(int i = 0;i<shadowsFromMCU.size();i+=4){
-            QVector<double> tempDiameters = filter->diameterFind(QVector<double>{shadowsFromMCU.at(i),shadowsFromMCU.at(i+1)},QVector<double>{shadowsFromMCU.at(2),shadowsFromMCU.at(3)});
-            r1FromMCU.append(tempDiameters.at(0)*2);
-            r2FromMCU.append(tempDiameters.at(1)*2);
-            c1FromMCU.append(tempDiameters.at(2));
-            c2FromMCU.append(tempDiameters.at(3));
+            for(int i = 0;i<shadowsFromMCU.size();i+=4){
+                QVector<double> tempDiameters = filter->diameterFind(QVector<double>{shadowsFromMCU.at(i),shadowsFromMCU.at(i+1)},QVector<double>{shadowsFromMCU.at(2),shadowsFromMCU.at(3)});
+                r1FromMCU.append(shadowsFromMCU.at(i)-shadowsFromMCU.at(i+1));
+                r2FromMCU.append(shadowsFromMCU.at(i+2)-shadowsFromMCU.at(i+3));
+                //c1FromMCU.append(shadowsFromMCU.at(i+2));
+                //c2FromMCU.append(shadowsFromMCU.at(i+3));
 
+                //r1FromMCU.append(tempDiameters.at(0)*2);
+                //r2FromMCU.append(tempDiameters.at(1)*2);
+                c1FromMCU.append(tempDiameters.at(0));
+                c2FromMCU.append(tempDiameters.at(1));
+
+            }
+            m1FromMCU = filter->medianFilter(r1FromMCU,m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value(),m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value());
+            m2FromMCU = filter->medianFilter(r2FromMCU,m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value(),m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value());
+            if(diameterMode)//CollectMode
+                collectDiameter();
+            else
+                realTimeDiameter();
+            break;
         }
-        m1FromMCU = filter->medianFilter(r1FromMCU,m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value(),m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value());
-        m2FromMCU = filter->medianFilter(r2FromMCU,m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value(),m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value());
-        if(diameterMode)//CollectMode
-            collectDiameter();
-        else
-            realTimeDiameter();
-        break;
+         break;
+
 
     case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
@@ -957,18 +966,32 @@ void MainWindow::plotDiameter()
 }
 
 void MainWindow::realTimeDiameter(){
-    int size = yr1.size();//Размер данных, которые надо добавить на график
+    int size = r1FromMCU.size();//Размер данных, которые надо добавить на график
     for(int i = 0;i<size; i++){
         xDiameter.append(lastIndex++);
     }
     int overload = filled+size-xWindowDiameter;//Если данных больше, чем окно, отрезаем хвост
     if(overload>=0){
-        xDiameter.remove(0,overload);
-        yr1.remove(0,overload);
-        yr2.remove(0,overload);
-        yc1.remove(0,overload);
-        yc2.remove(0,overload);
-        filled-=overload;
+        if(xDiameter.size()>overload){
+            xDiameter.remove(0,overload);
+            yr1.remove(0,overload);
+            yr2.remove(0,overload);
+            yc1.remove(0,overload);
+            yc2.remove(0,overload);
+            ym1.remove(0,overload);
+            ym2.remove(0,overload);
+            filled-=overload;
+        }
+        else{
+            xDiameter.clear();
+            yr1.clear();
+            yr2.clear();
+            yc1.clear();
+            yc2.clear();
+            ym1.clear();
+            ym2.clear();
+            filled=0;
+        }
     }
 
     yr1.append(r1FromMCU);
@@ -983,7 +1006,7 @@ void MainWindow::realTimeDiameter(){
 }
 
 void MainWindow::collectDiameter(){
-    int size = yr1.size();//Размер принятых данных
+    int size = r1FromMCU.size();//Размер принятых данных
 
     yr1.append(r1FromMCU);
     yr2.append(r2FromMCU);

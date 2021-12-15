@@ -6,6 +6,8 @@
 
 firFilter::firFilter(QVector<double> &s)
 {
+    updateSettings(s);
+
     file =  new QFile();
     file->setFileName("koeff.txt");
     if(!file->open(QIODevice::ReadOnly)){
@@ -20,10 +22,6 @@ firFilter::firFilter(QVector<double> &s)
         k++;
     }
     offset=k;//201
-
-    updateSettings(s);
-
-
 }
 firFilter::~firFilter(){
     delete file;
