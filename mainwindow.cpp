@@ -243,6 +243,49 @@ MainWindow::MainWindow(QWidget *parent) :
         temp.append(diameterPlis.at(0) + diameterPlis.at(1));
        ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
    });
+
+
+   ////////////////////////////////////эскперимент
+   /*QFile tempFile;
+   QByteArray tempBuf;
+   tempFile.setFileName("Тестовые диаметры 2.txt");
+   if(!tempFile.open(QIODevice::ReadOnly)){
+       QMessageBox::warning(this, "Внимание!", "Файл для чтения параметров расчета диаметра не может быть открыт",QMessageBox::Ok);
+       return ;
+   }
+   tempBuf = tempFile.readAll();
+   QList<QByteArray> list_params=tempBuf.split('\n');
+   QVector <double> extremums;
+   extremums.resize(3688);
+   for (int k=0;k<list_params.count();k++)
+       extremums[k] = list_params.at(k).toDouble();
+   file->close();
+   r1FromMCU.clear();
+   r2FromMCU.clear();
+   c1FromMCU.clear();
+   c2FromMCU.clear();
+
+
+   for(int i = 0;i<extremums.size();i+=4){
+       QVector<double> tempDiameters = filter->diameterFind(QVector<double>{extremums.at(i),extremums.at(i+1)},QVector<double>{extremums.at(i+2),extremums.at(i+3)});
+       r1FromMCU.append(tempDiameters.at(0));
+       r2FromMCU.append(tempDiameters.at(1));
+       c1FromMCU.append(tempDiameters.at(2));
+       c2FromMCU.append(tempDiameters.at(3));
+
+   }
+   m1FromMCU = filter->medianFilter(r1FromMCU,m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value(),m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value());
+   m2FromMCU = filter->medianFilter(r2FromMCU,m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value(),m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value());
+    m_ManagementWidget->m_DiameterTransmition->diemetersCheckBox->setChecked(true);
+    for (int i=0;i<11;i++){
+
+       realTimeDiameter();
+
+
+       plotDiameter();
+    }
+*/
+
 }
 
 MainWindow::~MainWindow(){
@@ -622,7 +665,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             }
 
             for(int i = 0;i<shadowsFromMCU.size();i+=4){
-                QVector<double> tempDiameters = filter->diameterFind(QVector<double>{shadowsFromMCU.at(i),shadowsFromMCU.at(i+1)},QVector<double>{shadowsFromMCU.at(2),shadowsFromMCU.at(3)});
+                QVector<double> tempDiameters = filter->diameterFind(QVector<double>{shadowsFromMCU.at(i),shadowsFromMCU.at(i+1)},QVector<double>{shadowsFromMCU.at(i+2),shadowsFromMCU.at(i+3)});
                 r1FromMCU.append(shadowsFromMCU.at(i)-shadowsFromMCU.at(i+1));
                 r2FromMCU.append(shadowsFromMCU.at(i+2)-shadowsFromMCU.at(i+3));
                 //c1FromMCU.append(shadowsFromMCU.at(i+2));
@@ -921,7 +964,7 @@ void MainWindow::plotDiameter()
         }
         if(c2 == nullptr){
             c2 = diameterPlot->addGraph();
-            c1->setName("Отклонение от центра по оси Y");
+            c2->setName("Отклонение от центра по оси Y");
         }
        c1->setData(xDiameter,yc1);
        c2->setData(xDiameter,yc2);
@@ -960,9 +1003,11 @@ void MainWindow::plotDiameter()
     }
 
     diameterPlot->xAxis->rescale();
-
+    diameterPlot->yAxis->rescale();
     diameterPlot->xAxis->setRange(diameterPlot->xAxis->range().upper, xWindowDiameter, Qt::AlignRight);
+    //diameterPlot->yAxis->setRangeLower(0);
     diameterPlot->replot();
+
 }
 
 void MainWindow::realTimeDiameter(){
