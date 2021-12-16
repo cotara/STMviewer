@@ -1,4 +1,5 @@
 #include "diametertransmition.h"
+#include <QMessageBox>
 
 DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
 
@@ -37,7 +38,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
 
     //Окно просмотра по оси Х
     xWindow = new QSlider(Qt::Horizontal,this);
-    xWindow->setMinimum(100);
+    xWindow->setMinimum(1000);
     xWindow->setMaximum(10000);
     xWindow->setValue(5000);
     xWindowsLabel = new QLabel("Окно отображения");
@@ -99,7 +100,10 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
             windowSizeSpinbox->setEnabled(false);
             averageSpinbox->setEnabled(false);
         }
-        emit getDiameterChanged(checked);
+        if(medianFilterCheckbox->isChecked() || diemetersCheckBox->isChecked() || centersCheckBox->isChecked())
+            emit getDiameterChanged(checked);
+        else
+            QMessageBox::warning(this, "Внимание!", "Не выбрано данных для вывода!",QMessageBox::Ok);
     });
     connect(reqFreqSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit reqFreqValueChanged(i); });
 

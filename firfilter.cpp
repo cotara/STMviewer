@@ -3,6 +3,9 @@
 #include <QTextStream>
 #include <cmath>
 #include <QMessageBox>
+#define STOPPER 0
+#define NULL 0
+#define MEDIAN_FILTER_SIZE 1001
 
 firFilter::firFilter(QVector<double> &s)
 {
@@ -327,8 +330,8 @@ QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<doub
             double Front2 = shadowsCh2.at(0);
             double Spad2 = shadowsCh2.at(1);
 
-            double  X11 = (-Front1+ Nx)*res+Cx;
-            double  X21 = (-Spad1+ Nx)*res+Cx;
+            double  X11 = (-Front1+Nx)*res+Cx;
+            double  X21 = (-Spad1+Nx)*res+Cx;
             double  Y11 = (-Front2+Ny)*res+Cy;
             double  Y21 = (-Spad2+Ny)*res+Cy;
 
@@ -363,10 +366,234 @@ void firFilter::updateSettings(QVector<double> &s)
         QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
 }
 
-QVector<double> firFilter::medianFilter(QVector<double> data, int window, int average){
-    return data;
+QVector<double> firFilter::medianFilterX(QVector<double> data, int window, int average){
+   QVector<double> result;
+   double cifra;
+
+    for(int i=0;i<data.size();i++){
+        cifra = median_filter_x(data.at(i),window);
+        if(window!=0){
+            double Alpha= 1/((double)average*10);
+            double Beta = 1 - Alpha;
+            double fx =fabs(cifra - old_Yx3);
+            if(fx <100)
+                old_Yx3 = old_Yx3*(1 - Alpha)+Alpha*cifra;
+            else
+                old_Yx3 = cifra;
+        }
+        else
+            old_Yx3 = cifra;
+
+        result.append(old_Yx3);
+    }
+
+    return result;
+}
+QVector<double> firFilter::medianFilterY(QVector<double> data, int window, int average){
+    QVector<double> result;
+    double cifra;
+
+     for(int i=0;i<data.size();i++){
+         cifra = median_filter_y(data.at(i),window);
+         if(window!=0){
+             double Alpha= 1/((double)average*10);
+             double Beta = 1 - Alpha;
+             double fy =fabs(cifra - old_Yy3);
+             if(fy <100)
+                 old_Yy3 = old_Yy3*(1 - Alpha)+Alpha*cifra;
+             else
+                 old_Yy3 = cifra;
+         }
+         else
+             old_Yy3 = cifra;
+
+         result.append(old_Yy3);
+     }
+
+     return result;
 }
 
+
+double firFilter::median_filter_x(double datum, int window){
+ struct pair
+ {
+   struct pair   *point;                              /* Pointers forming list linked in sorted order */
+   float  value;                                   /* Values to sort */
+ };
+ static struct pair buffer_x[1001] = {0};               /* Buffer of nwidth pairs */
+ static struct pair *datpoint = buffer_x;               /* Pointer into circular buffer of data */
+ static struct pair small = {nullptr, STOPPER};          /* Chain stopper */
+ static struct pair big = {&small, 0};                /* Pointer to head (largest) of linked list.*/
+
+ struct pair *successor;                              /* Pointer to successor of replaced data item */
+ struct pair *scan;                                   /* Pointer used to scan down the sorted list */
+ struct pair *scanold;                                /* Previous value of scan */
+ struct pair *median;                                 /* Pointer to median */
+ unsigned short i;
+
+ if (static_cast<int>(datum) == STOPPER)
+ {
+   datum = STOPPER + 1;                             /* No stoppers allowed. */
+ }
+
+ if ( (++datpoint - buffer_x) >= window)
+ {
+   datpoint = buffer_x;                               /* Increment and wrap data in pointer.*/
+ }
+
+ datpoint->value = datum;                           /* Copy in new datum */
+ successor = datpoint->point;                       /* Save pointer to old value's successor */
+ median = &big;                                     /* Median initially to first in chain */
+ scanold = nullptr;                                    /* Scanold initially null. */
+ scan = &big;                                       /* Points to pointer to first (largest) datum in chain */
+
+ /* Handle chain-out of first item in chain as special case */
+ if (scan->point == datpoint)
+ {
+   scan->point = successor;
+ }
+ scanold = scan;                                     /* Save this pointer and   */
+ scan = scan->point ;                                /* step down chain */
+
+ /* Loop through the chain, normal loop exit via break. */
+ for (i = 0 ; i < window; ++i)
+ {
+   /* Handle odd-numbered item in chain  */
+   if (scan->point == datpoint)
+   {
+     scan->point = successor;                      /* Chain out the old datum.*/
+   }
+
+   if (scan->value < datum)                        /* If datum is larger than scanned value,*/
+   {
+     datpoint->point = scanold->point;             /* Chain it in here.  */
+     scanold->point = datpoint;                    /* Mark it chained in. */
+     datum = STOPPER;
+   };
+
+   /* Step median pointer down chain after doing odd-numbered element */
+   median = median->point;                       /* Step median pointer.  */
+   if (scan == &small)
+   {
+     break;                                      /* Break at end of chain  */
+   }
+   scanold = scan;                               /* Save this pointer and   */
+   scan = scan->point;                           /* step down chain */
+
+   /* Handle even-numbered item in chain.  */
+   if (scan->point == datpoint)
+   {
+     scan->point = successor;
+   }
+
+   if (scan->value < datum)
+   {
+     datpoint->point = scanold->point;
+     scanold->point = datpoint;
+     datum = STOPPER;
+   }
+
+   if (scan == &small)
+   {
+     break;
+   }
+
+   scanold = scan;
+   scan = scan->point;
+ }
+ return median->value;
+}
+
+
+double firFilter::median_filter_y(double datum, int window){
+ struct pair
+ {
+   struct pair   *point;                              /* Pointers forming list linked in sorted order */
+   float  value;                                   /* Values to sort */
+ };
+ static struct pair buffer_y[1001] = {0};               /* Buffer of nwidth pairs */
+ static struct pair *datpoint = buffer_y;               /* Pointer into circular buffer of data */
+ static struct pair small = {nullptr, STOPPER};          /* Chain stopper */
+ static struct pair big = {&small, 0};                /* Pointer to head (largest) of linked list.*/
+
+ struct pair *successor;                              /* Pointer to successor of replaced data item */
+ struct pair *scan;                                   /* Pointer used to scan down the sorted list */
+ struct pair *scanold;                                /* Previous value of scan */
+ struct pair *median;                                 /* Pointer to median */
+ unsigned short i;
+
+ if (static_cast<int>(datum) == STOPPER)
+ {
+   datum = STOPPER + 1;                             /* No stoppers allowed. */
+ }
+
+ if ( (++datpoint - buffer_y) >= window)
+ {
+   datpoint = buffer_y;                               /* Increment and wrap data in pointer.*/
+ }
+
+ datpoint->value = datum;                           /* Copy in new datum */
+ successor = datpoint->point;                       /* Save pointer to old value's successor */
+ median = &big;                                     /* Median initially to first in chain */
+ scanold = nullptr;                                    /* Scanold initially null. */
+ scan = &big;                                       /* Points to pointer to first (largest) datum in chain */
+
+ /* Handle chain-out of first item in chain as special case */
+ if (scan->point == datpoint)
+ {
+   scan->point = successor;
+ }
+ scanold = scan;                                     /* Save this pointer and   */
+ scan = scan->point ;                                /* step down chain */
+
+ /* Loop through the chain, normal loop exit via break. */
+ for (i = 0 ; i < window; ++i)
+ {
+   /* Handle odd-numbered item in chain  */
+   if (scan->point == datpoint)
+   {
+     scan->point = successor;                      /* Chain out the old datum.*/
+   }
+
+   if (scan->value < datum)                        /* If datum is larger than scanned value,*/
+   {
+     datpoint->point = scanold->point;             /* Chain it in here.  */
+     scanold->point = datpoint;                    /* Mark it chained in. */
+     datum = STOPPER;
+   };
+
+   /* Step median pointer down chain after doing odd-numbered element */
+   median = median->point;                       /* Step median pointer.  */
+   if (scan == &small)
+   {
+     break;                                      /* Break at end of chain  */
+   }
+   scanold = scan;                               /* Save this pointer and   */
+   scan = scan->point;                           /* step down chain */
+
+   /* Handle even-numbered item in chain.  */
+   if (scan->point == datpoint)
+   {
+     scan->point = successor;
+   }
+
+   if (scan->value < datum)
+   {
+     datpoint->point = scanold->point;
+     scanold->point = datpoint;
+     datum = STOPPER;
+   }
+
+   if (scan == &small)
+   {
+     break;
+   }
+
+   scanold = scan;
+   scan = scan->point;
+ }
+ return median->value;
+}
 
 /*
 double firFilter::freqCalc(QList<double> dots,int len){

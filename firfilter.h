@@ -19,8 +19,10 @@ public:
     QVector<double> diameterFind(QVector<double> shadowsCh1,QVector<double> shadowsCh2);
     void updateSettings(QVector<double>& s);
     //double freqCalc(QList<double> dots,int len);
-    QVector <double> medianFilter(QVector<double> data, int window, int average);
-
+    QVector <double> medianFilterX(QVector<double> data, int window, int average);
+    double median_filter_x(double datum, int window);
+    QVector <double> medianFilterY(QVector<double> data, int window, int average);
+    double median_filter_y(double datum, int window);
 private:
     QFile *file;
     double koefs[201];
@@ -55,6 +57,10 @@ private:
     const double a[5]={1,-3.606129410855792,4.894109789457051,-2.961577327764605,0.674024707627429};
     //const double b[5]={449,1794,2691,1794,449};
     //const double a[5]={16777216,-60500812,82109537,-49687023,11308258};
+
+    //Для экспоненциального фильтра
+    double old_Yx3=0;
+    double old_Yy3=0;
 };
 
 #endif // FIRFILTER_H

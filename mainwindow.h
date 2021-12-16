@@ -108,6 +108,7 @@ private slots:
     void saveHistory(QString &dirname);     //Запись лога
     void on_action_triggered();             //Чтение лога
 
+    void mouseWheel();
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
