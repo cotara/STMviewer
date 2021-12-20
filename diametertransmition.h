@@ -26,10 +26,13 @@ public:
     QRadioButton *continiousMode, *collectMode;
     QLabel *countPointsLabel;
     QSpinBox * countPointsBox;
+    QLabel *r1ValueLabel,*r2ValueLabel;
+    QLabel *r1Label,*r2Label;
 private:
     QVBoxLayout *layout;
-    QHBoxLayout *windowSizeLayout, *averageLayout, *reqFreqLayout,*sliderLayout,*radioLayout,*colectLayout;
+    QHBoxLayout *windowSizeLayout, *averageLayout, *reqFreqLayout,*sliderLayout,*radioLayout,*colectLayout,*r1HLayout, *r2HLayout;
     QLabel *windowSizeLabel, *averageLabel, *reqFreqLabel,*xWindowsLabel,*sliderValue;
+
 
 signals:
     void getDiameterChanged(int state);
@@ -37,6 +40,8 @@ signals:
     void xWindowChanged(int value);
     void countPointsChanged(int value);
     void diameterModeChanged(bool mode);
+    void windowSizeChanged(int value);
+    void averageChanged(int value);
 };
 
 #endif // DIAMETERTRANSMITION_H

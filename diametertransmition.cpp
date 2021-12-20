@@ -62,10 +62,10 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     averageLayout->addWidget(averageSpinbox);
     layout->addLayout(averageLayout);
 
-    windowSizeSpinbox->setRange(1,100);
-    windowSizeSpinbox->setValue(10);
-    averageSpinbox->setRange(1,100);
-    averageSpinbox->setValue(10);
+    windowSizeSpinbox->setRange(3,10000);
+    windowSizeSpinbox->setValue(101);
+    averageSpinbox->setRange(0,10000);
+    averageSpinbox->setValue(100);
     reqFreqSpinbox->setRange(1,20);
     reqFreqSpinbox->setValue(10);
 
@@ -86,20 +86,26 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     layout->addLayout(colectLayout);
     layout->addWidget(progressBar);
 
-    //Получать диаметры
+    //КНОПКА
     layout->addWidget(gettingDiameterButton);
+    //Вывод диаметров
+    r1Label = new QLabel("R1: ",this);
+    r2Label = new QLabel("R2: ",this);
+    r1ValueLabel = new QLabel(this);
+    r2ValueLabel = new QLabel(this);
+    r1HLayout = new QHBoxLayout();
+    r2HLayout = new QHBoxLayout();
+    r1HLayout->addWidget(r1Label);
+    r1HLayout->addWidget(r1ValueLabel);
+    r2HLayout->addWidget(r2Label);
+    r2HLayout->addWidget(r2ValueLabel);
+    layout->addLayout(r1HLayout);
+    layout->addLayout(r2HLayout);
+    r1ValueLabel->setObjectName("BigLabel");
+    r2ValueLabel->setObjectName("BigLabel");
 
+    /********************************КОННЕКТЫ*********************************************************/
     connect(gettingDiameterButton,&QPushButton::clicked,[=](bool checked){
-        if(!checked){
-            medianFilterCheckbox->setEnabled(true);
-            windowSizeSpinbox->setEnabled(true);
-            averageSpinbox->setEnabled(true);
-        }
-        else{
-            medianFilterCheckbox->setEnabled(false);
-            windowSizeSpinbox->setEnabled(false);
-            averageSpinbox->setEnabled(false);
-        }
         if(medianFilterCheckbox->isChecked() || diemetersCheckBox->isChecked() || centersCheckBox->isChecked())
             emit getDiameterChanged(checked);
         else
@@ -107,11 +113,12 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     });
     connect(reqFreqSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit reqFreqValueChanged(i); });
 
-    connect(xWindow, &QSlider::valueChanged,this,&DiameterTransmition::xWindowChanged);
-    connect(xWindow, &QSlider::valueChanged,[=](int value) {sliderValue->setNum(value);});
+    connect(xWindow, &QSlider::valueChanged,[=](int value) {sliderValue->setNum(value); emit xWindowChanged(value);});
     connect(medianFilterCheckbox, &QCheckBox::stateChanged,averageSpinbox,&QSpinBox::setEnabled);
     connect(medianFilterCheckbox, &QCheckBox::stateChanged,windowSizeSpinbox,&QSpinBox::setEnabled);
     connect(countPointsBox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ progressBar->setMaximum(i*1000);  emit countPointsChanged(i*1000);});
+    connect(averageSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit averageChanged(i);});
+    connect(windowSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){  emit windowSizeChanged(i);});
     connect(continiousMode, &QRadioButton::clicked,[=](bool checked){
         emit diameterModeChanged(false);
         collectMode->setChecked(!checked);
@@ -128,4 +135,8 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     });
 
     continiousMode->click();
+    averageSpinbox->valueChanged(10);
+    windowSizeSpinbox->valueChanged(10);
+    countPointsBox->valueChanged(50);
+    reqFreqSpinbox->valueChanged(10);
 }

@@ -163,3 +163,4 @@ void SettingsShadowsFindDialog::on_pushButton_clicked(){
 void SettingsShadowsFindDialog::slotShortcutF5(){
     on_pushButton_clicked();
 }
+

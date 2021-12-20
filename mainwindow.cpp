@@ -170,7 +170,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::xWindowChanged, [=](int value){ xWindowDiameter = value; });
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::countPointsChanged, [=](int value){ countOfCollect = value; });//Количество точек для коллекционирования
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::diameterModeChanged, [=](bool mode){ diameterMode = mode; clearDiameterVectors(); });   //Изменен режим запроса диаметров
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::windowSizeChanged, [=](int value){ m_windowSize = value;});   //Окно фильтра изменилось
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::averageChanged, [=](int value){ m_average = value; });   //Усреднение изменилось
     connect(diameterPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
+
 
     //Тулбар
     tableSizeSpinbox = new QSpinBox(this);
@@ -372,7 +375,13 @@ void MainWindow::sendByteToMK(char dst, int dataByte, const QString &msg)
 void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &msg){
     conversation_t conv;
     QByteArray data;
+    char msb,lsb;
     data.append(dst);
+    msb=(0&0xFF00)>>8;
+    lsb=static_cast<char> (dataV.size()&0x00FF);
+    data.append(msb);
+    data.append(lsb);
+
     for(double d:dataV){
         conv.d=d;
         for(int i=0;i<8;i++)
@@ -630,8 +639,10 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 c2FromMCU.append(tempDiameters.at(3));
 
             }
-            m1FromMCU = filter->medianFilterX(r1FromMCU,m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value(),m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value());
-            m2FromMCU = filter->medianFilterY(r2FromMCU,m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value(),m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value());
+            m1FromMCU = filter->medianFilterX(r1FromMCU,m_windowSize,m_average);
+            m2FromMCU = filter->medianFilterY(r2FromMCU,m_windowSize,m_average);
+            m_ManagementWidget->m_DiameterTransmition->r1ValueLabel->setNum(m1FromMCU.last());
+            m_ManagementWidget->m_DiameterTransmition->r2ValueLabel->setNum(m2FromMCU.last());
             if(diameterMode)//CollectMode
                 collectDiameter();
             else
