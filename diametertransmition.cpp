@@ -11,6 +11,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     sliderLayout = new QHBoxLayout();
     radioLayout = new QHBoxLayout();
     colectLayout = new QHBoxLayout();
+    limitLayout = new QHBoxLayout();
 
     gettingDiameterButton = new QPushButton("Получать радиус");
     gettingDiameterButton->setCheckable(true);
@@ -23,9 +24,13 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     windowSizeSpinbox->setEnabled(false);
     averageSpinbox = new QSpinBox(this);
     averageSpinbox->setEnabled(false);
+    limitSpinbox = new QSpinBox(this);
+    limitSpinbox->setEnabled(false);
     reqFreqSpinbox = new QSpinBox(this);
+
     windowSizeLabel = new QLabel ("Окно фильтра", this);
     averageLabel = new QLabel ("Усреднение фильтра", this);
+    limitLabel = new QLabel ("Порог срабатывания",this);
     reqFreqLabel = new QLabel ("Периодичность запросов, раз/с", this);
 
     //Выбор режима
@@ -61,11 +66,16 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     averageLayout->addWidget(averageLabel);
     averageLayout->addWidget(averageSpinbox);
     layout->addLayout(averageLayout);
+    limitLayout->addWidget(limitLabel);
+    limitLayout->addWidget(limitSpinbox);
+    layout->addLayout(limitLayout);
 
     windowSizeSpinbox->setRange(3,10000);
     windowSizeSpinbox->setValue(101);
     averageSpinbox->setRange(0,10000);
     averageSpinbox->setValue(100);
+    limitSpinbox->setRange(10,1000);
+    limitSpinbox->setValue(100);
     reqFreqSpinbox->setRange(1,20);
     reqFreqSpinbox->setValue(10);
 
@@ -118,6 +128,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     connect(medianFilterCheckbox, &QCheckBox::stateChanged,windowSizeSpinbox,&QSpinBox::setEnabled);
     connect(countPointsBox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ progressBar->setMaximum(i*1000);  emit countPointsChanged(i*1000);});
     connect(averageSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit averageChanged(i);});
+    connect(limitSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit limitChanged(i);});
     connect(windowSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){  emit windowSizeChanged(i);});
     connect(continiousMode, &QRadioButton::clicked,[=](bool checked){
         emit diameterModeChanged(false);
@@ -136,6 +147,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
 
     continiousMode->click();
     averageSpinbox->valueChanged(10);
+    limitSpinbox->valueChanged(100);
     windowSizeSpinbox->valueChanged(10);
     countPointsBox->valueChanged(50);
     reqFreqSpinbox->valueChanged(10);

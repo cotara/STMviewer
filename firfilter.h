@@ -19,9 +19,9 @@ public:
     QVector<double> diameterFind(QVector<double> shadowsCh1,QVector<double> shadowsCh2);
     void updateSettings(QVector<double>& s);
     //double freqCalc(QList<double> dots,int len);
-    QVector <double> medianFilterX(QVector<double> data, int window, int average);
+    QVector <double> medianFilterX(QVector<double> data, int window, int average, int limit);
     double median_filter_x(double datum, int window);
-    QVector <double> medianFilterY(QVector<double> data, int window, int average);
+    QVector <double> medianFilterY(QVector<double> data, int window, int average, int limit);
     double median_filter_y(double datum, int window);
 private:
     QFile *file;

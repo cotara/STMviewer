@@ -20,7 +20,7 @@ public:
 
     QPushButton *gettingDiameterButton;
     QCheckBox *diemetersCheckBox, *centersCheckBox,*medianFilterCheckbox;
-    QSpinBox *windowSizeSpinbox,*averageSpinbox,*reqFreqSpinbox;
+    QSpinBox *windowSizeSpinbox,*averageSpinbox,*limitSpinbox, *reqFreqSpinbox;
     QSlider *xWindow;
     QProgressBar *progressBar;
     QRadioButton *continiousMode, *collectMode;
@@ -30,8 +30,8 @@ public:
     QLabel *r1Label,*r2Label;
 private:
     QVBoxLayout *layout;
-    QHBoxLayout *windowSizeLayout, *averageLayout, *reqFreqLayout,*sliderLayout,*radioLayout,*colectLayout,*r1HLayout, *r2HLayout;
-    QLabel *windowSizeLabel, *averageLabel, *reqFreqLabel,*xWindowsLabel,*sliderValue;
+    QHBoxLayout *windowSizeLayout, *averageLayout,*limitLayout, *reqFreqLayout,*sliderLayout,*radioLayout,*colectLayout,*r1HLayout, *r2HLayout;
+    QLabel *windowSizeLabel, *averageLabel, *limitLabel, *reqFreqLabel,*xWindowsLabel,*sliderValue;
 
 
 signals:
@@ -42,6 +42,7 @@ signals:
     void diameterModeChanged(bool mode);
     void windowSizeChanged(int value);
     void averageChanged(int value);
+    void limitChanged(int value);
 };
 
 #endif // DIAMETERTRANSMITION_H

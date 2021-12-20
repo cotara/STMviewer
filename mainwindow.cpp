@@ -173,7 +173,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::windowSizeChanged, [=](int value){ m_windowSize = value;});   //Окно фильтра изменилось
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::averageChanged, [=](int value){ m_average = value; });   //Усреднение изменилось
     connect(diameterPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
-
+    connect(ui->AutoRange,&QAction::triggered,viewer,[=]{
+        diameterPlot->yAxis->rescale();
+        diameterPlot->yAxis->setRangeLower(diameterPlot->yAxis->range().lower-10);
+        diameterPlot->yAxis->setRangeUpper(diameterPlot->yAxis->range().upper+10);
+        diameterPlot->replot();
+    });
 
     //Тулбар
     tableSizeSpinbox = new QSpinBox(this);
@@ -633,20 +638,26 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             for(int i = 0;i<shadowsFromMCU.size();i+=4){
                 QVector<double> tempDiameters = filter->diameterFind(QVector<double>{shadowsFromMCU.at(i),shadowsFromMCU.at(i+1)},QVector<double>{shadowsFromMCU.at(i+2),shadowsFromMCU.at(i+3)});
-                r1FromMCU.append(tempDiameters.at(0)*2);
-                r2FromMCU.append(tempDiameters.at(1)*2);
+                r1FromMCU.append(tempDiameters.at(0));
+                r2FromMCU.append(tempDiameters.at(1));
                 c1FromMCU.append(tempDiameters.at(2));
                 c2FromMCU.append(tempDiameters.at(3));
 
             }
-            m1FromMCU = filter->medianFilterX(r1FromMCU,m_windowSize,m_average);
-            m2FromMCU = filter->medianFilterY(r2FromMCU,m_windowSize,m_average);
+            m1FromMCU = filter->medianFilterX(r1FromMCU,m_windowSize,m_average,m_limit);
+            m2FromMCU = filter->medianFilterY(r2FromMCU,m_windowSize,m_average,m_limit);
             m_ManagementWidget->m_DiameterTransmition->r1ValueLabel->setNum(m1FromMCU.last());
             m_ManagementWidget->m_DiameterTransmition->r2ValueLabel->setNum(m2FromMCU.last());
-            if(diameterMode)//CollectMode
+            if(diameterMode){//CollectMode
+                lastIndex=0;
+                clearDiameterVectors();
+                xWindowDiameter = countOfCollect;
                 collectDiameter();
-            else
+            }
+            else{
+                xWindowDiameter = m_ManagementWidget->m_DiameterTransmition->xWindow->value();
                 realTimeDiameter();
+            }
             break;
         }
          break;
@@ -999,6 +1010,9 @@ void MainWindow::handlerGettingDiameterTimer(){
 }
 void MainWindow::plotDiameter()
 {
+    QPen m_pen;
+    m_pen.setColor(Qt::red);
+    m_pen.setWidth(3);
     if(m_ManagementWidget->m_DiameterTransmition->diemetersCheckBox->isChecked()){
         if(r1 == nullptr){
             r1 = diameterPlot->addGraph();
@@ -1007,6 +1021,8 @@ void MainWindow::plotDiameter()
         if(r2 == nullptr){
             r2 = diameterPlot->addGraph();
             r2->setName("Диаметр по оси Y");
+            m_pen.setColor(Qt::green);
+            r2->setPen(m_pen);
         }
        r1->setData(xDiameter,yr1);
        r2->setData(xDiameter,yr2);
@@ -1048,12 +1064,12 @@ void MainWindow::plotDiameter()
         if(m1 == nullptr){
             m1 = diameterPlot->addGraph();
             m1->setName("Фильтрованный диаметр по оси X");
-            m1->setPen(QPen(QColor(Qt::red)));
+            m1->setPen(m_pen);
         }
         if(m2 == nullptr){
             m2 = diameterPlot->addGraph();
             m2->setName("Фильтрованный диаметр по оси Y");
-            m2->setPen(QPen(QColor(Qt::red)));
+            m2->setPen(m_pen);
         }
        m1->setData(xDiameter,ym1);
        m2->setData(xDiameter,ym2);
@@ -1071,11 +1087,7 @@ void MainWindow::plotDiameter()
     }
 
     diameterPlot->xAxis->rescale();
-    diameterPlot->yAxis->rescale();
     diameterPlot->xAxis->setRange(diameterPlot->xAxis->range().upper, xWindowDiameter, Qt::AlignRight);
-    diameterPlot->yAxis->setRangeLower(diameterPlot->yAxis->range().lower-10);
-    diameterPlot->yAxis->setRangeUpper(diameterPlot->yAxis->range().upper+10);
-    //diameterPlot->yAxis->setRangeLower(0);
     diameterPlot->replot();
 
 }
@@ -1106,13 +1118,7 @@ void MainWindow::realTimeDiameter(){
             filled-=overload;
         }
         else{
-            xDiameter.clear();
-            yr1.clear();
-            yr2.clear();
-            yc1.clear();
-            yc2.clear();
-            ym1.clear();
-            ym2.clear();
+            clearDiameterVectors();
             filled=0;
         }
     }
@@ -1122,6 +1128,9 @@ void MainWindow::realTimeDiameter(){
 void MainWindow::collectDiameter(){
     int size = r1FromMCU.size();//Размер принятых данных
 
+    for(int i = 0;i<size; i++){
+        xDiameter.append(lastIndex++);
+    }
     yr1.append(r1FromMCU);
     yr2.append(r2FromMCU);
     yc1.append(c1FromMCU);
@@ -1130,15 +1139,11 @@ void MainWindow::collectDiameter(){
     ym2.append(m2FromMCU);
     currentCollected+=size;
     m_ManagementWidget->m_DiameterTransmition->progressBar->setValue(currentCollected);
+    plotDiameter();
 
     if(currentCollected>=countOfCollect){
         m_ManagementWidget->m_DiameterTransmition->progressBar->setValue(countOfCollect);
         m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->click();
-        lastIndex=0;
-        for(int i = 0;i<currentCollected; i++){
-            xDiameter.append(lastIndex++);
-        }
-        plotDiameter();
         currentCollected = 0;
         clearDiameterVectors();
     }

@@ -366,7 +366,7 @@ void firFilter::updateSettings(QVector<double> &s)
         QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
 }
 
-QVector<double> firFilter::medianFilterX(QVector<double> data, int window, int average){
+QVector<double> firFilter::medianFilterX(QVector<double> data, int window, int average, int limit){
    QVector<double> result;
    double cifra;
 
@@ -374,9 +374,8 @@ QVector<double> firFilter::medianFilterX(QVector<double> data, int window, int a
         cifra = median_filter_x(data.at(i),window);
         if(window!=0){
             double Alpha= 1/((double)average*10);
-            double Beta = 1 - Alpha;
             double fx =fabs(cifra - old_Yx3);
-            if(fx <100)
+            if(fx <limit)
                 old_Yx3 = old_Yx3*(1 - Alpha)+Alpha*cifra;
             else
                 old_Yx3 = cifra;
@@ -386,10 +385,9 @@ QVector<double> firFilter::medianFilterX(QVector<double> data, int window, int a
 
         result.append(old_Yx3);
     }
-
     return result;
 }
-QVector<double> firFilter::medianFilterY(QVector<double> data, int window, int average){
+QVector<double> firFilter::medianFilterY(QVector<double> data, int window, int average, int limit){
     QVector<double> result;
     double cifra;
 
@@ -397,7 +395,6 @@ QVector<double> firFilter::medianFilterY(QVector<double> data, int window, int a
          cifra = median_filter_y(data.at(i),window);
          if(window!=0){
              double Alpha= 1/((double)average*10);
-             double Beta = 1 - Alpha;
              double fy =fabs(cifra - old_Yy3);
              if(fy <100)
                  old_Yy3 = old_Yy3*(1 - Alpha)+Alpha*cifra;
@@ -409,7 +406,6 @@ QVector<double> firFilter::medianFilterY(QVector<double> data, int window, int a
 
          result.append(old_Yy3);
      }
-
      return result;
 }
 
@@ -432,14 +428,10 @@ double firFilter::median_filter_x(double datum, int window){
  unsigned short i;
 
  if (static_cast<int>(datum) == STOPPER)
- {
    datum = STOPPER + 1;                             /* No stoppers allowed. */
- }
 
  if ( (++datpoint - buffer_x) >= window)
- {
    datpoint = buffer_x;                               /* Increment and wrap data in pointer.*/
- }
 
  datpoint->value = datum;                           /* Copy in new datum */
  successor = datpoint->point;                       /* Save pointer to old value's successor */
@@ -449,9 +441,8 @@ double firFilter::median_filter_x(double datum, int window){
 
  /* Handle chain-out of first item in chain as special case */
  if (scan->point == datpoint)
- {
    scan->point = successor;
- }
+
  scanold = scan;                                     /* Save this pointer and   */
  scan = scan->point ;                                /* step down chain */
 
@@ -460,31 +451,24 @@ double firFilter::median_filter_x(double datum, int window){
  {
    /* Handle odd-numbered item in chain  */
    if (scan->point == datpoint)
-   {
-     scan->point = successor;                      /* Chain out the old datum.*/
-   }
+      scan->point = successor;                      /* Chain out the old datum.*/
 
    if (scan->value < datum)                        /* If datum is larger than scanned value,*/
    {
      datpoint->point = scanold->point;             /* Chain it in here.  */
      scanold->point = datpoint;                    /* Mark it chained in. */
      datum = STOPPER;
-   };
+   }
 
    /* Step median pointer down chain after doing odd-numbered element */
    median = median->point;                       /* Step median pointer.  */
-   if (scan == &small)
-   {
-     break;                                      /* Break at end of chain  */
-   }
+   if (scan == &small)   break;                  /* Break at end of chain  */
+
    scanold = scan;                               /* Save this pointer and   */
    scan = scan->point;                           /* step down chain */
 
-   /* Handle even-numbered item in chain.  */
-   if (scan->point == datpoint)
-   {
+   if (scan->point == datpoint)                 /* Handle even-numbered item in chain.  */
      scan->point = successor;
-   }
 
    if (scan->value < datum)
    {
@@ -493,10 +477,7 @@ double firFilter::median_filter_x(double datum, int window){
      datum = STOPPER;
    }
 
-   if (scan == &small)
-   {
-     break;
-   }
+   if (scan == &small)    break;
 
    scanold = scan;
    scan = scan->point;
@@ -523,14 +504,10 @@ double firFilter::median_filter_y(double datum, int window){
  unsigned short i;
 
  if (static_cast<int>(datum) == STOPPER)
- {
    datum = STOPPER + 1;                             /* No stoppers allowed. */
- }
 
  if ( (++datpoint - buffer_y) >= window)
- {
    datpoint = buffer_y;                               /* Increment and wrap data in pointer.*/
- }
 
  datpoint->value = datum;                           /* Copy in new datum */
  successor = datpoint->point;                       /* Save pointer to old value's successor */
@@ -540,9 +517,8 @@ double firFilter::median_filter_y(double datum, int window){
 
  /* Handle chain-out of first item in chain as special case */
  if (scan->point == datpoint)
- {
    scan->point = successor;
- }
+
  scanold = scan;                                     /* Save this pointer and   */
  scan = scan->point ;                                /* step down chain */
 
@@ -551,31 +527,25 @@ double firFilter::median_filter_y(double datum, int window){
  {
    /* Handle odd-numbered item in chain  */
    if (scan->point == datpoint)
-   {
      scan->point = successor;                      /* Chain out the old datum.*/
-   }
 
    if (scan->value < datum)                        /* If datum is larger than scanned value,*/
    {
      datpoint->point = scanold->point;             /* Chain it in here.  */
      scanold->point = datpoint;                    /* Mark it chained in. */
      datum = STOPPER;
-   };
+   }
 
    /* Step median pointer down chain after doing odd-numbered element */
    median = median->point;                       /* Step median pointer.  */
-   if (scan == &small)
-   {
-     break;                                      /* Break at end of chain  */
-   }
+   if (scan == &small)  break;                   /* Break at end of chain  */
+
    scanold = scan;                               /* Save this pointer and   */
    scan = scan->point;                           /* step down chain */
 
    /* Handle even-numbered item in chain.  */
    if (scan->point == datpoint)
-   {
      scan->point = successor;
-   }
 
    if (scan->value < datum)
    {
@@ -584,23 +554,10 @@ double firFilter::median_filter_y(double datum, int window){
      datum = STOPPER;
    }
 
-   if (scan == &small)
-   {
-     break;
-   }
+   if (scan == &small)   break;
 
    scanold = scan;
    scan = scan->point;
  }
  return median->value;
 }
-
-/*
-double firFilter::freqCalc(QList<double> dots,int len){
-    double tempSum=0;
-    for(int i=0;i<len;i++){
-        tempSum+=dots.at(i);
-    }
-    return tempSum/len;
-}
-*/
