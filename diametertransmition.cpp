@@ -15,6 +15,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
 
     gettingDiameterButton = new QPushButton("Получать радиус");
     gettingDiameterButton->setCheckable(true);
+    gettingDiameterButton->setEnabled(false);
 
     diemetersCheckBox = new QCheckBox("Выводить диаметры",this);
     centersCheckBox= new QCheckBox("Выводить центры",this);
@@ -35,11 +36,10 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
 
     //Выбор режима
     continiousMode = new QRadioButton("Реальное время",this);
-    collectMode = new QRadioButton("Собрать пул",this);
+    collectMode = new QRadioButton("Накопительный режим",this);
     radioLayout->addWidget(continiousMode);
     radioLayout->addWidget(collectMode);
     layout->addLayout(radioLayout);
-
 
     //Окно просмотра по оси Х
     xWindow = new QSlider(Qt::Horizontal,this);
@@ -76,28 +76,24 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     averageSpinbox->setValue(100);
     limitSpinbox->setRange(10,1000);
     limitSpinbox->setValue(100);
-    reqFreqSpinbox->setRange(1,20);
-    reqFreqSpinbox->setValue(10);
+    reqFreqSpinbox->setRange(1,7);
+    reqFreqSpinbox->setValue(5);
 
     //Частота опроса
     reqFreqLayout->addWidget(reqFreqLabel);
     reqFreqLayout->addWidget(reqFreqSpinbox);
     layout->addLayout(reqFreqLayout);
 
-    //Собрать пул
-    countPointsLabel = new QLabel("Собрать точек, тыс",this);
-    countPointsBox = new QSpinBox(this);
-    countPointsBox->setRange(1,100);
-    countPointsBox->setValue(50);
-    progressBar = new QProgressBar(this);
-    progressBar->setMaximum(10000);
-    colectLayout->addWidget(countPointsLabel);
-    colectLayout->addWidget(countPointsBox);
+    //Накопительный режим
+    collectLabel = new QLabel("Собрано точек",this);
+    collectCountLabel = new QLabel("-",this);
+    colectLayout->addWidget(collectLabel);
+    colectLayout->addWidget(collectCountLabel);
     layout->addLayout(colectLayout);
-    layout->addWidget(progressBar);
 
     //КНОПКА
     layout->addWidget(gettingDiameterButton);
+
     //Вывод диаметров
     r1Label = new QLabel("R1: ",this);
     r2Label = new QLabel("R2: ",this);
@@ -126,29 +122,22 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     connect(xWindow, &QSlider::valueChanged,[=](int value) {sliderValue->setNum(value); emit xWindowChanged(value);});
     connect(medianFilterCheckbox, &QCheckBox::stateChanged,averageSpinbox,&QSpinBox::setEnabled);
     connect(medianFilterCheckbox, &QCheckBox::stateChanged,windowSizeSpinbox,&QSpinBox::setEnabled);
-    connect(countPointsBox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ progressBar->setMaximum(i*1000);  emit countPointsChanged(i*1000);});
+    connect(medianFilterCheckbox, &QCheckBox::stateChanged,limitSpinbox,&QSpinBox::setEnabled);
     connect(averageSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit averageChanged(i);});
     connect(limitSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit limitChanged(i);});
     connect(windowSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){  emit windowSizeChanged(i);});
     connect(continiousMode, &QRadioButton::clicked,[=](bool checked){
         emit diameterModeChanged(false);
         collectMode->setChecked(!checked);
-        countPointsLabel->setVisible(!checked);
-        countPointsBox->setVisible(!checked);
-        progressBar->setVisible(!checked);
+        collectLabel->setVisible(!checked);
+        collectCountLabel->setVisible(!checked);
     });
     connect(collectMode, &QRadioButton::clicked,[=](bool checked){
         emit diameterModeChanged(true);
         continiousMode->setChecked(!checked);
-        countPointsLabel->setVisible(checked);
-        countPointsBox->setVisible(checked);
-        progressBar->setVisible(checked);
+        collectLabel->setVisible(checked);
+        collectCountLabel->setVisible(checked);
     });
 
     continiousMode->click();
-    averageSpinbox->valueChanged(10);
-    limitSpinbox->valueChanged(100);
-    windowSizeSpinbox->valueChanged(10);
-    countPointsBox->valueChanged(50);
-    reqFreqSpinbox->valueChanged(10);
 }

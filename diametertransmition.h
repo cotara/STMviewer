@@ -22,23 +22,21 @@ public:
     QCheckBox *diemetersCheckBox, *centersCheckBox,*medianFilterCheckbox;
     QSpinBox *windowSizeSpinbox,*averageSpinbox,*limitSpinbox, *reqFreqSpinbox;
     QSlider *xWindow;
-    QProgressBar *progressBar;
     QRadioButton *continiousMode, *collectMode;
-    QLabel *countPointsLabel;
-    QSpinBox * countPointsBox;
     QLabel *r1ValueLabel,*r2ValueLabel;
-    QLabel *r1Label,*r2Label;
+    QLabel *collectCountLabel;
+
 private:
     QVBoxLayout *layout;
     QHBoxLayout *windowSizeLayout, *averageLayout,*limitLayout, *reqFreqLayout,*sliderLayout,*radioLayout,*colectLayout,*r1HLayout, *r2HLayout;
     QLabel *windowSizeLabel, *averageLabel, *limitLabel, *reqFreqLabel,*xWindowsLabel,*sliderValue;
-
+    QLabel *r1Label,*r2Label;
+    QLabel *collectLabel;
 
 signals:
     void getDiameterChanged(int state);
     void reqFreqValueChanged(int value);
     void xWindowChanged(int value);
-    void countPointsChanged(int value);
     void diameterModeChanged(bool mode);
     void windowSizeChanged(int value);
     void averageChanged(int value);

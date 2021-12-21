@@ -172,10 +172,11 @@ private:
     void realTimeDiameter();
     void collectDiameter();
     void clearDiameterVectors();
-    QVector<double> xDiameter,yr1,yr2,yc1,yc2,ym1,ym2;
-    QVector<double> shadowsFromMCU,r1FromMCU,r2FromMCU,c1FromMCU,c2FromMCU,m1FromMCU,m2FromMCU;
+    void addDataToGraph();
+    QVector<double> xDiameter,yr1,yr2,yc1,yc2,ym1,ym2;//То, что выводится на график
+    QVector<double> shadowsFromMCU,r1FromMCU,r2FromMCU,c1FromMCU,c2FromMCU,m1FromMCU,m2FromMCU;//То, что приходит с MCU
     int filled = 0,lastIndex=0;
-    int countOfCollect=0,currentCollected=0, m_windowSize = 101, m_average=100,m_limit=100;
+    int m_windowSize,m_average,m_limit;
     bool diameterMode=false;
 };
 

@@ -61,6 +61,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_ManagementWidget = new ManagementWidget(this);
     m_ManagementWidget->setMinimumWidth(270);
     packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
+    xWindowDiameter = m_ManagementWidget->m_DiameterTransmition->xWindow->value();          //Сколько отображать точек
+    m_windowSize = m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value();   //Окно медианного фильтра
+    m_average  = m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value();        //Усреднение медианного фильтра
+    m_limit=m_ManagementWidget->m_DiameterTransmition->limitSpinbox->value();               //Лимит срабатывания медианного фильтра
 
     //Таблица
     m_table = new QTableWidget(this);
@@ -86,6 +90,7 @@ MainWindow::MainWindow(QWidget *parent) :
     diameterPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
     diameterPlot->axisRect()->setupFullAxesBox();
 
+
     QFont legendFont = font();
     legendFont.setPointSize(10);
     diameterPlot->xAxis->setRangeLower(0);
@@ -97,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
     diameterPlot->legend->setSelectedFont(legendFont);
     diameterPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
 
+    //ТАБЫ
     m_tab->addTab(viewer, "Сигнал");
     m_tab->addTab(diameterPlot, "Диаметр");
     m_tab->setTabBarAutoHide(true);
@@ -160,15 +166,21 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::getDiameterChanged,[=](int state){
         if(state){
             m_GettingDiameterTimer->setInterval(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
+            filled =0;
+            lastIndex=0;
+            clearDiameterVectors();
             m_GettingDiameterTimer->start();
+            m_ManagementWidget->m_DiameterTransmition->continiousMode->setEnabled(false);
+            m_ManagementWidget->m_DiameterTransmition->collectMode->setEnabled(false);
         }
         else{
+            m_ManagementWidget->m_DiameterTransmition->continiousMode->setEnabled(true);
+            m_ManagementWidget->m_DiameterTransmition->collectMode->setEnabled(true);
             m_GettingDiameterTimer->stop();
         }
     });
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::reqFreqValueChanged,[=](int value){ m_GettingDiameterTimer->setInterval(1000/value); });
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::xWindowChanged, [=](int value){ xWindowDiameter = value; });
-    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::countPointsChanged, [=](int value){ countOfCollect = value; });//Количество точек для коллекционирования
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::diameterModeChanged, [=](bool mode){ diameterMode = mode; clearDiameterVectors(); });   //Изменен режим запроса диаметров
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::windowSizeChanged, [=](int value){ m_windowSize = value;});   //Окно фильтра изменилось
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::averageChanged, [=](int value){ m_average = value; });   //Усреднение изменилось
@@ -311,6 +323,9 @@ void MainWindow::on_connect_triggered()
         m_ManagementWidget->m_plisSettings->borderRightButton->setEnabled(true);
         m_ManagementWidget->m_plisSettings->compCH1Button->setEnabled(true);
         m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(true);
+
+        //Выключаем кнопку получать диаметры
+        m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setEnabled(true);
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
@@ -362,6 +377,9 @@ void MainWindow::on_disconnect_triggered(){
     m_ManagementWidget->m_plisSettings->borderRightButton->setEnabled(false);
     m_ManagementWidget->m_plisSettings->compCH1Button->setEnabled(false);
     m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(false);
+
+    m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setEnabled(false);
+
 }
 
 void MainWindow::sendByteToMK(char dst, int dataByte, const QString &msg)
@@ -626,6 +644,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
       //Получили данные с диаметром
      case REQUEST_DIAMETER:
         if(value!=0){
+            m_console->putData(" :RECIEVED ANSWER_DIAMETER\n\n");
+
             r1FromMCU.clear();
             r2FromMCU.clear();
             c1FromMCU.clear();
@@ -648,19 +668,10 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m2FromMCU = filter->medianFilterY(r2FromMCU,m_windowSize,m_average,m_limit);
             m_ManagementWidget->m_DiameterTransmition->r1ValueLabel->setNum(m1FromMCU.last());
             m_ManagementWidget->m_DiameterTransmition->r2ValueLabel->setNum(m2FromMCU.last());
-            if(diameterMode){//CollectMode
-                lastIndex=0;
-                clearDiameterVectors();
-                xWindowDiameter = countOfCollect;
-                collectDiameter();
-            }
-            else{
-                xWindowDiameter = m_ManagementWidget->m_DiameterTransmition->xWindow->value();
-                realTimeDiameter();
-            }
-            break;
+            addDataToGraph();
         }
-         break;
+        m_timer->start();//Продолжаем запрос статуса
+        break;
 
 
     case REQUEST_POINTS:
@@ -1006,13 +1017,34 @@ void MainWindow::on_action_triggered()
 /*******************************РАБОТА С ДИАМЕТРАМИ****************************/
 // Обработчик таймаута запроса диаметра
 void MainWindow::handlerGettingDiameterTimer(){
+    m_timer->stop();//Временно не запрашиваем статус
     sendByteToMK(REQUEST_DIAMETER,0,"SEND REQUEST_DIAMETER: ");
 }
+
+void MainWindow::addDataToGraph(){
+    int size = r1FromMCU.size();//Размер данных, которые надо добавить на график
+    for(int i = 0;i<size; i++){
+        xDiameter.append(lastIndex++);
+    }
+    yr1.append(r1FromMCU);
+    yr2.append(r2FromMCU);
+    yc1.append(c1FromMCU);
+    yc2.append(c2FromMCU);
+    ym1.append(m1FromMCU);
+    ym2.append(m2FromMCU);
+    filled+=size;
+    if(!diameterMode)
+        realTimeDiameter();
+    else
+        collectDiameter();
+    plotDiameter();
+}
+
+
 void MainWindow::plotDiameter()
 {
     QPen m_pen;
-    m_pen.setColor(Qt::red);
-    m_pen.setWidth(3);
+    m_pen.setWidth(2);
     if(m_ManagementWidget->m_DiameterTransmition->diemetersCheckBox->isChecked()){
         if(r1 == nullptr){
             r1 = diameterPlot->addGraph();
@@ -1021,8 +1053,6 @@ void MainWindow::plotDiameter()
         if(r2 == nullptr){
             r2 = diameterPlot->addGraph();
             r2->setName("Диаметр по оси Y");
-            m_pen.setColor(Qt::green);
-            r2->setPen(m_pen);
         }
        r1->setData(xDiameter,yr1);
        r2->setData(xDiameter,yr2);
@@ -1064,11 +1094,14 @@ void MainWindow::plotDiameter()
         if(m1 == nullptr){
             m1 = diameterPlot->addGraph();
             m1->setName("Фильтрованный диаметр по оси X");
+            m_pen.setColor(Qt::red);
+            m_pen.setWidth(2);
             m1->setPen(m_pen);
         }
         if(m2 == nullptr){
             m2 = diameterPlot->addGraph();
             m2->setName("Фильтрованный диаметр по оси Y");
+            m_pen.setColor(Qt::green);
             m2->setPen(m_pen);
         }
        m1->setData(xDiameter,ym1);
@@ -1087,27 +1120,16 @@ void MainWindow::plotDiameter()
     }
 
     diameterPlot->xAxis->rescale();
-    diameterPlot->xAxis->setRange(diameterPlot->xAxis->range().upper, xWindowDiameter, Qt::AlignRight);
+    if(!diameterMode)
+        diameterPlot->xAxis->setRange(diameterPlot->xAxis->range().upper, xWindowDiameter, Qt::AlignRight);
     diameterPlot->replot();
 
 }
 
 void MainWindow::realTimeDiameter(){
-    int size = r1FromMCU.size();//Размер данных, которые надо добавить на график
-    for(int i = 0;i<size; i++){
-        xDiameter.append(lastIndex++);
-    }
-    yr1.append(r1FromMCU);
-    yr2.append(r2FromMCU);
-    yc1.append(c1FromMCU);
-    yc2.append(c2FromMCU);
-    ym1.append(m1FromMCU);
-    ym2.append(m2FromMCU);
-    filled+=size;
-
     int overload = filled-xWindowDiameter;//Если данных больше, чем окно, отрезаем хвост
     if(overload>=0){
-        if(yr1.size()>overload){
+        if(yr1.size()>overload){    //Если то, сколько надо отрезать с конца больше размера вектора, режем
             xDiameter.remove(0,overload);
             yr1.remove(0,overload);
             yr2.remove(0,overload);
@@ -1117,36 +1139,15 @@ void MainWindow::realTimeDiameter(){
             ym2.remove(0,overload);
             filled-=overload;
         }
-        else{
+        else{//Иначе, режем все
             clearDiameterVectors();
             filled=0;
         }
     }
-    plotDiameter();
 }
 
 void MainWindow::collectDiameter(){
-    int size = r1FromMCU.size();//Размер принятых данных
-
-    for(int i = 0;i<size; i++){
-        xDiameter.append(lastIndex++);
-    }
-    yr1.append(r1FromMCU);
-    yr2.append(r2FromMCU);
-    yc1.append(c1FromMCU);
-    yc2.append(c2FromMCU);
-    ym1.append(m1FromMCU);
-    ym2.append(m2FromMCU);
-    currentCollected+=size;
-    m_ManagementWidget->m_DiameterTransmition->progressBar->setValue(currentCollected);
-    plotDiameter();
-
-    if(currentCollected>=countOfCollect){
-        m_ManagementWidget->m_DiameterTransmition->progressBar->setValue(countOfCollect);
-        m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->click();
-        currentCollected = 0;
-        clearDiameterVectors();
-    }
+    m_ManagementWidget->m_DiameterTransmition->collectCountLabel->setNum(filled);//Выводим, сколько точек уже приянто
 }
 
 void MainWindow::clearDiameterVectors(){
@@ -1158,6 +1159,7 @@ void MainWindow::clearDiameterVectors(){
     ym2.clear();
     xDiameter.clear();
 }
+
 
 void MainWindow::mouseWheel(){
   // if an axis is selected, only allow the direction of that axis to be zoomed
