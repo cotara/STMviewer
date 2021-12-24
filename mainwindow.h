@@ -3,12 +3,12 @@
 
 #include <QMainWindow>
 #include <QInputDialog>
-#include "serialsettings.h"
+#include "transport\serialsettings.h"
 
 #include "console.h"
 #include <QTimer>
 #include <QVBoxLayout>
-#include "slip.h"
+#include "transport\slip.h"
 #include "console.h"
 #include "QLabel"
 #include "QSpinBox"
@@ -18,10 +18,10 @@
 #include "shotviewer.h"
 #include "firfilter.h"
 
-#include "settingsshadowsfinddialog.h"
-#include "maincontrolwidget.h"
-#include "managementwidget.h"
-#include "catchdatadialog.h"
+#include "shadowSettings\settingsshadowsfinddialog.h"
+#include "controlPanel\maincontrolwidget.h"
+#include "managementPanel\managementwidget.h"
+#include "shadowSettings\catchdatadialog.h"
 #include "qcustomplot/qcustomplot.h"
 #include <QRandomGenerator>
 #include "savelog.h"

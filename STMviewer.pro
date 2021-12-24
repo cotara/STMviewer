@@ -24,68 +24,35 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++11
 
+
 SOURCES += \
-    asynchronbutton.cpp \
-    autofindwizard.cpp \
-    catchdatadialog.cpp \
-    centerviewer.cpp \
     console.cpp \
-    diametertransmition.cpp \
-    entervaluewidget.cpp \
     firfilter.cpp \
-    historysettings.cpp \
-        main.cpp \
-    maincontrolwidget.cpp \
-        mainwindow.cpp \
-    managementwidget.cpp \
-    plissettings.cpp \
-    resultswidget.cpp \
+    main.cpp \
+    mainwindow.cpp \
     savelog.cpp \
-    serialsettings.cpp \
     qcustomplot/qcustomplot.cpp \
-    settingsshadowsfinddialog.cpp \
     shotviewer.cpp \
-    signalerrwidget.cpp \
-	statusbar.cpp \
-    transmitionsettings.cpp \
-	transp.cpp \
-	slip.cpp \
+    statusbar.cpp \
 
 HEADERS += \
-    asynchronbutton.h \
-    autofindwizard.h \
-    catchdatadialog.h \
-    centerviewer.h \
     console.h \
-    diametertransmition.h \
-    entervaluewidget.h \
     firfilter.h \
-    historysettings.h \
-    maincontrolwidget.h \
-        mainwindow.h \
-    managementwidget.h \
-    plissettings.h \
-    resultswidget.h \
+    mainwindow.h \
     savelog.h \
-    serialsettings.h \
     qcustomplot/qcustomplot.h \
-    settingsshadowsfinddialog.h \
     shotviewer.h \
-    signalerrwidget.h \
-	statusbar.h \
-    transmitionsettings.h \
-	transp.h \
-	slip.h \
-	types.h \
+    statusbar.h \
+    types.h \
 
 FORMS += \
-        autofindwizard.ui \
-        catchdatadialog.ui \
-        entervaluewidget.ui \
         mainwindow.ui \
         savelog.ui \
-        serialsettings.ui \
-        settingsshadowsfinddialog.ui
+
+include(managementPanel/managementPanel.pri)
+include(controlPanel/controlPanel.pri)
+include(shadowSettings/shadowSettings.pri)
+include(transport/transport.pri)
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -152,6 +152,7 @@
         <file>Resources/minus.svg</file>
         <file>Resources/open.png</file>
         <file>Resources/floppy-disk.png</file>
+        <file>Resources/waiting.gif</file>
     </qresource>
     <qresource prefix="/qss">
         <file>style.css</file>

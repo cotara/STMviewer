@@ -14,6 +14,7 @@ SerialSettings::SerialSettings(QWidget *parent) : QDialog(parent), serialSetting
         QMessageBox::warning(this,"Внимание!","В системе нет ни одного COM-порта");
     }
     setWindowTitle("Настройки подключения");
+    waitingD = new WaitingDialog(this);
 }
 
 SerialSettings::~SerialSettings()
@@ -175,4 +176,51 @@ void SerialSettings::on_UpdateAvaiblePorts_clicked()
 {
     clear_all_boxes();
     fill_all();
+}
+//Переключение в девелопер мод
+void SerialSettings::on_developerButton_clicked()
+{
+    QDialog dial;
+    m_serial = new QSerialPort();
+    m_serial->setBaudRate(static_cast<QSerialPort::BaudRate>(serialSettings->speedBox->currentData().toInt()));
+    m_serial->setDataBits(dataBits);
+    m_serial->setStopBits(stopBits);
+    m_serial->setParity(parity);
+    m_serial->setPortName(serialSettings->SerialSelect->currentText());
+    if (m_serial->open(QIODevice::ReadWrite)){
+        QByteArray command;
+        command.append(serialSettings->devAddBox->value());
+        command.append(char(0x06));
+        command.append(char(0x00));
+        command.append(char(0x02));
+        command.append(char(0x00));
+        command.append(char(0x01));
+
+        int crc = 0xFFFF;
+        for (int pos = 0; pos < 6; pos++) {
+            crc ^= (int) command[pos] & 0xFF;
+
+            for (int i = 8; i != 0; i--) {
+                if ((crc & 0x0001) != 0) {
+                    crc >>= 1;
+                    crc ^= 0xA001;
+                } else
+                    crc >>= 1;
+            }
+        }
+        command.append(char(crc>>8));
+        command.append(char(crc&0xFF));
+
+        if(m_serial->write(command)==8)
+                waitingD->waitingStart(5000);
+        else
+            QMessageBox::critical(this, "Ошибка!","Отправка команды завершилась неудачей!",QMessageBox::Ok);
+        m_serial->close();
+    }
+    else
+        QMessageBox::critical(this, "Ошибка!","Невозможно открыть указанный COM-порт!",QMessageBox::Ok);
+
+
+    delete m_serial;
+    m_serial=nullptr;
 }

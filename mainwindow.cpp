@@ -1,9 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "serialsettings.h"
+#include "transport\serialsettings.h"
 
-#include "slip.h"
-#include "transp.h"
+#include "transport\slip.h"
+#include "transport\transp.h"
 #include "statusbar.h"
 #include <QSplitter>
 

@@ -4,6 +4,8 @@
 #include <QDialog>
 #include <QSerialPort>
 #include <QAbstractButton>
+#include "waitingdialog.h"
+#include <QMessageBox>
 namespace Ui {
     class SerialSettings;
 }
@@ -40,7 +42,8 @@ private:
     bool fill_serial_desctipton(int i);
     void clear_all_boxes();
 
-
+    QSerialPort *m_serial;
+    WaitingDialog *waitingD;
 
 signals:
 
@@ -50,6 +53,7 @@ private slots:
     void on_SerialSelect_currentIndexChanged(int index);
     void on_Ok_Cancel_box_clicked(QAbstractButton *button);
     void on_UpdateAvaiblePorts_clicked();
+    void on_developerButton_clicked();
 };
 
 #endif // SERIALSETTINGS_H
