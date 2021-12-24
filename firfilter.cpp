@@ -4,7 +4,6 @@
 #include <cmath>
 #include <QMessageBox>
 #define STOPPER 0
-#define NULL 0
 #define MEDIAN_FILTER_SIZE 1001
 
 firFilter::firFilter(QVector<double> &s)
@@ -63,7 +62,7 @@ QByteArray firFilter::toFilter(QByteArray &in,int len){
 
 QByteArray firFilter::toButterFilter(QByteArray &in,int len){
     QByteArray out,outShifted;
-   const double x00=static_cast<unsigned char>(in.at(0));
+    const double x00=static_cast<unsigned char>(in.at(0));
     const double x01=static_cast<unsigned char>(in.at(1));
     const double x02=static_cast<unsigned char>(in.at(2));
     const double x03=static_cast<unsigned char>(in.at(3));

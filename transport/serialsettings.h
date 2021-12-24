@@ -54,6 +54,7 @@ private slots:
     void on_Ok_Cancel_box_clicked(QAbstractButton *button);
     void on_UpdateAvaiblePorts_clicked();
     void on_developerButton_clicked();
+    void SerialError(QSerialPort::SerialPortError error);
 };
 
 #endif // SERIALSETTINGS_H

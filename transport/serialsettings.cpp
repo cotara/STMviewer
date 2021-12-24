@@ -15,6 +15,8 @@ SerialSettings::SerialSettings(QWidget *parent) : QDialog(parent), serialSetting
     }
     setWindowTitle("Настройки подключения");
     waitingD = new WaitingDialog(this);
+    m_serial = new QSerialPort();
+    connect(m_serial,&QSerialPort::errorOccurred,this,&SerialSettings::SerialError);
 }
 
 SerialSettings::~SerialSettings()
@@ -34,6 +36,7 @@ bool SerialSettings::fill_all()
      }
 
     serialSettings->SerialSelect->addItems(list);
+
 
      for (int i=0; i<ports.count();i++){
         QSerialPortInfo p = ports.at(i);
@@ -180,20 +183,23 @@ void SerialSettings::on_UpdateAvaiblePorts_clicked()
 //Переключение в девелопер мод
 void SerialSettings::on_developerButton_clicked()
 {
-    QDialog dial;
-    m_serial = new QSerialPort();
-    m_serial->setBaudRate(static_cast<QSerialPort::BaudRate>(serialSettings->speedBox->currentData().toInt()));
-    m_serial->setDataBits(dataBits);
-    m_serial->setStopBits(stopBits);
-    m_serial->setParity(parity);
-    m_serial->setPortName(serialSettings->SerialSelect->currentText());
-    if (m_serial->open(QIODevice::ReadWrite)){
+
+    m_serial->setBaudRate(QSerialPort::BaudRate::Baud115200);
+    m_serial->setDataBits(QSerialPort::DataBits::Data8);
+    m_serial->setStopBits(QSerialPort::StopBits::OneStop);
+    m_serial->setParity(QSerialPort::Parity::NoParity);
+    m_serial->setPortName("COM3");
+    if (m_serial->open(QIODevice::WriteOnly)){
+        const char byte = 1;
+        if (m_serial->isOpen())
+            m_serial->write(&byte, 1);
+
         QByteArray command;
-        command.append(serialSettings->devAddBox->value());
-        command.append(char(0x06));
-        command.append(char(0x00));
+        command.append(char(serialSettings->devAddBox->value()));//Адрес
+        command.append(char(0x06));//Функция
+        command.append(char(0x00));//Адрес
         command.append(char(0x02));
-        command.append(char(0x00));
+        command.append(char(0x00));//Значение
         command.append(char(0x01));
 
         int crc = 0xFFFF;
@@ -208,7 +214,7 @@ void SerialSettings::on_developerButton_clicked()
                     crc >>= 1;
             }
         }
-        command.append(char(crc>>8));
+        command.append(char((crc>>8)&0xFF));//CRC
         command.append(char(crc&0xFF));
 
         if(m_serial->write(command)==8)
@@ -220,7 +226,9 @@ void SerialSettings::on_developerButton_clicked()
     else
         QMessageBox::critical(this, "Ошибка!","Невозможно открыть указанный COM-порт!",QMessageBox::Ok);
 
+}
 
-    delete m_serial;
-    m_serial=nullptr;
+void SerialSettings::SerialError(QSerialPort::SerialPortError error)
+{
+    qDebug()<< error;
 }

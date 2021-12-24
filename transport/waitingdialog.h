@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QTimer>
+#include <QMovie>
 
 namespace Ui {
 class WaitingDialog;
@@ -20,6 +21,7 @@ public:
 private:
     Ui::WaitingDialog *ui;
     QTimer m_timer;
+    QMovie *mv;
 
 private slots:
     void waitingStop();

@@ -11,6 +11,8 @@ WaitingDialog::WaitingDialog(QWidget *parent) :
     hide();
     connect(&m_timer,&QTimer::timeout,this,&WaitingDialog::waitingStop);
     setWindowTitle("Ожидание...");
+    mv = new QMovie(":/1/Resources/waiting.gif");
+    ui->label->setMovie(mv);
 }
 
 WaitingDialog::~WaitingDialog()
@@ -22,10 +24,13 @@ void WaitingDialog::waitingStop()
 {
     m_timer.stop();
     hide();
+    mv->stop();
 }
 
 void WaitingDialog::waitingStart(int mseconds)
 {
     m_timer.start(mseconds);
     show();
+    mv->start();
+
 }
