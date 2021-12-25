@@ -18,16 +18,18 @@ public:
     ~SerialSettings();
 
      bool fill_all();
-     void setName(QString ch);
-     void setBoudeRate(QSerialPort::BaudRate n);
-     void setDataBits(QSerialPort::DataBits n);
-     void setParity(QSerialPort::Parity n);
-     void setStopBits(QSerialPort::StopBits n);
-     QString getName();
-     QSerialPort::BaudRate getBoudeRate();
-     QSerialPort::DataBits getDataBits();
-     QSerialPort::Parity getParity();
-     QSerialPort::StopBits getStopBits();
+     void setName(QString ch){ name = ch;}
+     void setBoudeRate(QSerialPort::BaudRate n){ boudeRate = n;}
+     void setDataBits(QSerialPort::DataBits n){ dataBits=n;}
+     void setParity(QSerialPort::Parity n){parity=n;}
+     void setStopBits(QSerialPort::StopBits n){stopBits=n;}
+     void setSlaveAdd(int n){slaveAddres = n;}
+     QString getName(){return name;}
+     QSerialPort::BaudRate getBoudeRate(){return boudeRate;}
+     QSerialPort::DataBits getDataBits(){ return dataBits; }
+     QSerialPort::Parity getParity(){return parity;}
+     QSerialPort::StopBits getStopBits(){return stopBits;}
+     int getSlaveAdd(){return slaveAddres;}
      void updateSettings();
 
 private:
@@ -36,6 +38,7 @@ private:
     QSerialPort::Parity parity = QSerialPort::NoParity;
     QSerialPort::StopBits stopBits = QSerialPort::OneStop;
     QString name = nullptr;
+    int slaveAddres = 1;
 
     Ui::SerialSettings *serialSettings;
 
@@ -53,8 +56,6 @@ private slots:
     void on_SerialSelect_currentIndexChanged(int index);
     void on_Ok_Cancel_box_clicked(QAbstractButton *button);
     void on_UpdateAvaiblePorts_clicked();
-    void on_developerButton_clicked();
-    void SerialError(QSerialPort::SerialPortError error);
 };
 
 #endif // SERIALSETTINGS_H

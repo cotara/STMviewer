@@ -8,9 +8,11 @@ QT       += core gui serialport printsupport
 
 greaterThan(QT_MAJOR_VERSION, 5): QT += widgets
 
-TARGET = STMviewer
-TEMPLATE = app
 
+EXTRA_QMAKE_TARGET_PRODUCT =  LDM LDMExplorer
+QMAKE_TARGET_DESCRIPTION = Клиент для настройки измерителей диаметров LDM
+QMAKE_TARGET_COPYRIGHT = NurRuslan
+TEMPLATE = app
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -61,6 +63,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     res.qrc
+RC_ICONS += icon.ico
 
 DISTFILES +=
 

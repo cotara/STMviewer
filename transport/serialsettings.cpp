@@ -1,4 +1,5 @@
 #include "serialsettings.h"
+#include "serialsettings.h"
 #include "ui_serialsettings.h"
 #include <QSerialPort>
 #include <QSerialPortInfo>
@@ -15,8 +16,6 @@ SerialSettings::SerialSettings(QWidget *parent) : QDialog(parent), serialSetting
     }
     setWindowTitle("Настройки подключения");
     waitingD = new WaitingDialog(this);
-    m_serial = new QSerialPort();
-    connect(m_serial,&QSerialPort::errorOccurred,this,&SerialSettings::SerialError);
 }
 
 SerialSettings::~SerialSettings()
@@ -24,8 +23,7 @@ SerialSettings::~SerialSettings()
     //delete serialSettings;
 }
 
-bool SerialSettings::fill_all()
-{
+bool SerialSettings::fill_all(){
     QStringList list;
     //Заполнение перечня доступных компортов
     QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
@@ -54,14 +52,13 @@ bool SerialSettings::fill_all()
      }
 
     //Заполнение настроек компорта
-    serialSettings->speedBox->addItem(QStringLiteral("460800"), 460800);
-    serialSettings->speedBox->addItem(QStringLiteral("921600"), 921600);
-    serialSettings->speedBox->addItem(QStringLiteral("230400"), 230400);
     serialSettings->speedBox->addItem(QStringLiteral("115200"), QSerialPort::Baud115200);
     serialSettings->speedBox->addItem(QStringLiteral("9600"), QSerialPort::Baud9600);
     serialSettings->speedBox->addItem(QStringLiteral("19200"), QSerialPort::Baud19200);
     serialSettings->speedBox->addItem(QStringLiteral("38400"), QSerialPort::Baud38400);
-
+    serialSettings->speedBox->addItem(QStringLiteral("230400"), 230400);
+    serialSettings->speedBox->addItem(QStringLiteral("460800"), 460800);
+    serialSettings->speedBox->addItem(QStringLiteral("921600"), 921600);
 
     serialSettings->dataBitBox->addItem(QStringLiteral("5"), QSerialPort::Data5);
     serialSettings->dataBitBox->addItem(QStringLiteral("6"), QSerialPort::Data6);
@@ -105,7 +102,6 @@ bool SerialSettings::fill_serial_desctipton(int i)
     }
     else
         return false;
-
 }
 
 void SerialSettings::clear_all_boxes()
@@ -128,6 +124,7 @@ void SerialSettings::updateSettings()
     setParity(static_cast<QSerialPort::Parity>(serialSettings->parityBox->currentData().toInt()));
     setStopBits(static_cast<QSerialPort::StopBits>(serialSettings->stopBitBox->currentData().toInt()));
     setName(serialSettings->SerialSelect->currentText());
+    setSlaveAdd(serialSettings->devAddBox->value());
     qDebug() << getBoudeRate() << " " << getDataBits() << " " << getParity() << " " <<getStopBits();
 }
 
@@ -140,95 +137,8 @@ void SerialSettings::on_Ok_Cancel_box_clicked(QAbstractButton *button)
     hide();
 }
 
-
-
-void SerialSettings::setName(QString ch){
-    name = ch;
-}
-
-void SerialSettings::setBoudeRate(QSerialPort::BaudRate n){
-    boudeRate = n;
-}
-void SerialSettings::setDataBits(QSerialPort::DataBits n){
-    dataBits=n;
-}
-void SerialSettings::setParity(QSerialPort::Parity n){
-    parity=n;
-}
-void SerialSettings::setStopBits(QSerialPort::StopBits n){
-    stopBits=n;
-}
-
-QString SerialSettings::getName(){
-    return name;
-}
-QSerialPort::BaudRate SerialSettings::getBoudeRate(){
-    return boudeRate;
-}
-QSerialPort::DataBits SerialSettings::getDataBits(){
-    return dataBits;
-}
-QSerialPort::Parity SerialSettings::getParity(){
-    return parity;
-}
-QSerialPort::StopBits SerialSettings::getStopBits(){
-    return stopBits;
-}
-
 void SerialSettings::on_UpdateAvaiblePorts_clicked()
 {
     clear_all_boxes();
     fill_all();
-}
-//Переключение в девелопер мод
-void SerialSettings::on_developerButton_clicked()
-{
-
-    m_serial->setBaudRate(QSerialPort::BaudRate::Baud115200);
-    m_serial->setDataBits(QSerialPort::DataBits::Data8);
-    m_serial->setStopBits(QSerialPort::StopBits::OneStop);
-    m_serial->setParity(QSerialPort::Parity::NoParity);
-    m_serial->setPortName("COM3");
-    if (m_serial->open(QIODevice::WriteOnly)){
-        const char byte = 1;
-        if (m_serial->isOpen())
-            m_serial->write(&byte, 1);
-
-        QByteArray command;
-        command.append(char(serialSettings->devAddBox->value()));//Адрес
-        command.append(char(0x06));//Функция
-        command.append(char(0x00));//Адрес
-        command.append(char(0x02));
-        command.append(char(0x00));//Значение
-        command.append(char(0x01));
-
-        int crc = 0xFFFF;
-        for (int pos = 0; pos < 6; pos++) {
-            crc ^= (int) command[pos] & 0xFF;
-
-            for (int i = 8; i != 0; i--) {
-                if ((crc & 0x0001) != 0) {
-                    crc >>= 1;
-                    crc ^= 0xA001;
-                } else
-                    crc >>= 1;
-            }
-        }
-        command.append(char((crc>>8)&0xFF));//CRC
-        command.append(char(crc&0xFF));
-
-        if(m_serial->write(command)==8)
-                waitingD->waitingStart(5000);
-        else
-            QMessageBox::critical(this, "Ошибка!","Отправка команды завершилась неудачей!",QMessageBox::Ok);
-        m_serial->close();
-    }
-    else
-        QMessageBox::critical(this, "Ошибка!","Невозможно открыть указанный COM-порт!",QMessageBox::Ok);
-
-}
-
-void SerialSettings::SerialError(QSerialPort::SerialPortError error)
-{
-    qDebug()<< error;
 }

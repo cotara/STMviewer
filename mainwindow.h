@@ -75,6 +75,7 @@ signals:
     void downloadUpdate(bool);
 
 private slots:
+    void toDeveloperMode();
     void on_settings_triggered();
     void on_connect_triggered();
     void on_disconnect_triggered();

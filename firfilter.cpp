@@ -395,7 +395,7 @@ QVector<double> firFilter::medianFilterY(QVector<double> data, int window, int a
          if(window!=0){
              double Alpha= 1/((double)average*10);
              double fy =fabs(cifra - old_Yy3);
-             if(fy <100)
+             if(fy <limit)
                  old_Yy3 = old_Yy3*(1 - Alpha)+Alpha*cifra;
              else
                  old_Yy3 = cifra;

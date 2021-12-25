@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     settings_ptr = new SerialSettings(this);
     serial = new QSerialPort();
+
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
     m_GettingDiameterTimer=new QTimer(this);
@@ -280,11 +281,62 @@ MainWindow::~MainWindow(){
 void MainWindow::on_settings_triggered(){
     settings_ptr->show();
 }
-void MainWindow::on_connect_triggered()
+
+//Переключение в девелопер мод
+void MainWindow::toDeveloperMode()
 {
-    //Настраиваем компорт
+    //Создаем компорт и настраиваем из полей в форме
     serial->setPortName(settings_ptr->getName());
     serial->setBaudRate(settings_ptr->getBoudeRate());
+    serial->setDataBits(settings_ptr->getDataBits());
+    serial->setParity(settings_ptr->getParity());
+    serial->setStopBits(settings_ptr->getStopBits());
+
+    //Открываем и собираем пакет
+    if (serial->open(QIODevice::WriteOnly)){
+        QByteArray command;
+        command.append(char(settings_ptr->getSlaveAdd()));//Адрес
+        command.append(char(0x06));//Функция
+        command.append(char(0x00));//Адрес
+        command.append(char(0x02));
+        command.append(char(0x00));//Значение
+        command.append(char(0x01));
+        //Считаем CRC по 6 байтам
+        int crc = 0xFFFF;
+        for (int pos = 0; pos < 6; pos++) {
+            crc ^= (int) command[pos] & 0xFF;
+
+            for (int i = 8; i != 0; i--) {
+                if ((crc & 0x0001) != 0) {
+                    crc >>= 1;
+                    crc ^= 0xA001;
+                } else
+                    crc >>= 1;
+            }
+        }
+        command.append(char(crc&0xFF));
+        command.append(char((crc>>8)&0xFF));//CRC
+
+
+        serial->write(command);           //Засылаем пакет
+        //waitingD->waitingStart(3000);       //Запускаем анимацию
+
+        if (serial->waitForBytesWritten(1000)) {}//блокирующая отправка с таймаутом 1 сек
+        else
+            QMessageBox::critical(this, "Ошибка!","Отправка команды завершилась неудачей!",QMessageBox::Ok);
+        serial->close();
+    }
+    else
+        QMessageBox::critical(this, "Ошибка!","Невозможно открыть указанный COM-порт!",QMessageBox::Ok);
+}
+
+void MainWindow::on_connect_triggered()
+{ 
+    toDeveloperMode();
+
+    //Настраиваем компорт
+    serial->setPortName(settings_ptr->getName());
+    serial->setBaudRate(460800);                    //Жестко вбиваем основную скорость обмена девелопер мода.
     serial->setDataBits(settings_ptr->getDataBits());
     serial->setParity(settings_ptr->getParity());
     serial->setStopBits(settings_ptr->getStopBits());
