@@ -39,6 +39,7 @@ SOURCES += \
 
 HEADERS += \
     console.h \
+    fftw3.h \
     firfilter.h \
     mainwindow.h \
     savelog.h \
@@ -73,6 +74,5 @@ LIBS += -fopenmp
 #LIBS += -lgomp -lpthread
 
 
-INCLUDEPATH += "c:\fftw"
-#LIBS += -L "c:\fftw" -lfftw3-3
+#INCLUDEPATH += "c:\fftw"
 LIBS += "$$PWD/libfftw3-3.dll"
