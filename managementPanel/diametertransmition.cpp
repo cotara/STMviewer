@@ -17,6 +17,8 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     gettingDiameterButton->setCheckable(true);
     gettingDiameterButton->setEnabled(false);
 
+    furieCheckbox = new QCheckBox("Преобразование фурье",this);
+
     diemetersCheckBox = new QCheckBox("Выводить диаметры",this);
     centersCheckBox= new QCheckBox("Выводить центры",this);
     medianFilterCheckbox = new QCheckBox("Медианный фильтр",this);
@@ -92,6 +94,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     layout->addLayout(colectLayout);
 
     //КНОПКА
+    layout->addWidget(furieCheckbox);
     layout->addWidget(gettingDiameterButton);
 
     //Вывод диаметров
@@ -140,4 +143,5 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     });
 
     continiousMode->click();
+
 }

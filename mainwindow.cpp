@@ -7,6 +7,9 @@
 #include "statusbar.h"
 #include <QSplitter>
 
+#include <complex>
+#include <fftw3.h>
+#include <QRandomGenerator>
 
 //#define TEST_MODE
 
@@ -85,23 +88,36 @@ MainWindow::MainWindow(QWidget *parent) :
     viewer = new ShotViewer(m_tab);
     connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
 
-    diameterPlot = new QCustomPlot(m_tab);
 
     //ПОСТРОЕНИЕ ДИАМЕТРА
-    diameterPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
-    diameterPlot->axisRect()->setupFullAxesBox();
+    QWidget *diameterPlot = new QWidget(m_tab);
+    QVBoxLayout *diameterPlotLayout = new QVBoxLayout(diameterPlot);
+    diametersPlot = new QCustomPlot(diameterPlot);
+    spectrePlot = new QCustomPlot(diameterPlot);
+    diameterPlotLayout->addWidget(diametersPlot);
+    diameterPlotLayout->addWidget(spectrePlot);
 
+    diametersPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    diametersPlot->axisRect()->setupFullAxesBox();
+    spectrePlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    spectrePlot->axisRect()->setupFullAxesBox();
 
     QFont legendFont = font();
     legendFont.setPointSize(10);
-    diameterPlot->xAxis->setRangeLower(0);
-    diameterPlot->xAxis->setRangeUpper(5000);
-    diameterPlot->yAxis->setRangeLower(-2);
-    diameterPlot->yAxis->setRangeUpper(2);
-    diameterPlot->legend->setVisible(true);
-    diameterPlot->legend->setFont(legendFont);
-    diameterPlot->legend->setSelectedFont(legendFont);
-    diameterPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
+    diametersPlot->xAxis->setRangeLower(0);
+    diametersPlot->xAxis->setRangeUpper(5000);
+    diametersPlot->yAxis->setRangeLower(-2);
+    diametersPlot->yAxis->setRangeUpper(2);
+    diametersPlot->legend->setVisible(true);
+    diametersPlot->legend->setFont(legendFont);
+    diametersPlot->legend->setSelectedFont(legendFont);
+    diametersPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
+
+    spectrePlot->legend->setVisible(true);
+    spectrePlot->legend->setFont(legendFont);
+    spectrePlot->legend->setSelectedFont(legendFont);
+    spectrePlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
+
 
     //ТАБЫ
     m_tab->addTab(viewer, "Сигнал");
@@ -185,12 +201,18 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::diameterModeChanged, [=](bool mode){ diameterMode = mode; clearDiameterVectors(); });   //Изменен режим запроса диаметров
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::windowSizeChanged, [=](int value){ m_windowSize = value;});   //Окно фильтра изменилось
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::averageChanged, [=](int value){ m_average = value; });   //Усреднение изменилось
-    connect(diameterPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel()));
+    connect(diameterPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
+    connect(spectrePlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel2()));
     connect(ui->AutoRange,&QAction::triggered,viewer,[=]{
-        diameterPlot->yAxis->rescale();
-        diameterPlot->yAxis->setRangeLower(diameterPlot->yAxis->range().lower-10);
-        diameterPlot->yAxis->setRangeUpper(diameterPlot->yAxis->range().upper+10);
-        diameterPlot->replot();
+        diametersPlot->yAxis->rescale();
+        diametersPlot->yAxis->setRangeLower(diametersPlot->yAxis->range().lower-10);
+        diametersPlot->yAxis->setRangeUpper(diametersPlot->yAxis->range().upper+10);
+        diametersPlot->replot();
+
+        spectrePlot->yAxis->rescale();
+        spectrePlot->yAxis->setRangeLower(diametersPlot->yAxis->range().lower-10);
+        spectrePlot->yAxis->setRangeUpper(diametersPlot->yAxis->range().upper+10);
+        spectrePlot->replot();
     });
 
     //Тулбар
@@ -264,7 +286,117 @@ MainWindow::MainWindow(QWidget *parent) :
         temp.append(diameterPlis.at(0) + diameterPlis.at(1));
        ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
    });
+   /*********                       ГЕНЕРИРУЕМ СИГНАЛ               **************/
 
+    double T = 3;                       //длительность сигнала, с
+    double F = 1000;                      //частота сигнала, Гц
+    double F_d = 44000;                   //частота дискретизации, Гц
+    double n = (int)(T * F_d);          //Количество точек
+    double delta=(float)F_d/(float)n;   //Шаг АЧХ
+    //Генерируем сигнал
+    QVector<std::complex<double> > dataIn,dataOut(n,0),dataBack(n,0);
+    for (int i =0;i<n;i++){
+     //dataIn.append(sin(i/10.) + sin(i/5.) +  sin(i/1.)+  sin(i/3.));
+     //dataIn.append(sin(2 * 3.14 * F * i/F_d) + QRandomGenerator::global()->generateDouble()/2 + 5);
+     dataIn.append(sin(2 * 3.14 * F * i/F_d));
+     //dataIn.append(QRandomGenerator::global()->generateDouble());
+    }
+
+    // создаем план прямого преобазования фурье
+    fftw_plan plan=fftw_plan_dft_1d(n, (fftw_complex*) &dataIn[0], (fftw_complex*) &dataOut[0], FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_execute(plan);
+    fftw_destroy_plan(plan);
+
+
+    QWidget *tempPLot = new QWidget(m_tab);
+    QVBoxLayout *tempLayout = new QVBoxLayout(tempPLot);
+    QCustomPlot *tempPlot1 = new QCustomPlot(tempPLot);
+    QCustomPlot *tempPlot2 = new QCustomPlot(tempPLot);
+    tempLayout->addWidget(tempPlot1);
+    tempLayout->addWidget(tempPlot2);
+
+    tempPlot1->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    tempPlot1->axisRect()->setupFullAxesBox();
+
+    tempPlot2->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    tempPlot2->axisRect()->setupFullAxesBox();
+
+    tempPlot1->legend->setVisible(true);
+    tempPlot1->legend->setFont(legendFont);
+    tempPlot1->legend->setSelectedFont(legendFont);
+    tempPlot1->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
+    tempPlot2->legend->setVisible(true);
+    tempPlot2->legend->setFont(legendFont);
+    tempPlot2->legend->setSelectedFont(legendFont);
+    tempPlot2->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
+
+    m_tab->addTab(tempPLot, "ТЕСТ");
+    QCPGraph *tempG1 = tempPlot1->addGraph();
+    tempG1->setName("Исходный график");
+    QCPGraph *tempG2 = tempPlot2->addGraph();
+    tempG2->setName("АЧХ");
+    QCPGraph *tempG2_ = tempPlot2->addGraph();
+    tempG2_->setName("АЧХ отфильтрованное");
+    QCPGraph *tempG3 = tempPlot1->addGraph();
+    tempG3->setName("Обратно Преобразованный");
+
+    QVector<double> xTemp1,xTemp2,y1Temp,y2Temp,y2Temp_,y3Temp;
+
+    //Входной массив на график
+    for (int i=0;i<n;i++){
+      xTemp1.append(i);
+      y1Temp.append(dataIn.at(i).real());
+    }
+    //Преобразуем выход фурья в децибелы
+    double freqX = 0;
+    for (int i=0;i<n/2+1;i++){
+      freqX+=delta;
+      xTemp2.append(freqX);
+      y2Temp.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
+    }
+
+    //Фильтрация
+    for (int i=0;i<n/2+1;i++){
+        if(y2Temp.at(i)<12){
+            dataOut[i].real(0.1);
+            dataOut[i].imag(0.1);
+            dataOut[n-i-1].real(0.05);
+            dataOut[n-i-1].imag(0.05);
+
+        }
+        y2Temp_.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
+    }
+
+    // создаем план обратного преобазования фурье
+    fftw_plan plan2=fftw_plan_dft_1d(dataOut.size(), (fftw_complex*) &dataOut[0], (fftw_complex*) &dataBack[0], FFTW_BACKWARD , FFTW_ESTIMATE);
+    fftw_execute(plan2);
+    fftw_destroy_plan(plan2);
+
+    for (int i=0;i<n;i++){
+      y3Temp.append(dataBack.at(i).real()/n);
+    }
+
+    tempG1->setData(xTemp1,y1Temp);
+    tempG2->setData(xTemp2,y2Temp);
+    tempG2_->setData(xTemp2,y2Temp_);
+    tempG3->setData(xTemp1,y3Temp);
+
+    QPen m_pen;
+    m_pen.setColor(Qt::red);
+    tempG1->setPen(m_pen);
+
+    m_pen.setColor(Qt::blue);
+    tempG2->setPen(m_pen);
+    m_pen.setColor(Qt::red);
+    tempG2_->setPen(m_pen);
+
+    m_pen.setColor(Qt::black);
+    tempG3->setPen(m_pen);
+
+    tempPlot1->rescaleAxes();
+    tempPlot2->rescaleAxes();
+    tempPlot1->replot();
+    tempPlot2->replot();
 }
 
 MainWindow::~MainWindow(){
@@ -1084,6 +1216,19 @@ void MainWindow::addDataToGraph(){
     yc2.append(c2FromMCU);
     ym1.append(m1FromMCU);
     ym2.append(m2FromMCU);
+    //Фурье
+    furie(&yr1,&ySpectr1,&yFurieFiltered1,10);
+    furie(&yr2,&ySpectr2,&yFurieFiltered2,10);
+
+    double freqX = 0;
+    double delta = 10000/yr1.size();
+    for (int i=0;i <ySpectr1.size();i++){
+        freqX+=delta;
+        xFurie.append(freqX);
+    }
+    yf1.append(yFurieFiltered1);
+    yf2.append(yFurieFiltered1);
+
     filled+=size;
     if(!diameterMode)
         realTimeDiameter();
@@ -1099,11 +1244,11 @@ void MainWindow::plotDiameter()
     m_pen.setWidth(2);
     if(m_ManagementWidget->m_DiameterTransmition->diemetersCheckBox->isChecked()){
         if(r1 == nullptr){
-            r1 = diameterPlot->addGraph();
+            r1 = diametersPlot->addGraph();
             r1->setName("Диаметр по оси Х");
         }
         if(r2 == nullptr){
-            r2 = diameterPlot->addGraph();
+            r2 = diametersPlot->addGraph();
             r2->setName("Диаметр по оси Y");
         }
        r1->setData(xDiameter,yr1);
@@ -1111,22 +1256,22 @@ void MainWindow::plotDiameter()
      }
      else{
         if(r1 != nullptr){
-            diameterPlot->removeGraph(r1);
+            diametersPlot->removeGraph(r1);
             r1 = nullptr;
         }
         if(r2 != nullptr){
-            diameterPlot->removeGraph(r2);
+            diametersPlot->removeGraph(r2);
             r2 = nullptr;
         }
     }
 
     if(m_ManagementWidget->m_DiameterTransmition->centersCheckBox->isChecked()){
         if(c1 == nullptr){
-            c1 = diameterPlot->addGraph();
+            c1 = diametersPlot->addGraph();
             c1->setName("Отклонение от центра по оси Х");
         }
         if(c2 == nullptr){
-            c2 = diameterPlot->addGraph();
+            c2 = diametersPlot->addGraph();
             c2->setName("Отклонение от центра по оси Y");
         }
        c1->setData(xDiameter,yc1);
@@ -1134,24 +1279,24 @@ void MainWindow::plotDiameter()
      }
      else{
         if(c1 != nullptr){
-            diameterPlot->removeGraph(c1);
+            diametersPlot->removeGraph(c1);
             c1 = nullptr;
         }
         if(c2 != nullptr){
-            diameterPlot->removeGraph(c2);
+            diametersPlot->removeGraph(c2);
             c2 = nullptr;
         }
     }
     if(m_ManagementWidget->m_DiameterTransmition->medianFilterCheckbox->isChecked()){
         if(m1 == nullptr){
-            m1 = diameterPlot->addGraph();
+            m1 = diametersPlot->addGraph();
             m1->setName("Фильтрованный диаметр по оси X");
             m_pen.setColor(Qt::red);
             m_pen.setWidth(2);
             m1->setPen(m_pen);
         }
         if(m2 == nullptr){
-            m2 = diameterPlot->addGraph();
+            m2 = diametersPlot->addGraph();
             m2->setName("Фильтрованный диаметр по оси Y");
             m_pen.setColor(Qt::green);
             m2->setPen(m_pen);
@@ -1161,20 +1306,62 @@ void MainWindow::plotDiameter()
      }
      else{
         if(m1 != nullptr){
-            diameterPlot->removeGraph(m1);
+            diametersPlot->removeGraph(m1);
             m1 = nullptr;
 
         }
         if(m2 != nullptr){
-            diameterPlot->removeGraph(m2);
+            diametersPlot->removeGraph(m2);
             m2 = nullptr;
         }
     }
 
-    diameterPlot->xAxis->rescale();
+    if(m_ManagementWidget->m_DiameterTransmition->furieCheckbox){
+        if(f1 == nullptr && spec1 == nullptr){
+            m_pen.setColor(Qt::red);
+            f1 = diametersPlot->addGraph();
+            f1->setName("Фильтрованный диаметр по оси X");
+            f1->setPen(m_pen);
+            spec1 = spectrePlot->addGraph();
+            spec1->setName("Спектр радиуса Х");
+            spec1->setPen(m_pen);
+
+        }
+        if(f2 == nullptr && spec2 == nullptr){
+            m_pen.setColor(Qt::green);
+            f2 = diametersPlot->addGraph();
+            f2->setName("Фильтрованный диаметр по оси Y");
+            f2->setPen(m_pen);
+            spec2 = spectrePlot->addGraph();
+            spec2->setName("Спектр радиуса Y");
+            spec2->setPen(m_pen);
+        }
+       f1->setData(xDiameter,yf1);
+       f2->setData(xDiameter,yf2);
+       spec1->setData(xFurie,ySpectr1);
+       spec2->setData(xFurie,ySpectr2);
+     }
+     else{
+        if(f1 != nullptr && spec1 == nullptr){
+            diametersPlot->removeGraph(f1);
+            spectrePlot->removeGraph(spec1);
+            f1 = nullptr;
+            spec1 = nullptr;
+
+        }
+        if(f2 != nullptr && spec2 == nullptr){
+            diametersPlot->removeGraph(f2);
+            spectrePlot->removeGraph(spec2);
+            f2 = nullptr;
+            spec2 = nullptr;
+        }
+    }
+
+
+    diametersPlot->xAxis->rescale();
     if(!diameterMode)
-        diameterPlot->xAxis->setRange(diameterPlot->xAxis->range().upper, xWindowDiameter, Qt::AlignRight);
-    diameterPlot->replot();
+        diametersPlot->xAxis->setRange(diametersPlot->xAxis->range().upper, xWindowDiameter, Qt::AlignRight);
+    diametersPlot->replot();
 
 }
 
@@ -1189,6 +1376,8 @@ void MainWindow::realTimeDiameter(){
             yc2.remove(0,overload);
             ym1.remove(0,overload);
             ym2.remove(0,overload);
+            yf1.remove(0,overload);
+            yf2.remove(0,overload);
             filled-=overload;
         }
         else{//Иначе, режем все
@@ -1202,6 +1391,42 @@ void MainWindow::collectDiameter(){
     m_ManagementWidget->m_DiameterTransmition->collectCountLabel->setNum(filled);//Выводим, сколько точек уже приянто
 }
 
+void MainWindow::furie(QVector<double> *in, QVector<double> *spectr, QVector<double> *out, double  cutOfFreq)
+{
+
+    int size = in->size();
+    QVector<std::complex<double> > dataIn, dataSpectr(size,0),dataOut(size,0);
+
+    for (int i =0;i<size;i++)
+     dataIn.append(in->at(i));
+
+    // создаем план прямого преобазования фурье
+    fftw_plan plan=fftw_plan_dft_1d(size, (fftw_complex*) &dataIn[0], (fftw_complex*) &dataSpectr[0], FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_execute(plan);
+    fftw_destroy_plan(plan);
+
+    //Преобразуем выход фурья в децибелы
+    //Фильтрация
+    for (int i=0;i<size/2+1;i++){
+        spectr->append(10*std::log10(sqrt(dataSpectr.at(i).real()*dataSpectr.at(i).real() + dataSpectr.at(i).imag()*dataSpectr.at(i).imag())));
+        if(spectr->at(i)<cutOfFreq){
+            dataSpectr[i].real(0.1);
+            dataSpectr[i].imag(0.1);
+            dataSpectr[size-i-1].real(0.1);
+            dataSpectr[size-i-1].imag(0.1);
+        }
+        //y2Temp_.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
+    }
+
+    // создаем план обратного преобазования фурье
+    fftw_plan plan2=fftw_plan_dft_1d(dataOut.size(), (fftw_complex*) &dataSpectr[0], (fftw_complex*) &dataOut[0], FFTW_BACKWARD , FFTW_ESTIMATE);
+    fftw_execute(plan2);
+    fftw_destroy_plan(plan2);
+
+    for (int i=0;i<size;i++)
+      out->append(dataOut.at(i).real()/size);
+}
+
 void MainWindow::clearDiameterVectors(){
     yr1.clear();
     yr2.clear();
@@ -1209,20 +1434,35 @@ void MainWindow::clearDiameterVectors(){
     yc2.clear();
     ym1.clear();
     ym2.clear();
+    yf1.clear();
+    yf2.clear();
     xDiameter.clear();
 }
 
 
-void MainWindow::mouseWheel(){
+void MainWindow::mouseWheel1(){
   // if an axis is selected, only allow the direction of that axis to be zoomed
   // if no axis is selected, both directions may be zoomed
 
-  if (diameterPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
-      diameterPlot->axisRect()->setRangeZoom(diameterPlot->xAxis->orientation());
+  if (diametersPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
+      diametersPlot->axisRect()->setRangeZoom(diametersPlot->xAxis->orientation());
 
-  else if (diameterPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
-    diameterPlot->axisRect()->setRangeZoom(diameterPlot->yAxis->orientation());
+  else if (diametersPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
+    diametersPlot->axisRect()->setRangeZoom(diametersPlot->yAxis->orientation());
 
   else
-    diameterPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
+    diametersPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
+}
+void MainWindow::mouseWheel2(){
+  // if an axis is selected, only allow the direction of that axis to be zoomed
+  // if no axis is selected, both directions may be zoomed
+
+  if (spectrePlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
+      spectrePlot->axisRect()->setRangeZoom(spectrePlot->xAxis->orientation());
+
+  else if (spectrePlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
+    spectrePlot->axisRect()->setRangeZoom(spectrePlot->yAxis->orientation());
+
+  else
+    spectrePlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
 }

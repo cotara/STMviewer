@@ -19,7 +19,7 @@ public:
     DiameterTransmition(QWidget *parent);
 
     QPushButton *gettingDiameterButton;
-    QCheckBox *diemetersCheckBox, *centersCheckBox,*medianFilterCheckbox;
+    QCheckBox *diemetersCheckBox, *centersCheckBox,*medianFilterCheckbox, *furieCheckbox;
     QSpinBox *windowSizeSpinbox,*averageSpinbox,*limitSpinbox, *reqFreqSpinbox;
     QSlider *xWindow;
     QRadioButton *continiousMode, *collectMode;

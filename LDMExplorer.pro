@@ -71,3 +71,8 @@ QMAKE_CXXFLAGS += -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 LIBS += -fopenmp
 #LIBS += -lgomp -lpthread
+
+
+INCLUDEPATH += "c:\fftw"
+#LIBS += -L "c:\fftw" -lfftw3-3
+LIBS += "$$PWD/libfftw3-3.dll"

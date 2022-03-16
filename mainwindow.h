@@ -109,7 +109,8 @@ private slots:
     void saveHistory(QString &dirname);     //Запись лога
     void on_action_triggered();             //Чтение лога
 
-    void mouseWheel();
+    void mouseWheel1();
+    void mouseWheel2();
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;
@@ -126,7 +127,7 @@ private:
     QTableWidget *m_table;
     Console *m_console;
     QTabWidget *m_tab;
-    QCustomPlot* diameterPlot;
+
     ShotViewer *viewer;
     firFilter *filter;
     SettingsShadowsFindDialog *ShadowSettings;
@@ -149,7 +150,7 @@ private:
     int xWindowDiameter = 5000;
     int tableSize=100;
     bool m_online = false;
-    QCPGraph *r1=nullptr,*r2=nullptr,*c1=nullptr,*c2=nullptr,*m1=nullptr,*m2=nullptr;
+    QCPGraph *r1=nullptr,*r2=nullptr,*c1=nullptr,*c2=nullptr,*m1=nullptr,*m2=nullptr,*f1=nullptr,*f2=nullptr,*spec1=nullptr,*spec2=nullptr;
     //Работа с файлами
     QDir *dir;
     QString dirnameDefault = "log";
@@ -169,12 +170,16 @@ private:
 
 
     //Построение диаметров
+    QCustomPlot* diametersPlot, *spectrePlot;
     void plotDiameter();
     void realTimeDiameter();
     void collectDiameter();
+    void furie( QVector<double> *in,QVector<double> *spectr,QVector<double> *out, double  cutOfFreq);
+
     void clearDiameterVectors();
     void addDataToGraph();
-    QVector<double> xDiameter,yr1,yr2,yc1,yc2,ym1,ym2;//То, что выводится на график
+    QVector<double> xDiameter,yr1,yr2,yc1,yc2,ym1,ym2,yf1,yf2;//То, что выводится на график
+    QVector<double> xFurie,ySpectr1,ySpectr2,yFurieFiltered1,yFurieFiltered2;//Фурье
     QVector<double> shadowsFromMCU,r1FromMCU,r2FromMCU,c1FromMCU,c2FromMCU,m1FromMCU,m2FromMCU;//То, что приходит с MCU
     int filled = 0,lastIndex=0;
     int m_windowSize,m_average,m_limit;
