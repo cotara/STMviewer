@@ -210,8 +210,8 @@ MainWindow::MainWindow(QWidget *parent) :
         diametersPlot->replot();
 
         spectrePlot->yAxis->rescale();
-        spectrePlot->yAxis->setRangeLower(diametersPlot->yAxis->range().lower-10);
-        spectrePlot->yAxis->setRangeUpper(diametersPlot->yAxis->range().upper+10);
+        spectrePlot->yAxis->setRangeLower(spectrePlot->yAxis->range().lower-10);
+        spectrePlot->yAxis->setRangeUpper(spectrePlot->yAxis->range().upper+10);
         spectrePlot->replot();
     });
 
@@ -1217,17 +1217,28 @@ void MainWindow::addDataToGraph(){
     ym1.append(m1FromMCU);
     ym2.append(m2FromMCU);
     //Фурье
-    furie(&yr1,&ySpectr1,&yFurieFiltered1,10);
-    furie(&yr2,&ySpectr2,&yFurieFiltered2,10);
+    xFurie.clear();
+    ySpectr1.clear();
+    ySpectr2.clear();
+    yFurieFiltered1.clear();
+    yFurieFiltered2.clear();
+    yf1.clear();
+    yf2.clear();
+    furie(&yc1,&ySpectr1,&yFurieFiltered1,10);
+    furie(&yc1,&ySpectr2,&yFurieFiltered2,10);
 
     double freqX = 0;
-    double delta = 10000/yr1.size();
+    double delta = 926.0/yr1.size();
+
     for (int i=0;i <ySpectr1.size();i++){
         freqX+=delta;
         xFurie.append(freqX);
     }
+
     yf1.append(yFurieFiltered1);
-    yf2.append(yFurieFiltered1);
+    yf2.append(yFurieFiltered2);
+
+
 
     filled+=size;
     if(!diameterMode)
@@ -1241,7 +1252,7 @@ void MainWindow::addDataToGraph(){
 void MainWindow::plotDiameter()
 {
     QPen m_pen;
-    m_pen.setWidth(2);
+    //m_pen.setWidth(2);
     if(m_ManagementWidget->m_DiameterTransmition->diemetersCheckBox->isChecked()){
         if(r1 == nullptr){
             r1 = diametersPlot->addGraph();
@@ -1292,7 +1303,6 @@ void MainWindow::plotDiameter()
             m1 = diametersPlot->addGraph();
             m1->setName("Фильтрованный диаметр по оси X");
             m_pen.setColor(Qt::red);
-            m_pen.setWidth(2);
             m1->setPen(m_pen);
         }
         if(m2 == nullptr){
@@ -1316,7 +1326,7 @@ void MainWindow::plotDiameter()
         }
     }
 
-    if(m_ManagementWidget->m_DiameterTransmition->furieCheckbox){
+    if(m_ManagementWidget->m_DiameterTransmition->furieCheckbox->isChecked()){
         if(f1 == nullptr && spec1 == nullptr){
             m_pen.setColor(Qt::red);
             f1 = diametersPlot->addGraph();
@@ -1362,6 +1372,8 @@ void MainWindow::plotDiameter()
     if(!diameterMode)
         diametersPlot->xAxis->setRange(diametersPlot->xAxis->range().upper, xWindowDiameter, Qt::AlignRight);
     diametersPlot->replot();
+
+    spectrePlot->replot();
 
 }
 
@@ -1436,7 +1448,10 @@ void MainWindow::clearDiameterVectors(){
     ym2.clear();
     yf1.clear();
     yf2.clear();
+    ySpectr1.clear();
+    ySpectr2.clear();
     xDiameter.clear();
+    xFurie.clear();
 }
 
 
