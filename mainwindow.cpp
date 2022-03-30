@@ -1231,8 +1231,8 @@ void MainWindow::addDataToGraph(){
     yFurieFiltered2.clear();
     yf1.clear();
     yf2.clear();
-    furie(&yc1,&ySpectr1,&yFurieFiltered1,m_furieLimit);
-    furie(&yc1,&ySpectr2,&yFurieFiltered2,m_furieLimit);
+    furie(&yr1,&ySpectr1,&yFurieFiltered1,m_furieLimit);
+    furie(&yr2,&ySpectr2,&yFurieFiltered2,m_furieLimit);
 
     double freqX = 0;
     double delta = 926.0/yr1.size();
@@ -1429,7 +1429,7 @@ void MainWindow::furie(QVector<double> *in, QVector<double> *spectr, QVector<dou
     //Фильтрация
     for (int i=0;i<size/2+1;i++){
         spectr->append(10*std::log10(sqrt(dataSpectr.at(i).real()*dataSpectr.at(i).real() + dataSpectr.at(i).imag()*dataSpectr.at(i).imag())));
-        if(spectr->at(i)>cutOfFreq){
+        if(spectr->at(i)>cutOfFreq && i>0){
             decr = (spectr->at(i)-cutOfFreq)/10;
             re = dataSpectr.at(i).real()/(pow(10,decr));
             im = dataSpectr.at(i).real()/(pow(10,decr));
