@@ -201,7 +201,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::diameterModeChanged, [=](bool mode){ diameterMode = mode; clearDiameterVectors(); });   //Изменен режим запроса диаметров
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::windowSizeChanged, [=](int value){ m_windowSize = value;});   //Окно фильтра изменилось
     connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::averageChanged, [=](int value){ m_average = value; });   //Усреднение изменилось
-    connect(diameterPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::furieLimitChanged, [=](int value){ m_furieLimit = value; });
+
+    connect(diametersPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
     connect(spectrePlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel2()));
     connect(ui->AutoRange,&QAction::triggered,viewer,[=]{
         diametersPlot->yAxis->rescale();
@@ -289,8 +291,8 @@ MainWindow::MainWindow(QWidget *parent) :
    /*********                       ГЕНЕРИРУЕМ СИГНАЛ               **************/
 
     double T = 3;                       //длительность сигнала, с
-    double F = 1000;                      //частота сигнала, Гц
-    double F_d = 44000;                   //частота дискретизации, Гц
+    double F = 100;                      //частота сигнала, Гц
+    double F_d = 1000;                   //частота дискретизации, Гц
     double n = (int)(T * F_d);          //Количество точек
     double delta=(float)F_d/(float)n;   //Шаг АЧХ
     //Генерируем сигнал
@@ -298,7 +300,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i =0;i<n;i++){
      //dataIn.append(sin(i/10.) + sin(i/5.) +  sin(i/1.)+  sin(i/3.));
      //dataIn.append(sin(2 * 3.14 * F * i/F_d) + QRandomGenerator::global()->generateDouble()/2 + 5);
-     dataIn.append(sin(2 * 3.14 * F * i/F_d));
+     dataIn.append(0.2* sin(2 * 3.14 * F * i/F_d)+ 2*sin(2 * 3.14 * 2*F * i/F_d));
      //dataIn.append(QRandomGenerator::global()->generateDouble());
     }
 
@@ -355,13 +357,18 @@ MainWindow::MainWindow(QWidget *parent) :
       y2Temp.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
     }
 
+    double re,im;
+    double decr = 1;
     //Фильтрация
     for (int i=0;i<n/2+1;i++){
-        if(y2Temp.at(i)<12){
-            dataOut[i].real(0.1);
-            dataOut[i].imag(0.1);
-            dataOut[n-i-1].real(0.05);
-            dataOut[n-i-1].imag(0.05);
+        if(y2Temp.at(i)>20){
+            decr = (y2Temp.at(i)-20)/10;
+            re = dataOut.at(i).real()/(pow(10,decr));
+            im = dataOut.at(i).real()/(pow(10,decr));
+            dataOut[i].real(re);
+            dataOut[i].imag(im);
+            dataOut[n-i-1].real(re);
+            dataOut[n-i-1].imag(im);
 
         }
         y2Temp_.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
@@ -1224,8 +1231,8 @@ void MainWindow::addDataToGraph(){
     yFurieFiltered2.clear();
     yf1.clear();
     yf2.clear();
-    furie(&yc1,&ySpectr1,&yFurieFiltered1,10);
-    furie(&yc1,&ySpectr2,&yFurieFiltered2,10);
+    furie(&yc1,&ySpectr1,&yFurieFiltered1,m_furieLimit);
+    furie(&yc1,&ySpectr2,&yFurieFiltered2,m_furieLimit);
 
     double freqX = 0;
     double delta = 926.0/yr1.size();
@@ -1403,10 +1410,11 @@ void MainWindow::collectDiameter(){
     m_ManagementWidget->m_DiameterTransmition->collectCountLabel->setNum(filled);//Выводим, сколько точек уже приянто
 }
 
-void MainWindow::furie(QVector<double> *in, QVector<double> *spectr, QVector<double> *out, double  cutOfFreq)
-{
+void MainWindow::furie(QVector<double> *in, QVector<double> *spectr, QVector<double> *out, double  cutOfFreq){
 
     int size = in->size();
+    double decr;//на сколько Дб надо опустить
+    double re,im;
     QVector<std::complex<double> > dataIn, dataSpectr(size,0),dataOut(size,0);
 
     for (int i =0;i<size;i++)
@@ -1421,11 +1429,15 @@ void MainWindow::furie(QVector<double> *in, QVector<double> *spectr, QVector<dou
     //Фильтрация
     for (int i=0;i<size/2+1;i++){
         spectr->append(10*std::log10(sqrt(dataSpectr.at(i).real()*dataSpectr.at(i).real() + dataSpectr.at(i).imag()*dataSpectr.at(i).imag())));
-        if(spectr->at(i)<cutOfFreq){
-            dataSpectr[i].real(0.1);
-            dataSpectr[i].imag(0.1);
-            dataSpectr[size-i-1].real(0.1);
-            dataSpectr[size-i-1].imag(0.1);
+        if(spectr->at(i)>cutOfFreq){
+            decr = (spectr->at(i)-cutOfFreq)/10;
+            re = dataSpectr.at(i).real()/(pow(10,decr));
+            im = dataSpectr.at(i).real()/(pow(10,decr));
+            dataSpectr[i].real(re);
+            dataSpectr[i].imag(im);
+            dataSpectr[size-i-1].real(re);
+            dataSpectr[size-i-1].imag(im);
+            (*spectr)[i] = 10*std::log10(sqrt(dataSpectr.at(i).real()*dataSpectr.at(i).real() + dataSpectr.at(i).imag()*dataSpectr.at(i).imag()));
         }
         //y2Temp_.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
     }

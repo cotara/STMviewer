@@ -20,7 +20,7 @@ public:
 
     QPushButton *gettingDiameterButton;
     QCheckBox *diemetersCheckBox, *centersCheckBox,*medianFilterCheckbox, *furieCheckbox;
-    QSpinBox *windowSizeSpinbox,*averageSpinbox,*limitSpinbox, *reqFreqSpinbox;
+    QSpinBox *windowSizeSpinbox,*averageSpinbox,*limitSpinbox, *reqFreqSpinbox, *furieLimitSpinbox;
     QSlider *xWindow;
     QRadioButton *continiousMode, *collectMode;
     QLabel *r1ValueLabel,*r2ValueLabel;
@@ -28,8 +28,8 @@ public:
 
 private:
     QVBoxLayout *layout;
-    QHBoxLayout *windowSizeLayout, *averageLayout,*limitLayout, *reqFreqLayout,*sliderLayout,*radioLayout,*colectLayout,*r1HLayout, *r2HLayout;
-    QLabel *windowSizeLabel, *averageLabel, *limitLabel, *reqFreqLabel,*xWindowsLabel,*sliderValue;
+    QHBoxLayout *windowSizeLayout, *averageLayout,*limitLayout, *reqFreqLayout,*sliderLayout,*radioLayout,*colectLayout,*r1HLayout, *r2HLayout, *furieLimitLayout;
+    QLabel *windowSizeLabel, *averageLabel, *limitLabel, *reqFreqLabel,*xWindowsLabel,*sliderValue, *furieLimitLabel;
     QLabel *r1Label,*r2Label;
     QLabel *collectLabel;
 
@@ -41,6 +41,7 @@ signals:
     void windowSizeChanged(int value);
     void averageChanged(int value);
     void limitChanged(int value);
+    void furieLimitChanged(int value);
 };
 
 #endif // DIAMETERTRANSMITION_H

@@ -17,7 +17,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     gettingDiameterButton->setCheckable(true);
     gettingDiameterButton->setEnabled(false);
 
-    furieCheckbox = new QCheckBox("Преобразование фурье",this);
+
 
     diemetersCheckBox = new QCheckBox("Выводить диаметры",this);
     centersCheckBox= new QCheckBox("Выводить центры",this);
@@ -93,8 +93,19 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     colectLayout->addWidget(collectCountLabel);
     layout->addLayout(colectLayout);
 
-    //КНОПКА
+    //ФУРЬЕ
+    furieLimitLayout = new QHBoxLayout();
+    furieCheckbox = new QCheckBox("Преобразование фурье",this);
+    furieLimitSpinbox = new  QSpinBox(this);
+    furieLimitSpinbox->setValue(20);
+    furieLimitLabel = new QLabel("Амплитуда среза, Дб", this);
+    furieLimitLayout->addWidget(furieLimitLabel);
+    furieLimitLayout->addWidget(furieLimitSpinbox);
+    layout->addLayout(furieLimitLayout);
     layout->addWidget(furieCheckbox);
+
+
+    //КНОПКА
     layout->addWidget(gettingDiameterButton);
 
     //Вывод диаметров
@@ -113,6 +124,8 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     r1ValueLabel->setObjectName("BigLabel");
     r2ValueLabel->setObjectName("BigLabel");
 
+
+
     /********************************КОННЕКТЫ*********************************************************/
     connect(gettingDiameterButton,&QPushButton::clicked,[=](bool checked){
         if(medianFilterCheckbox->isChecked() || diemetersCheckBox->isChecked() || centersCheckBox->isChecked())
@@ -129,6 +142,8 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     connect(averageSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit averageChanged(i);});
     connect(limitSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit limitChanged(i);});
     connect(windowSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){  emit windowSizeChanged(i);});
+    connect(furieLimitSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){  emit furieLimitChanged(i);});
+
     connect(continiousMode, &QRadioButton::clicked,[=](bool checked){
         emit diameterModeChanged(false);
         collectMode->setChecked(!checked);

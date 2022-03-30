@@ -182,7 +182,7 @@ private:
     QVector<double> xFurie,ySpectr1,ySpectr2,yFurieFiltered1,yFurieFiltered2;//Фурье
     QVector<double> shadowsFromMCU,r1FromMCU,r2FromMCU,c1FromMCU,c2FromMCU,m1FromMCU,m2FromMCU;//То, что приходит с MCU
     int filled = 0,lastIndex=0;
-    int m_windowSize,m_average,m_limit;
+    int m_windowSize,m_average,m_limit, m_furieLimit = 20;
     bool diameterMode=false;
 };
 
