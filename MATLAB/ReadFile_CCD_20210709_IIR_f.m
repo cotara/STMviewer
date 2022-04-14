@@ -1,5 +1,5 @@
 clear all
-fid = fopen('D:\MatLab_work\CCD\2021_06_22__20_45_44_CH2.log', 'rb');  % открытие файла на чтение 
+fid = fopen('2022_04_04__20_05_28', 'rb');  % открытие файла на чтение 
 if fid == -1 
     error('File is not opened'); 
 end 
@@ -26,9 +26,9 @@ end
 fclose('all')
 Fs=10e6;
 dt=1/Fs;
-    N=4;      % Order
-    Fc=240000;     % Cutoff Frequency
-    Wc=Fc/(Fs/2);
+N=4;      % Order
+Fc=240000;     % Cutoff Frequency
+Wc=Fc/(Fs/2);
 [b1,a1] = butter(N,Wc);
 b=int32(b1*(2^24));
 a=int32(a1*(2^24));

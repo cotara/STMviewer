@@ -290,17 +290,17 @@ MainWindow::MainWindow(QWidget *parent) :
    });
    /*********                       ГЕНЕРИРУЕМ СИГНАЛ               **************/
 
-    double T = 3;                       //длительность сигнала, с
-    double F = 100;                      //частота сигнала, Гц
-    double F_d = 1000;                   //частота дискретизации, Гц
+    double T = 2;                       //длительность сигнала, с
+    double F = 10;                      //частота сигнала, Гц
+    double F_d = 512;                   //частота дискретизации, Гц
     double n = (int)(T * F_d);          //Количество точек
     double delta=(float)F_d/(float)n;   //Шаг АЧХ
     //Генерируем сигнал
     QVector<std::complex<double> > dataIn,dataOut(n,0),dataBack(n,0);
     for (int i =0;i<n;i++){
      //dataIn.append(sin(i/10.) + sin(i/5.) +  sin(i/1.)+  sin(i/3.));
-     //dataIn.append(sin(2 * 3.14 * F * i/F_d) + QRandomGenerator::global()->generateDouble()/2 + 5);
-     dataIn.append(0.2* sin(2 * 3.14 * F * i/F_d)+ 2*sin(2 * 3.14 * 2*F * i/F_d));
+     dataIn.append(sin(2 * 3.14 * F * i/F_d) );
+     //dataIn.append(0.2* sin(2 * 3.14 * F * i/F_d)+ 2*sin(2 * 3.14 * 2*F * i/F_d));
      //dataIn.append(QRandomGenerator::global()->generateDouble());
     }
 
@@ -342,7 +342,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QCPGraph *tempG3 = tempPlot1->addGraph();
     tempG3->setName("Обратно Преобразованный");
 
-    QVector<double> xTemp1,xTemp2,y1Temp,y2Temp,y2Temp_,y3Temp;
+    QCPGraph *tempG4 = tempPlot1->addGraph();
+    tempG4->setName("Обратно Преобразованный IMAG");
+
+    QVector<double> xTemp1,xTemp2,y1Temp,y2Temp,y2Temp_,y3Temp,y4Temp;
 
     //Входной массив на график
     for (int i=0;i<n;i++){
@@ -359,17 +362,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     double re,im;
     double decr = 1;
+    double limit=10;
     //Фильтрация
     for (int i=0;i<n/2+1;i++){
-        if(y2Temp.at(i)>20){
-            decr = (y2Temp.at(i)-20)/10;
-            re = dataOut.at(i).real()/(pow(10,decr));
-            im = dataOut.at(i).real()/(pow(10,decr));
+        if(y2Temp.at(i)>limit){
+            decr = pow(10,(y2Temp.at(i)-limit)/10);
+            re = dataOut.at(i).real()/decr;
+            im = dataOut.at(i).imag()/decr;
             dataOut[i].real(re);
             dataOut[i].imag(im);
             dataOut[n-i-1].real(re);
             dataOut[n-i-1].imag(im);
-
         }
         y2Temp_.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
     }
@@ -381,12 +384,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     for (int i=0;i<n;i++){
       y3Temp.append(dataBack.at(i).real()/n);
+      y4Temp.append(dataBack.at(i).imag()/n);
     }
 
     tempG1->setData(xTemp1,y1Temp);
     tempG2->setData(xTemp2,y2Temp);
     tempG2_->setData(xTemp2,y2Temp_);
     tempG3->setData(xTemp1,y3Temp);
+    tempG4->setData(xTemp1,y4Temp);
 
     QPen m_pen;
     m_pen.setColor(Qt::red);
@@ -656,18 +661,6 @@ int MainWindow::countCheckedCH()
     return chCountChecked;
 }
 
-//Запрость у MCU пакет длины n с канала ch
-void MainWindow::getPacketFromMCU(int n)
-{
-    QByteArray data;
-    char msb,lsb;
-    data.append(REQUEST_POINTS);
-    msb=static_cast<char> ((n&0xFF00)>>8);
-    lsb=static_cast<char> (n&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-    m_transp->sendPacket(data);
-}
 void MainWindow::getButtonClicked(bool checked)
 {
     if(checked){
@@ -712,7 +705,8 @@ void MainWindow::manualGetShotButton(){
         statusBar->setDownloadBarRange(countAvaibleDots);
         statusBar->setDownloadBarValue(0);
         while (countAvaibleDots>0){                                   //Отправляем запрос несоклько раз по packetSize точек.
-            getPacketFromMCU(countAvaibleDots>packetSize?packetSize:countAvaibleDots);
+            sendByteToMK(REQUEST_POINTS,countAvaibleDots>packetSize?packetSize:countAvaibleDots, "REQUEST_POINTS: ");
+            //getPacketFromMCU(countAvaibleDots>packetSize?packetSize:countAvaibleDots);
             countAvaibleDots-=packetSize;
         }
         notYetFlag--;
