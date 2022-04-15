@@ -583,7 +583,7 @@ void MainWindow::sendByteToMK(char dst, int dataByte, const QString &msg)
     QByteArray data;
     char msb,lsb;
     data.append(dst);
-    msb=(0&0xFF00)>>8;
+    msb=(dataByte&0xFF00)>>8;
     lsb=static_cast<char> (dataByte&0x00FF);
     data.append(msb);
     data.append(lsb);
@@ -659,6 +659,20 @@ int MainWindow::countCheckedCH()
             chCountChecked++;
     }
     return chCountChecked;
+}
+
+
+//Запрость у MCU пакет длины n с канала ch
+void MainWindow::getPacketFromMCU(int n)
+{
+    QByteArray data;
+    char msb,lsb;
+    data.append(REQUEST_POINTS);
+    msb=static_cast<char> ((n&0xFF00)>>8);
+    lsb=static_cast<char> (n&0x00FF);
+    data.append(msb);
+    data.append(lsb);
+    m_transp->sendPacket(data);
 }
 
 void MainWindow::getButtonClicked(bool checked)

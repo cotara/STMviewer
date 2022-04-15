@@ -20,7 +20,7 @@ class centerViewer : public QWidget
     void paintPosition(QPainter *qp);
     double xPos=0,yPos=0;
     double xRad=0,yRad=0;
-    int m_scale = 100;//Размер зоны в миллиметрах
+    int m_scale = 20;//Размер зоны в миллиметрах
     QPoint widgetCenter;
     const double m_angle = 0.70710678118654752440084436210485;
 };

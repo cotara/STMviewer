@@ -16,8 +16,8 @@ void centerViewer::setCoord(double x, double y)
 
 void centerViewer::setRad(double x,double y)
 {
-    xRad=x/2;
-    yRad=y/2;
+    xRad=x;
+    yRad=y;
 }
 
 void centerViewer::setScale(int scale)
@@ -57,9 +57,8 @@ void centerViewer::paintPosition(QPainter *qp)
     qp->setBrush(brush);
     double mmToPixScale = widgetCenter.y()*2/m_scale;
     QPointF rot (m_angle*mmToPixScale*(yPos-xPos),m_angle*mmToPixScale*(-xPos-yPos));
-
     QPointF center = static_cast<QPointF>(widgetCenter) + rot;
-
+    //QPointF center = static_cast<QPointF>(widgetCenter) + QPointF(xPos*mmToPixScale,yPos*mmToPixScale);
     if(xRad > 0 && yRad>0){
         qp->drawEllipse(center, xRad*mmToPixScale, yRad*mmToPixScale);
     }

@@ -14,7 +14,7 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     rightShadow1Label = new QLabel("   Прав.тень: -");
     leftShadow2Label = new QLabel("   Лев.тень: -");
     rightShadow2Label = new QLabel("   Прав.тень: -");
-    m_centerViewer = new centerViewer();
+    m_centerViewer = new centerViewer(this,20);
     centerPositionLabel = new QLabel("Смещение: -");
 
     extr1Ch1 = new QLabel("   Экстр1: -");

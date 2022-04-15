@@ -82,9 +82,9 @@ private slots:
     void sendByteToMK(char dst, int dataByte, const QString &msg);
     void sendVectorToMK(char dst, QVector<double> dataV, const QString &msg);
     void chOrderSend(int);
+    void getPacketFromMCU(int n);
     int countCheckedCH(void);
     void manualGetShotButton();
-    void getPacketFromMCU(int n);
     void getButtonClicked(bool checked);
     void selectShot();
     void on_clearButton();
