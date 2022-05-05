@@ -34,7 +34,7 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     legendFont.setPointSize(10);
 
     customPlot1->xAxis->setRangeLower(0);
-    customPlot1->xAxis->setRangeUpper(11000);
+    customPlot1->xAxis->setRangeUpper(signalSize);
     customPlot1->yAxis->setRangeLower(-5);
     customPlot1->yAxis->setRangeUpper(260);
     customPlot1->legend->setVisible(true);
@@ -43,7 +43,7 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     customPlot1->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
 
     customPlot2->xAxis->setRangeLower(0);
-    customPlot2->xAxis->setRangeUpper(11000);
+    customPlot2->xAxis->setRangeUpper(signalSize);
     customPlot2->yAxis->setRangeLower(-5);
     customPlot2->yAxis->setRangeUpper(260);
     customPlot2->legend->setVisible(true);
@@ -434,8 +434,8 @@ void ShotViewer::mousePress1(QMouseEvent* ){
     customPlot1->axisRect()->setRangeDrag(customPlot1->xAxis->orientation());
     if(customPlot1->xAxis->range().lower <0)
          customPlot1->xAxis->setRangeLower(0);
-    if(customPlot1->xAxis->range().upper > 11000)
-         customPlot1->xAxis->setRangeUpper(11000);
+    if(customPlot1->xAxis->range().upper > signalSize)
+         customPlot1->xAxis->setRangeUpper(signalSize);
   }
   else if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
    customPlot1->axisRect()->setRangeDrag(customPlot1->yAxis->orientation());
@@ -448,8 +448,8 @@ void ShotViewer::mousePress1(QMouseEvent* ){
     customPlot1->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
     if(customPlot1->xAxis->range().lower <0)
          customPlot1->xAxis->setRangeLower(0);
-    if(customPlot1->xAxis->range().upper > 11000)
-         customPlot1->xAxis->setRangeUpper(11000);
+    if(customPlot1->xAxis->range().upper > signalSize)
+         customPlot1->xAxis->setRangeUpper(signalSize);
     if(customPlot1->yAxis->range().lower <-5)
          customPlot1->yAxis->setRangeLower(-5);
     if(customPlot1->yAxis->range().upper >260)
@@ -465,8 +465,8 @@ void ShotViewer::mousePress2(QMouseEvent* ){
     customPlot2->axisRect()->setRangeDrag(customPlot2->xAxis->orientation());
     if(customPlot2->xAxis->range().lower <0)
          customPlot2->xAxis->setRangeLower(0);
-    if(customPlot2->xAxis->range().upper > 11000)
-         customPlot2->xAxis->setRangeUpper(11000);
+    if(customPlot2->xAxis->range().upper > signalSize)
+         customPlot2->xAxis->setRangeUpper(signalSize);
   }
   else if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
    customPlot2->axisRect()->setRangeDrag(customPlot2->yAxis->orientation());
@@ -479,8 +479,8 @@ void ShotViewer::mousePress2(QMouseEvent* ){
     customPlot2->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
     if(customPlot2->xAxis->range().lower <0)
          customPlot2->xAxis->setRangeLower(0);
-    if(customPlot2->xAxis->range().upper > 11000)
-         customPlot2->xAxis->setRangeUpper(11000);
+    if(customPlot2->xAxis->range().upper > signalSize)
+         customPlot2->xAxis->setRangeUpper(signalSize);
     if(customPlot2->yAxis->range().lower <-5)
          customPlot2->yAxis->setRangeLower(-5);
     if(customPlot2->yAxis->range().upper >260)
@@ -495,8 +495,8 @@ void ShotViewer::mouseWheel1(){
       customPlot1->axisRect()->setRangeZoom(customPlot1->xAxis->orientation());
       if(customPlot1->xAxis->range().lower <0)
            customPlot1->xAxis->setRangeLower(0);
-      if(customPlot1->xAxis->range().upper > 11000)
-           customPlot1->xAxis->setRangeUpper(11000);
+      if(customPlot1->xAxis->range().upper > signalSize)
+           customPlot1->xAxis->setRangeUpper(signalSize);
    }
 
   else if (customPlot1->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
@@ -510,8 +510,8 @@ void ShotViewer::mouseWheel1(){
     customPlot1->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
     if(customPlot1->xAxis->range().lower <0)
          customPlot1->xAxis->setRangeLower(0);
-    if(customPlot1->xAxis->range().upper > 11000)
-         customPlot1->xAxis->setRangeUpper(11000);
+    if(customPlot1->xAxis->range().upper > signalSize)
+         customPlot1->xAxis->setRangeUpper(signalSize);
     if(customPlot1->yAxis->range().lower <-1)
          customPlot1->yAxis->setRangeLower(-1);
     if(customPlot1->yAxis->range().upper >260)
@@ -527,8 +527,8 @@ void ShotViewer::mouseWheel2(){
       customPlot2->axisRect()->setRangeZoom(customPlot2->xAxis->orientation());
       if(customPlot2->xAxis->range().lower <0)
            customPlot2->xAxis->setRangeLower(0);
-      if(customPlot2->xAxis->range().upper > 11000)
-           customPlot2->xAxis->setRangeUpper(11000);
+      if(customPlot2->xAxis->range().upper > signalSize)
+           customPlot2->xAxis->setRangeUpper(signalSize);
    }
 
   else if (customPlot2->yAxis->selectedParts().testFlag(QCPAxis::spAxis)){
@@ -542,8 +542,8 @@ void ShotViewer::mouseWheel2(){
     customPlot2->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
     if(customPlot2->xAxis->range().lower <0)
          customPlot2->xAxis->setRangeLower(0);
-    if(customPlot2->xAxis->range().upper > 11000)
-         customPlot2->xAxis->setRangeUpper(11000);
+    if(customPlot2->xAxis->range().upper > signalSize)
+         customPlot2->xAxis->setRangeUpper(signalSize);
     if(customPlot2->yAxis->range().lower <-1)
          customPlot2->yAxis->setRangeLower(-1);
     if(customPlot2->yAxis->range().upper >260)

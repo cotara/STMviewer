@@ -80,6 +80,11 @@ void Console::setLocalEchoEnabled(bool set)
     m_localEchoEnabled = set;
 }
 
+void Console::clearAll(){
+    clear();
+}
+
+
 void Console::keyPressEvent(QKeyEvent *e)
 {
     switch (e->key()) {

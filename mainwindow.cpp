@@ -229,7 +229,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->ShowMainControl->setChecked(true);
     ui->ShowManagementPanel->setChecked(true);
-    connect(ui->showConsole,&QAction::toggled,[=](bool i){if(i) m_console->show(); else m_console->hide();});
+    connect(ui->showConsole,&QAction::toggled,[=](bool i){if(i) {m_console->show(); m_console->clearAll();} else m_console->hide();});
     connect(ui->TableShow,&QAction::toggled,[=](bool i){
         if(i) {
             m_table->show();
@@ -494,7 +494,7 @@ void MainWindow::on_connect_triggered()
         ui->connect->setEnabled(false);
         ui->settings->setEnabled(false);
         ui->disconnect->setEnabled(true);
-        m_timer->start(150);
+
         statusBar->clearReSent();
         m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
         m_transp->clearQueue();
@@ -528,6 +528,7 @@ void MainWindow::on_connect_triggered()
 
         //Запрашиваем модель
         sendByteToMK(REQUEST_MODEL,0,"SEND REQUEST_MODEL: ");
+
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
@@ -667,20 +668,6 @@ int MainWindow::countCheckedCH()
     return chCountChecked;
 }
 
-
-//Запрость у MCU пакет длины n с канала ch
-void MainWindow::getPacketFromMCU(int n)
-{
-    QByteArray data;
-    char msb,lsb;
-    data.append(REQUEST_POINTS);
-    msb=static_cast<char> ((n&0xFF00)>>8);
-    lsb=static_cast<char> (n&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-    m_transp->sendPacket(data);
-}
-
 void MainWindow::getButtonClicked(bool checked)
 {
     if(checked){
@@ -720,13 +707,11 @@ void MainWindow::manualGetShotButton(){
     statusBar->setMessageBar("");
     if(countAvaibleDots){
         m_timer->stop();                                              //Останавливаем запрос статусов
-        m_console->putData("REQUEST_POINTS: ");
         countWaitingDots = countAvaibleDots;                          //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
         statusBar->setDownloadBarRange(countAvaibleDots);
         statusBar->setDownloadBarValue(0);
         while (countAvaibleDots>0){                                   //Отправляем запрос несоклько раз по packetSize точек.
             sendByteToMK(REQUEST_POINTS,countAvaibleDots>packetSize?packetSize:countAvaibleDots, "REQUEST_POINTS: ");
-            //getPacketFromMCU(countAvaibleDots>packetSize?packetSize:countAvaibleDots);
             countAvaibleDots-=packetSize;
         }
         notYetFlag--;
@@ -767,13 +752,16 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 ldmGeomParams = ldm50Params;break;
         }
         filter->seteGeomParams(ldmGeomParams);
+        m_timer->start(100);
         break;
     case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
-
+        m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
         if (value != NO_DATA_READY) {
             dataReady = value;
             countAvaibleDots=value;
+            signalSize = value;
+            viewer->signalSize = value;
 
             //Забираем 16 байт метаданных
             tempPLISextremums2.clear();
@@ -852,7 +840,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_console->putData("Warning: MCU has no data\n\n");
         }
         emit dataReadyUpdate(dataReady);
-        m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
         break;
 
 
@@ -953,7 +940,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 //Обнуляем всякое
                 countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
-                statusBar->setInfo(m_transp->getQueueCount());                          //Обновляем статус бар
+                emit infoUpdate(m_transp->getQueueCount());                          //Обновляем статус бар
 
                 if (notYetFlag==0){                                                     //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
                     m_console->putData("\n\n");
@@ -998,7 +985,7 @@ void MainWindow::selectShot(){
             ch = shotsCH2[shotNum];
             viewer->addUserGraph(ch,ch.size(),2);
             viewer->addLines(tempPLISextremums1,1,1);
-            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},1,3);
+            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},1,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Button->text().toInt())},1,3);
 
 
@@ -1027,7 +1014,7 @@ void MainWindow::selectShot(){
             ch = shotsCH4[shotNum];
             viewer->addUserGraph(ch,ch.size(),4);
             viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
-            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(10800-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);
+            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Button->text().toInt())},2,3);
         }
         if(shotsCH4In.contains(shotNum)){
@@ -1079,7 +1066,7 @@ void MainWindow::reSentInc(){
 }
 // Обработчик таймаута опроса состояния MCU
 void MainWindow::handlerTimer() {
-    statusBar->setInfo(m_transp->getQueueCount());
+    emit infoUpdate(m_transp->getQueueCount());
     QByteArray data;
     if (m_online) {
         sendByteToMK(REQUEST_STATUS,0,"SEND REQUEST_STATUS: ");

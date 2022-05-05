@@ -27,6 +27,7 @@ public:
     void addLines(QVector<double> dots, int ch, int w);
     void addLines2(QVector<double> dots, int ch, int w);
     void replotGraphs(int state);
+    int signalSize = 10800;
 signals:
     void graph_selected(QCPGraphDataContainer &dataMap);
 

@@ -66,6 +66,7 @@ public:
 
     void putData(const QByteArray &data);
     void setLocalEchoEnabled(bool set);
+    void clearAll();
 
 protected:
     void keyPressEvent(QKeyEvent *e) override;

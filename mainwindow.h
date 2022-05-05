@@ -83,7 +83,6 @@ private slots:
     void sendByteToMK(char dst, int dataByte, const QString &msg);
     void sendVectorToMK(char dst, QVector<double> dataV, const QString &msg);
     void chOrderSend(int);
-    void getPacketFromMCU(int n);
     int countCheckedCH(void);
     void manualGetShotButton();
     void getButtonClicked(bool checked);
@@ -143,6 +142,7 @@ private:
     QByteArray currentShot;
     int shotCountRecieved=0;                                        //Текущее количество отмеченных каналов и текущее количество принятых шотов
     int packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
+    int signalSize = 10800;
     int countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
