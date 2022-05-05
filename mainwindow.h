@@ -33,6 +33,7 @@ const unsigned short NO_DATA_READY    = 0xFFFF;
 
 // commands
 const char ASK_MCU          = 0x41;
+const char REQUEST_MODEL    = 0x55;
 const char REQUEST_STATUS   = 0x50;
 const char REQUEST_POINTS   = 0x70;
 const char WRITE_POINTS     = 0x74;
@@ -184,6 +185,12 @@ private:
     int filled = 0,lastIndex=0;
     int m_windowSize,m_average,m_limit, m_furieLimit = 20;
     bool diameterMode=false;
+
+   const QVector<double> ldm20Params = {4,0.905,5320,5320,207400,207400,73400,73400};
+   const QVector<double> ldm50Params = {4,0.905,3750,3750,283500,283500,56400,56400};
+   QVector<double> ldmGeomParams = ldm20Params;
+
+
 };
 
 #endif // MAINWINDOW_H

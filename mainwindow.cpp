@@ -293,8 +293,8 @@ MainWindow::MainWindow(QWidget *parent) :
     double T = 2;                       //длительность сигнала, с
     double F = 10;                      //частота сигнала, Гц
     double F_d = 512;                   //частота дискретизации, Гц
-    double n = (int)(T * F_d);          //Количество точек
-    double delta=(float)F_d/(float)n;   //Шаг АЧХ
+    double n = static_cast<int>(T * F_d);          //Количество точек
+    double delta=F_d/n;   //Шаг АЧХ
     //Генерируем сигнал
     QVector<std::complex<double> > dataIn,dataOut(n,0),dataBack(n,0);
     for (int i =0;i<n;i++){
@@ -409,6 +409,9 @@ MainWindow::MainWindow(QWidget *parent) :
     tempPlot2->rescaleAxes();
     tempPlot1->replot();
     tempPlot2->replot();
+
+
+
 }
 
 MainWindow::~MainWindow(){
@@ -522,6 +525,9 @@ void MainWindow::on_connect_triggered()
 
         //Выключаем кнопку получать диаметры
         m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setEnabled(true);
+
+        //Запрашиваем модель
+        sendByteToMK(REQUEST_MODEL,0,"SEND REQUEST_MODEL: ");
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
@@ -752,7 +758,16 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         }
         break;
 
-
+    case REQUEST_MODEL:
+        m_console->putData(" :RECIEVED ANSWER_MODEL\n\n");
+        switch  (value){
+            case 20:
+                ldmGeomParams = ldm20Params;break;
+            case 50:
+                ldmGeomParams = ldm50Params;break;
+        }
+        filter->seteGeomParams(ldmGeomParams);
+        break;
     case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
 
@@ -839,6 +854,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         emit dataReadyUpdate(dataReady);
         m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
         break;
+
 
       //Получили данные с диаметром
      case REQUEST_DIAMETER:

@@ -560,3 +560,19 @@ double firFilter::median_filter_y(double datum, int window){
  }
  return median->value;
 }
+
+void firFilter::seteGeomParams(QVector<double> &params){
+    res = params[0];
+    la = params[1];
+    Nx = params[2];
+    Ny = params[3];
+    Hx = params[4];
+    Hy = params[5];
+    Cx = params[6];
+    Cy = params[7];
+}
+
+
+
+
+

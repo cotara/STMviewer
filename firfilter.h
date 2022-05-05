@@ -3,6 +3,8 @@
 #include "qfile.h"
 #include <QWidget>
 
+
+
 class firFilter: public QWidget
 {
     Q_OBJECT
@@ -23,6 +25,10 @@ public:
     double median_filter_x(double datum, int window);
     QVector <double> medianFilterY(QVector<double> data, int window, int average, int limit);
     double median_filter_y(double datum, int window);
+
+    void seteGeomParams(QVector<double> &params);
+
+
 private:
     QFile *file;
     double koefs[201];
@@ -30,8 +36,8 @@ private:
     //shadowsFind constants:
     double p1=2.51087470;
     double res=4;
-    //Параметры читаются из файла
 
+    //Параметры читаются из файла
     double la=0;
     double Nx=0;
     double Ny=0;
@@ -39,6 +45,7 @@ private:
     double Hy=0;
     double Cx=0;
     double Cy=0;
+
     //Все в микронах
 //    double la = 905.0;
 //    double L = 207400;
