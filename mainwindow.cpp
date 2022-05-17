@@ -276,6 +276,7 @@ MainWindow::MainWindow(QWidget *parent) :
    connect(ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);//Обновляем настройки в фильтре
    connect(ShadowSettings, &SettingsShadowsFindDialog::sendSettingsToMK,[=]{
        sendVectorToMK(NEWSHADFINDPAR,ShadowSettings->getShadowFindSettings(),"Новые параметры поиска диаметра отправлены в МК: ");//Засылаем настройки в МК
+       sendByteToMK(REQUEST_MODEL,0,"SEND REQUEST_MODEL: ");                //Запрашиваем геометрические параметры
    });
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
@@ -745,13 +746,17 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
     case REQUEST_MODEL:
         m_console->putData(" :RECIEVED ANSWER_MODEL\n\n");
-        switch  (value){
-            case 20:
-                ldmGeomParams = ldm20Params;break;
-            case 50:
-                ldmGeomParams = ldm50Params;break;
+        ldmModel = value;
+        ShadowSettings->ldmModel = value;
+        for (int i = 0; i<6; i++){
+            for (int j =0;j<8;j++)
+                charToDouble.ch[j] =  bytes.at(j+i*8);
+            ldmGeomParams[i] = charToDouble.d;
         }
-        filter->seteGeomParams(ldmGeomParams);
+
+        filter->updateSettings(ldmGeomParams);
+        ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
+        ShadowSettings->filLabels(ldmGeomParams);
         m_timer->start(100);
         break;
     case REQUEST_STATUS:                                                                //Пришло количество точек
@@ -1107,7 +1112,7 @@ void MainWindow::fillTable(QCPGraphDataContainer &dataMap){
 }
 
 void MainWindow::on_ShdowSet_triggered(){
-    ShadowSettings->updateSettingsStruct();
+
     ShadowSettings->show();
 }
 

@@ -19,27 +19,26 @@ public:
     explicit SettingsShadowsFindDialog(QWidget *parent = nullptr);
     ~SettingsShadowsFindDialog();
     QVector<double>& getShadowFindSettings();
-    void updateSettingsStruct();
-    void fillFileads();
     AutoFindWizard *wizard;
+    void updateSettingsStructSlot(const QVector<double> &par);
+    void filLabels(QVector<double> &par);
+    int ldmModel = 20;
 
 private slots:
     void on_buttonBox_accepted();
     void on_buttonBox_rejected();
     void on_pushButton_3_clicked();
     void on_pushButton_clicked();
-    void updateSettingsStructSlot(QVector<double> &par);
+    void fillFields();
+    void fillStruct();
     void slotShortcutF5();
 
 private:
     Ui::SettingsShadowsFindDialog *ui;
-    QFile *file;
-    QString filename = "ShadowSettings.txt";
-    QVector<double> paramsDouble;
-    void defaultToFile();
-    void writeToFile();
-    QByteArray readParamsFromFile();
-    QVector<double> defaultSettings{0.905,5320,5320,207400,207400,73400,73400};
+    QVector<double> geomParams;
+    const QVector<double> ldm20Params = {5320,5320,207400,207400,73400,73400};
+    const QVector<double> ldm50Params = {3750,3750,283500,283500,56400,56400};
+
     QShortcut       *keyF5;    // объект горячей клавиши F11
 signals:
     void settingsChanged();

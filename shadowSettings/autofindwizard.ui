@@ -37,25 +37,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>20</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>la</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="label_7">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -187,13 +168,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="laLabel">
-          <property name="text">
-           <string>0</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="NxLabel">
           <property name="text">
            <string>0</string>
@@ -249,31 +223,6 @@
           </property>
           <property name="text">
            <string>Новые коэффициентны</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="laSpinBox_2">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="decimals">
-           <number>5</number>
-          </property>
-          <property name="maximum">
-           <double>10.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.001000000000000</double>
-          </property>
-          <property name="stepType">
-           <enum>QAbstractSpinBox::DefaultStepType</enum>
-          </property>
-          <property name="value">
-           <double>0.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -387,16 +336,6 @@
           </property>
           <property name="text">
            <string>Допуски, %</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSpinBox" name="laRange">
-          <property name="maximum">
-           <number>100</number>
-          </property>
-          <property name="value">
-           <number>7</number>
           </property>
          </widget>
         </item>

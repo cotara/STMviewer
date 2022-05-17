@@ -168,7 +168,7 @@ private:
         unsigned short sh;
     };
     charToShort_t charToShort;
-
+    conversation_t charToDouble;
 
     //Построение диаметров
     QCustomPlot* diametersPlot, *spectrePlot;
@@ -186,8 +186,9 @@ private:
     int m_windowSize,m_average,m_limit, m_furieLimit = 20;
     bool diameterMode=false;
 
-   const QVector<double> ldm20Params = {4,0.905,5320,5320,207400,207400,73400,73400};
-   const QVector<double> ldm50Params = {4,0.905,3750,3750,283500,283500,56400,56400};
+   const QVector<double> ldm20Params = {5320,5320,207400,207400,73400,73400};
+   const QVector<double> ldm50Params = {3750,3750,283500,283500,56400,56400};
+   int ldmModel = 20;
    QVector<double> ldmGeomParams = ldm20Params;
 
 

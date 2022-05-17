@@ -8,6 +8,7 @@
 
 firFilter::firFilter(QVector<double> &s)
 {
+
     updateSettings(s);
 
     file =  new QFile();
@@ -29,6 +30,7 @@ firFilter::~firFilter(){
     delete file;
 }
 
+//КИХ-фильтр. Коэффициенты из файла
 QByteArray firFilter::toFilter(QByteArray &in,int len){
     QByteArray out,outShifted;
     double Yx =0;
@@ -59,7 +61,7 @@ QByteArray firFilter::toFilter(QByteArray &in,int len){
    return outShifted;
 }
 
-
+//БИХ - фильтр Баттерворта
 QByteArray firFilter::toButterFilter(QByteArray &in,int len){
     QByteArray out,outShifted;
     const double x00=static_cast<unsigned char>(in.at(0));
@@ -100,7 +102,8 @@ QByteArray firFilter::toButterFilter(QByteArray &in,int len){
           outShifted.append(15,0);
    return outShifted;
 }
-//В один проход
+
+//Поиск экстремумов в один проход
 QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
     const int start= 200, stop = len-200;                                   //Начало и конец поиска экстремумов
     unsigned char yMin11=255,yMin12=255,yMin21=255,yMin22=255,yCurrentMin, yLastMin1, yLastMin2;          //Искомые 4 точки (Y) и промежуточные экстремумы
@@ -192,7 +195,7 @@ QVector <QVector<unsigned int>> firFilter::extrFind2(QByteArray &in,int len){
 }
 
 
-
+//Поиск экстремумов
 QVector <QVector<double>> firFilter::extrFind(QByteArray &in,int len){
     int frontIndex=0,frontValue=0,straightCount=0;
     unsigned char ch,chPrev;
@@ -281,7 +284,7 @@ QVector <QVector<double>> firFilter::extrFind(QByteArray &in,int len){
     return result;
 }
 
-//находит левую и правую тень для одного канала
+//Находит левую и правую тень для одного канала по 4-м экстремумам
 QVector<double> firFilter::shadowFind(QVector<double> dots){
     QVector<double> x;
     double delta1 = dots.at(1)-dots.at(0);
@@ -302,6 +305,7 @@ QVector<double> firFilter::shadowFind(QVector<double> dots){
     return x;
 }
 
+//Находит левую и правую тень для одного канала по 4-м экстремумам
 QVector<double> firFilter::shadowFind(QVector<unsigned int> dots)
 {
     QVector<double> x;
@@ -321,6 +325,7 @@ QVector<double> firFilter::shadowFind(QVector<unsigned int> dots)
     return x;
 }
 
+//Находим диаметр по двум теням - левой и правой с двух каналов
 QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<double> shadowsCh2){
     QVector<double> result;
     if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
@@ -350,21 +355,22 @@ QVector<double> firFilter::diameterFind(QVector<double> shadowsCh1, QVector<doub
     return result;
 }
 
+
 void firFilter::updateSettings(QVector<double> &s)
 {
-    if(s.size()==7){
-        la = s.at(0);
-        Nx = s.at(1);
-        Ny = s.at(2);
-        Hx = s.at(3);
-        Hy = s.at(4);
-        Cx = s.at(5);
-        Cy = s.at(6);
+    if(s.size()==6){
+        Nx = s.at(0);
+        Ny = s.at(1);
+        Hx = s.at(2);
+        Hy = s.at(3);
+        Cx = s.at(4);
+        Cy = s.at(5);
     }
     else
         QMessageBox::warning(this, "Внимание!", "Настройки не были прочитаны корректно",QMessageBox::Ok);
 }
 
+//Медианный фильтр
 QVector<double> firFilter::medianFilterX(QVector<double> data, int window, int average, int limit){
    QVector<double> result;
    double cifra;
@@ -407,7 +413,6 @@ QVector<double> firFilter::medianFilterY(QVector<double> data, int window, int a
      }
      return result;
 }
-
 
 double firFilter::median_filter_x(double datum, int window){
  struct pair
@@ -484,7 +489,6 @@ double firFilter::median_filter_x(double datum, int window){
  return median->value;
 }
 
-
 double firFilter::median_filter_y(double datum, int window){
  struct pair
  {
@@ -560,19 +564,3 @@ double firFilter::median_filter_y(double datum, int window){
  }
  return median->value;
 }
-
-void firFilter::seteGeomParams(QVector<double> &params){
-    res = params[0];
-    la = params[1];
-    Nx = params[2];
-    Ny = params[3];
-    Hx = params[4];
-    Hy = params[5];
-    Cx = params[6];
-    Cy = params[7];
-}
-
-
-
-
-
