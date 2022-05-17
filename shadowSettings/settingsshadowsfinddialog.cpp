@@ -5,6 +5,12 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
     QDialog(parent), ui(new Ui::SettingsShadowsFindDialog){
     setObjectName("settingsshadowsfinddialog");
     ui->setupUi(this);
+    ui->HxMKLabel->setObjectName("BigLabel");
+    ui->HyMKLabel->setObjectName("BigLabel");
+    ui->NxMKLabel->setObjectName("BigLabel");
+    ui->NyMKLabel->setObjectName("BigLabel");
+    ui->CxMKLabel->setObjectName("BigLabel");
+    ui->CyMKLabel->setObjectName("BigLabel");
 
     ui->buttonBox->button(QDialogButtonBox::Ok)->setText("Сохранить");
     ui->buttonBox->button(QDialogButtonBox::Cancel)->setText("Не сохранять");
@@ -13,18 +19,18 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
 
     ui->pushButton->setVisible(false);
     ui->pushButton_3->setToolTip("Восставновить параметры по умолчанию");
-    ui->buttonBox->setToolTip("Сохранить настройки в файл");
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setToolTip("Сохранить параметры в файл");
-    ui->buttonBox->button(QDialogButtonBox::Cancel)->setToolTip("Закрыть, не сохраняя параметры в файл");
+    ui->buttonBox->setToolTip("Сохранить настройки");
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setToolTip("Сохранить параметры в полях для ввода");
+    ui->buttonBox->button(QDialogButtonBox::Cancel)->setToolTip("Вернуть параметры до редактирования");
 
     wizard = new AutoFindWizard(this,geomParams);
     connect(wizard,&AutoFindWizard::saveBestParameters,this,&SettingsShadowsFindDialog::updateSettingsStructSlot);
-    connect(ui->NxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ geomParams[0] = i; emit settingsChanged();});
-    connect(ui->NySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ geomParams[1] = i; emit settingsChanged();});
-    connect(ui->HxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ geomParams[2] = i; emit settingsChanged();});
-    connect(ui->HySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ geomParams[3] = i; emit settingsChanged();});
-    connect(ui->CxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ geomParams[4] = i; emit settingsChanged();});
-    connect(ui->CySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ geomParams[5] = i; emit settingsChanged();});
+    connect(ui->NxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ emit settingsChanged();});
+    connect(ui->NySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ emit settingsChanged();});
+    connect(ui->HxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ emit settingsChanged();});
+    connect(ui->HySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ emit settingsChanged();});
+    connect(ui->CxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ emit settingsChanged();});
+    connect(ui->CySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){ emit settingsChanged();});
 
     connect(wizard,&AutoFindWizard::sendBestParameters,this,&SettingsShadowsFindDialog::sendSettingsToMK);
     connect(ui->sendToMKButton,&QPushButton::clicked,this,&SettingsShadowsFindDialog::sendSettingsToMK);
@@ -55,13 +61,14 @@ void SettingsShadowsFindDialog::fillFields()
     ui->CySpinBox->setValue(geomParams.at(5));
 }
 
+//Заполяняем структуру из полей
 void SettingsShadowsFindDialog::fillStruct(){
-    geomParams[0] = ui->NxSpinBox->text().toDouble();
-    geomParams[1] = ui->NxSpinBox->text().toDouble();
-    geomParams[2] = ui->NxSpinBox->text().toDouble();
-    geomParams[3] = ui->NxSpinBox->text().toDouble();
-    geomParams[4] = ui->NxSpinBox->text().toDouble();
-    geomParams[5] = ui->NxSpinBox->text().toDouble();
+    geomParams[0] = ui->NxSpinBox->value();
+    geomParams[1] = ui->NySpinBox->value();
+    geomParams[2] = ui->HxSpinBox->value();
+    geomParams[3] = ui->HySpinBox->value();
+    geomParams[4] = ui->CxSpinBox->value();
+    geomParams[5] = ui->CySpinBox->value();
 }
 
 //Записывает labels (то, что сейчас в МК)

@@ -590,33 +590,45 @@ void MainWindow::sendByteToMK(char dst, int dataByte, const QString &msg)
 {
     QByteArray data;
     char msb,lsb;
-    data.append(dst);
-    msb=(dataByte&0xFF00)>>8;
-    lsb=static_cast<char> (dataByte&0x00FF);
-    data.append(msb);
-    data.append(lsb);
-    m_console->putData(msg.toUtf8());
-    m_transp->sendPacket(data);
+    if(serial->isOpen()){
+        data.append(dst);
+        msb=(dataByte&0xFF00)>>8;
+        lsb=static_cast<char> (dataByte&0x00FF);
+        data.append(msb);
+        data.append(lsb);
+        m_console->putData(msg.toUtf8());
+        m_transp->sendPacket(data);
+    }
+    else{
+        QMessageBox::critical(nullptr,"Порт закрыт!","Невозможно отправить сообщение (" + msg + "). ");
+        m_console->putData("Ошибка передачи сообщения : " + msg.toUtf8() + ". Порт закрыт.");
+    }
 }
 
 void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &msg){
     conversation_t conv;
     QByteArray data;
     char msb,lsb;
-    data.append(dst);
-    msb=(0&0xFF00)>>8;
-    lsb=static_cast<char> (dataV.size()&0x00FF);
-    data.append(msb);
-    data.append(lsb);
+    if(serial->isOpen()){
+        data.append(dst);
+        msb=(0&0xFF00)>>8;
+        lsb=static_cast<char> (dataV.size()&0x00FF);
+        data.append(msb);
+        data.append(lsb);
 
-    for(double d:dataV){
-        conv.d=d;
-        for(int i=0;i<8;i++)
-        data.append(conv.ch[i]);
+        for(double d:dataV){
+            conv.d=d;
+            for(int i=0;i<8;i++)
+            data.append(conv.ch[i]);
+        }
+
+        m_console->putData(msg.toUtf8());
+        m_transp->sendPacket(data);
     }
-
-    m_console->putData(msg.toUtf8());
-    m_transp->sendPacket(data);
+    else{
+        QMessageBox::critical(nullptr,"Порт закрыт!","Невозможно отправить сообщение (" + msg + "). ");
+        m_console->putData("Ошибка передачи сообщения : " + msg.toUtf8() + ". Порт закрыт.");
+    }
 }
 
 //Подсчет количества отмеченных каналов
@@ -755,6 +767,11 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         }
 
         filter->updateSettings(ldmGeomParams);
+        switch (ldmModel){
+         case 20:  filter->setResolution(ldm20Res); break;
+         case 50:  filter->setResolution(ldm50Res); break;
+        }
+
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
         ShadowSettings->filLabels(ldmGeomParams);
         m_timer->start(100);
@@ -769,8 +786,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             viewer->signalSize = value;
 
             //Забираем 16 байт метаданных
-            tempPLISextremums2.clear();
             tempPLISextremums1.clear();
+            tempPLISextremums2.clear();
             for(int i=0;i<8;i+=2){
                 charToShort.ch[0] = bytes.at(i);
                 charToShort.ch[1] = bytes.at(i+1);
@@ -820,20 +837,20 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             if(tempPLISextremums1.size()==4){
                 shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
-                m_MainControlWidget->m_resultWidget->shad1Ch1->setText("   Тень1: " + QString::number(shadowsCh1Plis.at(0)));
-                m_MainControlWidget->m_resultWidget->shad2Ch1->setText("   Тень2: " + QString::number(shadowsCh1Plis.at(1)));
+                m_MainControlWidget->m_resultWidget->shad1Ch1->setText("   Фронт: " + QString::number(shadowsCh1Plis.at(0)));
+                m_MainControlWidget->m_resultWidget->shad2Ch1->setText("   Спад: " + QString::number(shadowsCh1Plis.at(1)));
             }
             if(tempPLISextremums2.size()==4){
                 shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
-                m_MainControlWidget->m_resultWidget->shad1Ch2->setText("   Тень1: " + QString::number(shadowsCh2Plis.at(0)));
-                m_MainControlWidget->m_resultWidget->shad2Ch2->setText("   Тень2: " + QString::number(shadowsCh2Plis.at(1)));
+                m_MainControlWidget->m_resultWidget->shad1Ch2->setText("   Фронт: " + QString::number(shadowsCh2Plis.at(0)));
+                m_MainControlWidget->m_resultWidget->shad2Ch2->setText("   Спад: " + QString::number(shadowsCh2Plis.at(1)));
             }
             if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
-                m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр ПЛИС: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
+                m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
                 m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2),'f',0) + ", " + QString::number(diameterPlis.at(3),'f',0));
-                m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус1: " + QString::number(diameterPlis.at(0)));
-                m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус2: " + QString::number(diameterPlis.at(1)));
+                m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус X: " + QString::number(diameterPlis.at(0)));
+                m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус Y: " + QString::number(diameterPlis.at(1)));
                 m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
                 m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
             }
@@ -848,7 +865,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         break;
 
 
-      //Получили данные с диаметром
+      //Получили много экстремумов, по которым рассчитываем диаметры
      case REQUEST_DIAMETER:
         if(value!=0){
             m_console->putData(" :RECIEVED ANSWER_DIAMETER\n\n");
@@ -860,7 +877,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             shadowsFromMCU.clear();
             for(int i=0; i<bytes.size();i+=2){
                 int num = static_cast<unsigned char>(bytes.at(i)) + static_cast<unsigned char>(bytes.at(i+1))*256;
-                shadowsFromMCU.append(num);//Front,Spad1,Front2,Spad2
+                shadowsFromMCU.append(num);//Front1,Spad1,Front2,Spad2
             }
 
             for(int i = 0;i<shadowsFromMCU.size();i+=4){
@@ -1005,8 +1022,8 @@ void MainWindow::selectShot(){
                 xDots.append(dots.at(i).at(0));
             }
             shadowsCh1 = filter->shadowFind(xDots);                                                 //Поиск теней
-            m_MainControlWidget->m_resultWidget->leftShadow1Label->setText("   Лев. тень: " +QString::number(shadowsCh1.at(0)));
-            m_MainControlWidget->m_resultWidget->rightShadow1Label->setText("   Прав. тень: " +QString::number(shadowsCh1.at(1)));
+            m_MainControlWidget->m_resultWidget->leftShadow1Label->setText("   Фронт(внутр): " +QString::number(shadowsCh1.at(0)));
+            m_MainControlWidget->m_resultWidget->rightShadow1Label->setText("   Спад(внутр): " +QString::number(shadowsCh1.at(1)));
             viewer->addLines(shadowsCh1,1,2);
         }
 
@@ -1033,15 +1050,15 @@ void MainWindow::selectShot(){
             }
             shadowsCh2 = filter->shadowFind(xDots);
             viewer->addLines(shadowsCh2,2,2);
-            m_MainControlWidget->m_resultWidget->leftShadow2Label->setText("   Лев. тень: " + QString::number(shadowsCh2.at(0)));
-            m_MainControlWidget->m_resultWidget->rightShadow2Label->setText("   Прав. тень: " + QString::number(shadowsCh2.at(1)));
+            m_MainControlWidget->m_resultWidget->leftShadow2Label->setText("   Фронт(внутр): " + QString::number(shadowsCh2.at(0)));
+            m_MainControlWidget->m_resultWidget->rightShadow2Label->setText("   Спад(внутр): " + QString::number(shadowsCh2.at(1)));
 
         }
         viewer->replotGraphs(ShotViewer::AllCH);
         //Расчет диаметра
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-            m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр: " +QString::number(diameter.at(0) + diameter.at(1)));
+            m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр(внутр): " +QString::number(diameter.at(0) + diameter.at(1)));
             m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameter.at(2)/1000,diameter.at(3)/1000);
             m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameter.at(0)/1000,diameter.at(1)/1000);
             m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(2)) + ", " + QString::number(diameter.at(3)));
@@ -1251,7 +1268,7 @@ void MainWindow::addDataToGraph(){
     furie(&yr2,&ySpectr2,&yFurieFiltered2,m_furieLimit);
 
     double freqX = 0;
-    double delta = 926.0/yr1.size();
+    double delta = 926.0/yr1.size(); //926 - частота генерации диаметров
 
     for (int i=0;i <ySpectr1.size();i++){
         freqX+=delta;

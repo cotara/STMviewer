@@ -20,12 +20,11 @@ public:
     QVector<double> shadowFind(QVector<unsigned int> dots);
     QVector<double> diameterFind(QVector<double> shadowsCh1,QVector<double> shadowsCh2);
     void updateSettings(QVector<double>& s);
-    //double freqCalc(QList<double> dots,int len);
     QVector <double> medianFilterX(QVector<double> data, int window, int average, int limit);
     double median_filter_x(double datum, int window);
     QVector <double> medianFilterY(QVector<double> data, int window, int average, int limit);
     double median_filter_y(double datum, int window);
-
+    void setResolution(double resolution);
 private:
     QFile *file;
     double koefs[201];
@@ -33,9 +32,9 @@ private:
     int offset=0;
     //Константы для поиска тени по экстремумам:
     const double p1=2.51087470;
-    const double res=4;
     const double la=0.905;
 
+    double res=4;
     //Геометрические параметры, мкм
     double Nx=5320;
     double Ny=5320;

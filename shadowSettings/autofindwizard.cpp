@@ -193,12 +193,12 @@ void AutoFindWizard::autoFindAlg()
     initCy *= (100-ui->CyRange->value())/100.0;
 
     //Рассчитываем шаг перебора (1%)
-    dNx = m_params.at(1)/100;
-    dNy = m_params.at(2)/100;
-    dHx = m_params.at(3)/100;
-    dHy = m_params.at(4)/100;
-    dCx = m_params.at(5)/100;
-    dCy = m_params.at(6)/100;
+    dNx = m_params.at(0)/100;
+    dNy = m_params.at(1)/100;
+    dHx = m_params.at(2)/100;
+    dHy = m_params.at(3)/100;
+    dCx = m_params.at(4)/100;
+    dCy = m_params.at(5)/100;
     double err=0,bestErr=99999;
     steps = (ui->NxRange->value()*2+1)* (ui->NyRange->value()*2+1)*(ui->HxRange->value()*2+1)*
             (ui->HyRange->value()*2+1)* (ui->CxRange->value()*2+1)*(ui->CxRange->value()*2+1);

@@ -188,6 +188,7 @@ private:
 
    const QVector<double> ldm20Params = {5320,5320,207400,207400,73400,73400};
    const QVector<double> ldm50Params = {3750,3750,283500,283500,56400,56400};
+   const double ldm20Res = 4, ldm50Res = 17.522;
    int ldmModel = 20;
    QVector<double> ldmGeomParams = ldm20Params;
 

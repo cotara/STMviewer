@@ -564,3 +564,7 @@ double firFilter::median_filter_y(double datum, int window){
  }
  return median->value;
 }
+
+void firFilter::setResolution(double resolution){
+    res = resolution;
+}

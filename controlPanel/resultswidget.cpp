@@ -6,14 +6,14 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     layout = new QVBoxLayout(this);
     setTitle("Результаты расчетов");
     //Результат
-    diametrLabel = new QLabel("Диаметр: ");
+    diametrLabel = new QLabel("Диаметр(внутр): -");
     diametrLabel->setObjectName("BigLabel");
-    diametrPlisLabel = new QLabel("Диаметр ПЛИС: -");
+    diametrPlisLabel = new QLabel("Диаметр: -");
     diametrPlisLabel->setObjectName("BigLabel");
-    leftShadow1Label = new QLabel("   Лев.тень: -");
-    rightShadow1Label = new QLabel("   Прав.тень: -");
-    leftShadow2Label = new QLabel("   Лев.тень: -");
-    rightShadow2Label = new QLabel("   Прав.тень: -");
+    leftShadow1Label = new QLabel("   Фронт(внутр): -");
+    rightShadow1Label = new QLabel("   Спад(внутр): -");
+    leftShadow2Label = new QLabel("   Фронт(внутр): -");
+    rightShadow2Label = new QLabel("   Спад(внутр): -");
     m_centerViewer = new centerViewer(this,20);
     centerPositionLabel = new QLabel("Смещение: -");
 
@@ -26,12 +26,12 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     extr3Ch2 = new QLabel("   Экстр3: -");
     extr4Ch2 = new QLabel("   Экстр4: -");
 
-    shad1Ch1 = new QLabel("   Тень1: -");
-    shad2Ch1 = new QLabel("   Тень2: -");
-    shad1Ch2 = new QLabel("   Тень1: -");
-    shad2Ch2 = new QLabel("   Тень2: -");
-    radius1 = new QLabel("   Радиус1: -");
-    radius2 = new QLabel("   Радиус2: -");
+    shad1Ch1 = new QLabel("   Фронт: -");
+    shad2Ch1 = new QLabel("   Спад: -");
+    shad1Ch2 = new QLabel("   Фронт: -");
+    shad2Ch2 = new QLabel("   Спад: -");
+    radius1 = new QLabel("   Радиус Х: -");
+    radius2 = new QLabel("   Радиус Y: -");
     ch1ShadowsLabel = new QLabel("Канал 1:");
     ch2ShadowsLabel = new QLabel("Канал 2:");
 

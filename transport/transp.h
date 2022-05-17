@@ -22,6 +22,7 @@ signals:
     void answerReceive(QByteArray &bytes);
     void transpError();
     void reSentInc();
+    void serialNotOpened();
 
 private:
     Slip *m_slip;
@@ -37,7 +38,7 @@ private:
 private slots:
     void slipPacketReceive(QByteArray &bytes);
     void timeoutHandler();
-    void slipSerialButtonDisconnected();
+    void serialClosed();
 };
 
 #endif // TRANSP_H

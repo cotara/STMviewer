@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>466</width>
-    <height>360</height>
+    <width>504</width>
+    <height>311</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -266,6 +266,12 @@
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QLabel" name="label_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Значения в памяти МК</string>
            </property>
@@ -273,6 +279,11 @@
          </item>
          <item>
           <widget class="QLabel" name="NxMKLabel">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -280,6 +291,11 @@
          </item>
          <item>
           <widget class="QLabel" name="NyMKLabel">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -287,6 +303,11 @@
          </item>
          <item>
           <widget class="QLabel" name="HxMKLabel">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -294,6 +315,11 @@
          </item>
          <item>
           <widget class="QLabel" name="HyMKLabel">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -301,6 +327,11 @@
          </item>
          <item>
           <widget class="QLabel" name="CxMKLabel">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -308,6 +339,11 @@
          </item>
          <item>
           <widget class="QLabel" name="CyMKLabel">
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>0</string>
            </property>
@@ -333,14 +369,14 @@
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="QPushButton" name="sendToMKButton">
-         <property name="text">
-          <string>Отправить в МК</string>
-         </property>
-        </widget>
-       </item>
       </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="sendToMKButton">
+       <property name="text">
+        <string>Записать в EEPROM</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

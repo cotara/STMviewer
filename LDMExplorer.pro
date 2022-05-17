@@ -9,8 +9,8 @@ QT       += core gui serialport printsupport
 greaterThan(QT_MAJOR_VERSION, 5): QT += widgets
 
 
-EXTRA_QMAKE_TARGET_PRODUCT =  LDM LDMExplorer
-QMAKE_TARGET_DESCRIPTION = Клиент для настройки измерителей диаметров LDM
+EXTRA_QMAKE_TARGET_PRODUCT =  LDMExplorer
+QMAKE_TARGET_DESCRIPTION = LDMExplorer (Client for LDM tuning)
 QMAKE_TARGET_COPYRIGHT = NurRuslan
 TEMPLATE = app
 # The following define makes your compiler emit warnings if you use

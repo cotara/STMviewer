@@ -6,13 +6,12 @@
 
 Transp::Transp(Slip *slip) : m_slip(slip) {
     connect(m_slip, &Slip::packetReceive, this, &Transp::slipPacketReceive);
-    connect(m_slip, &Slip::serialPortClosed,this,&Transp::slipSerialButtonDisconnected);
-
+    connect(m_slip, &Slip::serialPortClosed,this,&Transp::serialClosed);
+    connect(m_slip, &Slip::serialPortError, this, &Transp::transpError);
     timeout = new QTimer;
     timeout->setInterval(1000);
 
     connect(timeout, &QTimer::timeout, this, &Transp::timeoutHandler);
-
 }
 
 Transp::~Transp() {
@@ -102,11 +101,10 @@ void Transp::timeoutHandler() {
     }
 }
 
-void Transp::slipSerialButtonDisconnected(){
+void Transp::serialClosed(){
    timeout->stop();
    repeatCount = 0;
    waitACK = 0;
-   qDebug() << "error: serial was closed";
 }
 
 uint16_t Transp::crc16(const QByteArray &buf, int len) {

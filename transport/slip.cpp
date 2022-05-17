@@ -27,7 +27,7 @@ Slip::Slip(QSerialPort *serial, Console *console) : serialPort(serial), slipCons
 void Slip::sendPacket(const QByteArray &bytes) {
     if (!serialPort->isOpen()) {
         emit serialPortClosed();
-        qDebug() << "serial port not open";
+        qDebug() << "Serial port not opened";
         return;
     }
     if(send_byte(END))       return;
