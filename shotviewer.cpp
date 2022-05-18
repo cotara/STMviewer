@@ -326,6 +326,18 @@ void ShotViewer::replotGraphs(int state)
     if(state & CH2)
         customPlot2->replot();
 }
+
+void ShotViewer::rescaleX(int xmin, int xmax){
+    customPlot1->xAxis->setRangeLower(xmin);
+    customPlot1->xAxis->setRangeUpper(xmax);
+    customPlot1->replot();
+
+    customPlot2->xAxis->setRangeLower(xmin);
+    customPlot2->xAxis->setRangeUpper(xmax);
+    customPlot1->replot();
+
+    signalSize = xmax;
+}
 void ShotViewer::titleDoubleClick1(QMouseEvent* event)
 {
   Q_UNUSED(event)

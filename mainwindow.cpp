@@ -772,8 +772,14 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
         filter->updateSettings(ldmGeomParams);
         switch (ldmModel){
-         case 20:  filter->setResolution(ldm20Res); break;
-         case 50:  filter->setResolution(ldm50Res); break;
+         case 20:
+            filter->setResolution(ldm20Res);
+            shiftFactor = 10;
+            break;
+         case 50:
+            filter->setResolution(ldm50Res);
+            shiftFactor = 40;
+            break;
         }
 
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
@@ -787,7 +793,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             dataReady = value;
             countAvaibleDots=value;
             signalSize = value;
-            viewer->signalSize = value;
+            viewer->rescaleX(0,signalSize);
 
             //Забираем 16 байт метаданных
             tempPLISextremums1.clear();
@@ -1008,6 +1014,8 @@ void MainWindow::selectShot(){
         }
         if(shotsCH2.contains(shotNum)){
             ch = shotsCH2[shotNum];
+            ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
+            ch.prepend(shiftFactor,0);
             viewer->addUserGraph(ch,ch.size(),2);
             viewer->addLines(tempPLISextremums1,1,1);
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},1,3);
@@ -1037,6 +1045,8 @@ void MainWindow::selectShot(){
         }
         if(shotsCH4.contains(shotNum)){
             ch = shotsCH4[shotNum];
+            ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
+            ch.prepend(shiftFactor,0);
             viewer->addUserGraph(ch,ch.size(),4);
             viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);

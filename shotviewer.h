@@ -27,7 +27,8 @@ public:
     void addLines(QVector<double> dots, int ch, int w);
     void addLines2(QVector<double> dots, int ch, int w);
     void replotGraphs(int state);
-    int signalSize = 10800;
+    void rescaleX(int xmin, int xmax);
+
 signals:
     void graph_selected(QCPGraphDataContainer &dataMap);
 
@@ -55,5 +56,6 @@ private:
         QPoint currentMousePosition;
         QCPItemText *textLabel1,*textLabel2;
         QCPItemTracer *tracer1=nullptr,*tracer2=nullptr;
+        int signalSize = 10800;
 };
 #endif // SHOTVIEWER_H
