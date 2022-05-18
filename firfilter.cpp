@@ -14,7 +14,7 @@ firFilter::firFilter(QVector<double> &s)
     file =  new QFile();
     file->setFileName("koeff.txt");
     if(!file->open(QIODevice::ReadOnly)){
-      qDebug()<<"koeff.txt сannot be opened";
+      qDebug()<<"koeff.txt cannot be opened";
       return;
     }
     QTextStream in(file);
@@ -417,13 +417,13 @@ QVector<double> firFilter::medianFilterY(QVector<double> data, int window, int a
 double firFilter::median_filter_x(double datum, int window){
  struct pair
  {
-   struct pair   *point;                              /* Pointers forming list linked in sorted order */
+   struct pair  *point;                              /* Pointers forming list linked in sorted order */
    float  value;                                   /* Values to sort */
  };
- static struct pair buffer_x[1001] = {0};               /* Buffer of nwidth pairs */
+ static struct pair buffer_x[1001] {{nullptr,0}};               /* Buffer of nwidth pairs */
  static struct pair *datpoint = buffer_x;               /* Pointer into circular buffer of data */
- static struct pair small = {nullptr, STOPPER};          /* Chain stopper */
- static struct pair big = {&small, 0};                /* Pointer to head (largest) of linked list.*/
+ static struct pair small {nullptr,0};                              /* Chain stopper */
+ static struct pair big {&small, 0};                /* Pointer to head (largest) of linked list.*/
 
  struct pair *successor;                              /* Pointer to successor of replaced data item */
  struct pair *scan;                                   /* Pointer used to scan down the sorted list */
@@ -495,7 +495,7 @@ double firFilter::median_filter_y(double datum, int window){
    struct pair   *point;                              /* Pointers forming list linked in sorted order */
    float  value;                                   /* Values to sort */
  };
- static struct pair buffer_y[1001] = {0};               /* Buffer of nwidth pairs */
+ static struct pair buffer_y[1001] = {{nullptr,0}};               /* Buffer of nwidth pairs */
  static struct pair *datpoint = buffer_y;               /* Pointer into circular buffer of data */
  static struct pair small = {nullptr, STOPPER};          /* Chain stopper */
  static struct pair big = {&small, 0};                /* Pointer to head (largest) of linked list.*/

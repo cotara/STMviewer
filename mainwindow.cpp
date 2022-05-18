@@ -849,8 +849,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
                 m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
                 m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2),'f',0) + ", " + QString::number(diameterPlis.at(3),'f',0));
-                m_MainControlWidget->m_resultWidget->radius1->setText("   Радиус X: " + QString::number(diameterPlis.at(0)));
-                m_MainControlWidget->m_resultWidget->radius2->setText("   Радиус Y: " + QString::number(diameterPlis.at(1)));
+                m_MainControlWidget->m_resultWidget->radiusPLISX->setText("   Радиус X: " + QString::number(diameterPlis.at(0)));
+                m_MainControlWidget->m_resultWidget->radiusPLISY->setText("   Радиус Y: " + QString::number(diameterPlis.at(1)));
                 m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
                 m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
             }
@@ -1058,10 +1058,12 @@ void MainWindow::selectShot(){
         //Расчет диаметра
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
+            m_MainControlWidget->m_resultWidget->diametrLabel->setText("   Радиус Х (внутр): " +QString::number(diameter.at(0)));
+            m_MainControlWidget->m_resultWidget->diametrLabel->setText("   Радиус Y (внутр):" +QString::number(diameter.at(1)));
             m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр(внутр): " +QString::number(diameter.at(0) + diameter.at(1)));
-            m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameter.at(2)/1000,diameter.at(3)/1000);
-            m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameter.at(0)/1000,diameter.at(1)/1000);
-            m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(2)) + ", " + QString::number(diameter.at(3)));
+            //m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameter.at(2)/1000,diameter.at(3)/1000);
+            //m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameter.at(0)/1000,diameter.at(1)/1000);
+            //m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(2)) + ", " + QString::number(diameter.at(3)));
         }
     }
 }
