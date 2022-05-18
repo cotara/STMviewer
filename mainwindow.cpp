@@ -147,12 +147,13 @@ MainWindow::MainWindow(QWidget *parent) :
     splitterH->addWidget(m_MainControlWidget);
     splitterH->addWidget(m_tab);
     splitterH->addWidget(m_ManagementWidget);
+    splitterH->addWidget(m_console);
     splitterH->addWidget(m_table);
     qVBoxLayout->addWidget(splitterH);
     container->setLayout(qVBoxLayout);
 
     splitterV->addWidget(container);
-    splitterV->addWidget(m_console);
+    //splitterV->addWidget(m_console);
     layoutV->addWidget(splitterV);
 
     splitterH->setStretchFactor(0,1);
@@ -212,7 +213,8 @@ MainWindow::MainWindow(QWidget *parent) :
         diametersPlot->replot();
 
         spectrePlot->yAxis->rescale();
-        spectrePlot->yAxis->setRangeLower(spectrePlot->yAxis->range().lower-10);
+        spectrePlot->xAxis->rescale();
+        spectrePlot->yAxis->setRangeLower(spectrePlot->yAxis->range().lower-5);
         spectrePlot->yAxis->setRangeUpper(spectrePlot->yAxis->range().upper+10);
         spectrePlot->replot();
     });
@@ -294,7 +296,7 @@ MainWindow::MainWindow(QWidget *parent) :
     double T = 2;                       //длительность сигнала, с
     double F = 10;                      //частота сигнала, Гц
     double F_d = 512;                   //частота дискретизации, Гц
-    double n = static_cast<int>(T * F_d);          //Количество точек
+    int n = static_cast<int>(T * F_d);          //Количество точек
     double delta=F_d/n;   //Шаг АЧХ
     //Генерируем сигнал
     QVector<std::complex<double> > dataIn,dataOut(n,0),dataBack(n,0);
@@ -583,6 +585,7 @@ void MainWindow::on_disconnect_triggered(){
     m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(false);
 
     m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setEnabled(false);
+    m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setChecked(false);
 
 }
 
@@ -742,7 +745,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     int dataReady=-1;
     QString chName;
     bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
-
+    emit infoUpdate(m_transp->getQueueCount());                          //Обновляем статус бар
     switch(cmd){
     case ASK_MCU:                                                           //Пришел ответ, mcu жив
         if (value == OK) {
@@ -760,6 +763,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         m_console->putData(" :RECIEVED ANSWER_MODEL\n\n");
         ldmModel = value;
         ShadowSettings->ldmModel = value;
+        m_MainControlWidget->m_resultWidget->m_centerViewer->setScale(ldmModel);
         for (int i = 0; i<6; i++){
             for (int j =0;j<8;j++)
                 charToDouble.ch[j] =  bytes.at(j+i*8);
@@ -774,7 +778,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
         ShadowSettings->filLabels(ldmGeomParams);
-        m_timer->start(100);
+        m_timer->start(250);
         break;
     case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
@@ -962,7 +966,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 //Обнуляем всякое
                 countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
-                emit infoUpdate(m_transp->getQueueCount());                          //Обновляем статус бар
 
                 if (notYetFlag==0){                                                     //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
                     m_console->putData("\n\n");
@@ -1058,8 +1061,8 @@ void MainWindow::selectShot(){
         //Расчет диаметра
         if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
             diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-            m_MainControlWidget->m_resultWidget->diametrLabel->setText("   Радиус Х (внутр): " +QString::number(diameter.at(0)));
-            m_MainControlWidget->m_resultWidget->diametrLabel->setText("   Радиус Y (внутр):" +QString::number(diameter.at(1)));
+            m_MainControlWidget->m_resultWidget->radiusX->setText("   Радиус Х (внутр): " + QString::number(diameter.at(0)));
+            m_MainControlWidget->m_resultWidget->radiusY->setText("   Радиус Y (внутр):" + QString::number(diameter.at(1)));
             m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр(внутр): " +QString::number(diameter.at(0) + diameter.at(1)));
             //m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameter.at(2)/1000,diameter.at(3)/1000);
             //m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameter.at(0)/1000,diameter.at(1)/1000);
@@ -1082,11 +1085,13 @@ void MainWindow::on_clearButton(){
 
 //Обработка ошибок SLIP
 void MainWindow::handlerTranspError() {
+    m_console->putData("\n Transporting Error \n");
     emit on_disconnect_triggered();                         //Отключаемся   
 }
 //Слот на сигнал от m_transp, что произошла повторная отправка
 void MainWindow::reSentInc(){
     statusBar->incReSent();
+    m_console->putData("\n Resent \n");
 }
 // Обработчик таймаута опроса состояния MCU
 void MainWindow::handlerTimer() {

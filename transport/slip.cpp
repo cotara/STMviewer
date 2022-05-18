@@ -46,7 +46,7 @@ void Slip::sendPacket(const QByteArray &bytes) {
     if(send_byte(END)) return;
 
     QByteArray temp;
-    temp.append("\n");
+    temp.append("(endPacket)\n");
     slipConsole->putData(temp);
 
 }
@@ -64,9 +64,7 @@ bool Slip::send_byte(const char &byte) {
     }
     QByteArray temp;
     temp.append(byte);
-    slipConsole->putData(temp.toHex());
-    temp = " ";
-    slipConsole->putData(temp);
+    slipConsole->putData(temp.toHex() + " ");
     return false;
 }
 
@@ -75,8 +73,13 @@ void Slip::new_rx_byte(char byte) {
     switch(byte) {
     case END:
         if (rx_buffer.size()) {
-            if(rx_buffer.size()<20){
+            slipConsole->putData("<-");
+            if(rx_buffer.size()<=20){
                 slipConsole->putData(rx_buffer.toHex());
+            }
+            else{
+                QByteArray startPart = rx_buffer.left(20);
+                slipConsole->putData(startPart.toHex() + "...");
             }
             emit packetReceive(rx_buffer);
             rx_buffer.clear();

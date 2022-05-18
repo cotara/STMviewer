@@ -41,11 +41,11 @@ void Transp::sendPacket(const QByteArray &bytes) {
     uint16_t crc = crc16(buff, length.in - 2);
     buff.append(static_cast<char>(crc & 0xFF));
     buff.append(static_cast<char>(crc >> 8));
-    sendQueue.enqueue(buff);//Добавили пакет в конец очереди для отправки
+    sendQueue.enqueue(buff);        //Добавили пакет в конец очереди для отправки
 
-    if (!waitACK) {         //Если не ожидаем ответа, то можно отправлять текущий пакет
+    if (waitACK == 0) {                 //Если не ожидаем ответа, то можно отправлять текущий пакет
         waitACK = 1;
-        m_slip->sendPacket(buff);
+        m_slip->sendPacket(sendQueue.head());
         timeout->start();
     }
 }
@@ -54,8 +54,7 @@ int Transp::getQueueCount(){
     return sendQueue.count();
 }
 
-void Transp::clearQueue()
-{
+void Transp::clearQueue(){
     sendQueue.clear();
 }
 

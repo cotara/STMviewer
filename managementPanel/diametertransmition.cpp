@@ -130,8 +130,10 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     connect(gettingDiameterButton,&QPushButton::clicked,[=](bool checked){
         if(medianFilterCheckbox->isChecked() || diemetersCheckBox->isChecked() || centersCheckBox->isChecked())
             emit getDiameterChanged(checked);
-        else
+        else{
             QMessageBox::warning(this, "Внимание!", "Не выбрано данных для вывода!",QMessageBox::Ok);
+            gettingDiameterButton->setChecked(false);
+        }
     });
     connect(reqFreqSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit reqFreqValueChanged(i); });
 

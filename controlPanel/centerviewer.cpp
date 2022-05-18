@@ -56,7 +56,7 @@ void centerViewer::paintPosition(QPainter *qp)
     QBrush brush(Qt::red,Qt::SolidPattern);
     qp->setBrush(brush);
     double mmToPixScale = widgetCenter.y()*2/m_scale;
-    QPointF rot (m_angle*mmToPixScale*(yPos-xPos),m_angle*mmToPixScale*(-xPos-yPos));
+    QPointF rot (m_angle*mmToPixScale*(yPos-xPos),-m_angle*mmToPixScale*(-xPos-yPos));
     QPointF center = static_cast<QPointF>(widgetCenter) + rot;
     //QPointF center = static_cast<QPointF>(widgetCenter) + QPointF(xPos*mmToPixScale,yPos*mmToPixScale);
     if(xRad > 0 && yRad>0){

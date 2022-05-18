@@ -11,7 +11,7 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     diametrPlisLabel = new QLabel("Диаметр: -");
     diametrPlisLabel->setObjectName("BigLabel");
     diametrFinalLabel = new QLabel("Диаметр (финал): -");
-    diametrPlisLabel->setObjectName("BigLabel");
+    diametrFinalLabel->setObjectName("BigLabel");
     leftShadow1Label = new QLabel("   Фронт(внутр): -");
     rightShadow1Label = new QLabel("   Спад(внутр): -");
     leftShadow2Label = new QLabel("   Фронт(внутр): -");
