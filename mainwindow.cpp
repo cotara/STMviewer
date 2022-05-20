@@ -612,7 +612,7 @@ void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &
     conversation_t conv;
     QByteArray data;
     char msb,lsb;
-    if(serial->isOpen()){
+     if(serial->isOpen()){
         data.append(dst);
         msb=(0&0xFF00)>>8;
         lsb=static_cast<char> (dataV.size()&0x00FF);
@@ -775,13 +775,15 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
          case 20:
             filter->setResolution(ldm20Res);
             shiftFactor = 10;
+            signalSize = 10800;
             break;
          case 50:
             filter->setResolution(ldm50Res);
             shiftFactor = 40;
+            signalSize = 7700;
             break;
         }
-
+        viewer->rescaleX(0,signalSize);
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
         ShadowSettings->filLabels(ldmGeomParams);
         m_timer->start(250);
@@ -792,8 +794,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         if (value != NO_DATA_READY) {
             dataReady = value;
             countAvaibleDots=value;
-            signalSize = value;
-            viewer->rescaleX(0,signalSize);
+            //signalSize = value;
+            //viewer->rescaleX(0,signalSize);
 
             //Забираем 16 байт метаданных
             tempPLISextremums1.clear();
@@ -864,6 +866,17 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
                 m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
             }
+
+            //32 байт финальные радиусы и центры
+            for (int i = 0; i<4; i++){
+                for (int j =0;j<8;j++)
+                    charToDouble.ch[j] =  bytes.at(j+i*8);
+                finalDiamCenters[i] = charToDouble.d;
+            }
+            m_MainControlWidget->m_resultWidget->radiusFinalX->setText("   Радиус Х (финал):  " +QString::number(finalDiamCenters.at(0)));
+            m_MainControlWidget->m_resultWidget->radiusFinalY->setText("   Радиус Y (финал):  " +QString::number(finalDiamCenters.at(1)));
+            m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("   Диаметр (финал):  " +QString::number(finalDiamCenters.at(0) + finalDiamCenters.at(1)));
+
             if(notYetFlag)                                                             //Если есть непринятые каналы
                 manualGetShotButton();                                                  //Запрашиваем шот
         }
@@ -1010,6 +1023,8 @@ void MainWindow::selectShot(){
         //Первый канал
         if(shotsCH1.contains(shotNum)){
             ch = shotsCH1[shotNum];
+            ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем  сигнал вправо на количество ячеек в зависимости от модели
+            ch.prepend(shiftFactor-10,0);
             viewer->addUserGraph(ch,ch.size(),1);
         }
         if(shotsCH2.contains(shotNum)){
@@ -1041,6 +1056,8 @@ void MainWindow::selectShot(){
         //Второй канал
         if(shotsCH3.contains(shotNum)){
             ch = shotsCH3[shotNum];
+            ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем  сигнал вправо на количество ячеек в зависимости от модели
+            ch.prepend(shiftFactor-10,0);
             viewer->addUserGraph(ch,ch.size(),3);
         }
         if(shotsCH4.contains(shotNum)){

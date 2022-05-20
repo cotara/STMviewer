@@ -147,6 +147,7 @@ private:
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
     QVector<double> diameter, diameterPlis;
+    QVector<double> finalDiamCenters{0,0,0,0};
     QVector<double> tempPLISextremums1{3735,3795,5135,5191},tempPLISextremums2{973,1035,3010,3078};
     int xWindowDiameter = 5000;
     int tableSize=100;

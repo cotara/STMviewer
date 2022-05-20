@@ -25,12 +25,12 @@ SettingsShadowsFindDialog::SettingsShadowsFindDialog(QWidget *parent) :
 
     wizard = new AutoFindWizard(this,geomParams);
     connect(wizard,&AutoFindWizard::saveBestParameters,this,&SettingsShadowsFindDialog::updateSettingsStructSlot);
-    connect(ui->NxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=]{ emit settingsChanged();});
-    connect(ui->NySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=]{ emit settingsChanged();});
-    connect(ui->HxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=]{ emit settingsChanged();});
-    connect(ui->HySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=]{ emit settingsChanged();});
-    connect(ui->CxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=]{ emit settingsChanged();});
-    connect(ui->CySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=]{ emit settingsChanged();});
+    connect(ui->NxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){geomParams[0] = i; emit settingsChanged();});
+    connect(ui->NySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){geomParams[1] = i; emit settingsChanged();});
+    connect(ui->HxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){geomParams[2] = i; emit settingsChanged();});
+    connect(ui->HySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){geomParams[3] = i; emit settingsChanged();});
+    connect(ui->CxSpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){geomParams[4] = i; emit settingsChanged();});
+    connect(ui->CySpinBox,QOverload<double>::of(&QDoubleSpinBox::valueChanged), [=](double i){geomParams[5] = i; emit settingsChanged();});
 
     connect(wizard,&AutoFindWizard::sendBestParameters,this,&SettingsShadowsFindDialog::sendSettingsToMK);
     connect(ui->sendToMKButton,&QPushButton::clicked,this,&SettingsShadowsFindDialog::sendSettingsToMK);
