@@ -13,14 +13,11 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
 
     lazerLayout->addLayout(lazer1SettingLayout);
     lazerLayout->addLayout(lazer2SettingLayout);
-    lazer1Button = new AsynchronButton(this,10,50);
-    lazer2Button = new AsynchronButton(this,10,50);
-    lazer1Label = new QLabel("Лазер 1:");
-    lazer2Label = new QLabel("Лазер 2:");
+    lazer1Button = new AsynchronButton(this,40,210);
+    lazer2Button = new AsynchronButton(this,40,210);
+    lazer1Label = new QLabel("Лазер 1,нс");
+    lazer2Label = new QLabel("Лазер 2,нс");
     saveButton = new QPushButton("Сохранить");
-
-    emit lazer1Send(40);
-    emit lazer2Send(40);
 
     lazer1SettingLayout->addWidget(lazer1Label);
     lazer1SettingLayout->addWidget(lazer1Button);
@@ -33,9 +30,9 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     //saveButton->setEnabled(false);
 
     connect(lazer1Button, &AsynchronButton::sendValue,
-          [=](int i){emit lazer1Send(i); });
+          [=](int i){emit lazer1Send(static_cast<int>(i/nsTotugr + 0.5)); });
     connect(lazer2Button, &AsynchronButton::sendValue,
-          [=](int i){emit lazer2Send(i); });
+          [=](int i){emit lazer2Send(static_cast<int>(i/nsTotugr + 0.5)); });
 
 
 
@@ -66,10 +63,10 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     compCH2Button->setText(QString::number(0));
 
 
-    borderLeftLabel = new QLabel("Л.Гр.:");
-    borderRightLabel = new QLabel("П.Гр.:");
-    compCH1Label = new QLabel("Ур.К1:");
-    compCH2Label = new QLabel("Ур.К2:");
+    borderLeftLabel = new QLabel("Л.Гр.");
+    borderRightLabel = new QLabel("П.Гр.");
+    compCH1Label = new QLabel("Ур.К1");
+    compCH2Label = new QLabel("Ур.К2");
     borderLeftLabel->setAlignment(Qt::AlignCenter);
     borderRightLabel->setAlignment(Qt::AlignCenter);
     compCH1Label->setAlignment(Qt::AlignCenter);

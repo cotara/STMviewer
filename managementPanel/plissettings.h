@@ -24,6 +24,8 @@ public:
     AsynchronButton *borderLeftButton, *borderRightButton, *compCH1Button, *compCH2Button;
     QPushButton *saveButton;
     EnterValueWidget *borderLeftWidget,*borderRightWidget,*compCH1Widget,*compCH2Widget;
+    const double nsTotugr = 25.0/6;
+
 signals:
     void lazer1Send(int i);
     void lazer2Send(int i);
@@ -32,6 +34,8 @@ signals:
     void sendBorderRight(int i);
     void sendCompCH1(int i);
     void sendCompCH2(int i);
+
+
 
 };
 

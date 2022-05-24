@@ -823,11 +823,11 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             charToShort.ch[0] = bytes.at(4);
             charToShort.ch[1] = bytes.at(5);
-            m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(charToShort.sh));
+            m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(static_cast<int>(m_ManagementWidget->m_plisSettings->nsTotugr*charToShort.sh + 0.5)));
 
             charToShort.ch[0] = bytes.at(6);
             charToShort.ch[1] = bytes.at(7);
-            m_ManagementWidget->m_plisSettings->lazer2Button->setText(QString::number(charToShort.sh));
+            m_ManagementWidget->m_plisSettings->lazer2Button->setText(QString::number(static_cast<int>(m_ManagementWidget->m_plisSettings->nsTotugr*charToShort.sh + 0.5)));
 
             charToShort.ch[0] = bytes.at(8);
             charToShort.ch[1] = bytes.at(9);
