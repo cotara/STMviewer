@@ -34,20 +34,10 @@
     </widget>
    </item>
    <item row="0" column="0">
-    <widget class="QSpinBox" name="spinBox">
-     <property name="focusPolicy">
-      <enum>Qt::WheelFocus</enum>
-     </property>
-     <property name="maximum">
-      <number>255</number>
-     </property>
-    </widget>
+    <widget class="QSpinBox" name="spinBox"/>
    </item>
   </layout>
  </widget>
- <tabstops>
-  <tabstop>spinBox</tabstop>
- </tabstops>
  <resources/>
  <connections>
   <connection>

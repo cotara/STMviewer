@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowTitle("LDMExplorer");
     ui->disconnect->setEnabled(false);
 
     settings_ptr = new SerialSettings(this);
@@ -161,14 +162,14 @@ MainWindow::MainWindow(QWidget *parent) :
     splitterH->setStretchFactor(2,2);
 
     //Коннекты от Настроек ПЛИС
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,[=](int i){sendByteToMK(LAZER1_SET, static_cast<char>(i),"Set Lazer1 Setting: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,[=](int i){sendByteToMK(LAZER2_SET, static_cast<char>(i),"Set Lazer2 Setting: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,[=](int i){sendByteToMK(LAZER1_SET,i,"Set Lazer1 Setting: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,[=](int i){sendByteToMK(LAZER2_SET, i,"Set Lazer2 Setting: ");});
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::saveSend,[=]{sendByteToMK(LAZERS_SAVE, 0,"Save lazer's parameters to EEPROM: ");});//?? проверить работу
 
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderLeft,[=](int i){sendByteToMK(LEFT_BORDER_SET, static_cast<char>(i),"Set left border: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderRight,[=](int i){sendByteToMK(RIGHT_BORDER_SET, static_cast<char>(i),"Set right border: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH1,[=](int i){sendByteToMK(COMP_CH1_SET, static_cast<char>(i),"Set comp level CH1: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,[=](int i){sendByteToMK(COMP_CH2_SET, static_cast<char>(i),"Set comp level CH2: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderLeft,[=](int i){sendByteToMK(LEFT_BORDER_SET, i,"Set left border: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderRight,[=](int i){sendByteToMK(RIGHT_BORDER_SET, i,"Set right border: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH1,[=](int i){sendByteToMK(COMP_CH1_SET, i,"Set comp level CH1: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,[=](int i){sendByteToMK(COMP_CH2_SET, i,"Set comp level CH2: ");});
 
     //Коннекты от параметров передачи
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,[=](int n) {packetSize=n;});
@@ -278,7 +279,7 @@ MainWindow::MainWindow(QWidget *parent) :
    connect(ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);//Обновляем настройки в фильтре
    connect(ShadowSettings, &SettingsShadowsFindDialog::sendSettingsToMK,[=]{
        sendVectorToMK(NEWSHADFINDPAR,ShadowSettings->getShadowFindSettings(),"Новые параметры поиска диаметра отправлены в МК: ");//Засылаем настройки в МК
-       sendByteToMK(REQUEST_MODEL,0,"SEND REQUEST_MODEL: ");                //Запрашиваем геометрические параметры
+       sendByteToMK(REQUEST_MODEL,0,"\nSEND REQUEST_MODEL: ");                //Запрашиваем геометрические параметры
    });
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
@@ -454,7 +455,7 @@ void MainWindow::toDeveloperMode()
         //Считаем CRC по 6 байтам
         int crc = 0xFFFF;
         for (int pos = 0; pos < 6; pos++) {
-            crc ^= (int) command[pos] & 0xFF;
+            crc ^= command[pos] & 0xFF;
 
             for (int i = 8; i != 0; i--) {
                 if ((crc & 0x0001) != 0) {
@@ -530,7 +531,7 @@ void MainWindow::on_connect_triggered()
         m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setEnabled(true);
 
         //Запрашиваем модель
-        sendByteToMK(REQUEST_MODEL,0,"SEND REQUEST_MODEL: ");
+        sendByteToMK(REQUEST_MODEL,0,"\nSEND REQUEST_MODEL: ");
 
     }
     else{
@@ -595,8 +596,8 @@ void MainWindow::sendByteToMK(char dst, int dataByte, const QString &msg)
     char msb,lsb;
     if(serial->isOpen()){
         data.append(dst);
-        msb=(dataByte&0xFF00)>>8;
-        lsb=static_cast<char> (dataByte&0x00FF);
+        msb= static_cast< char>((dataByte&0xFF00)>>8);
+        lsb= static_cast< char>(dataByte&0x00FF);
         data.append(msb);
         data.append(lsb);
         m_console->putData(msg.toUtf8());
@@ -750,17 +751,17 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     case ASK_MCU:                                                           //Пришел ответ, mcu жив
         if (value == OK) {
             m_online = true;
-            m_console->putData(" :RECIEVED ANSWER_MCU\n\n");
+            m_console->putData(" :RECIEVED ANSWER_MCU\n");
             emit statusUpdate(m_online);
         }
         else{
             statusBar->setMessageBar("Error: Wrong ASK_MCU ansver message!");
-            m_console->putData("Error: Wrong ASK_MCU ansver message!\n\n");
+            m_console->putData("Error: Wrong ASK_MCU ansver message!\n");
         }
         break;
 
     case REQUEST_MODEL:
-        m_console->putData(" :RECIEVED ANSWER_MODEL\n\n");
+        m_console->putData(" :RECIEVED ANSWER_MODEL\n");
         ldmModel = value;
         ShadowSettings->ldmModel = value;
         m_MainControlWidget->m_resultWidget->m_centerViewer->setScale(ldmModel);
@@ -769,7 +770,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 charToDouble.ch[j] =  bytes.at(j+i*8);
             ldmGeomParams[i] = charToDouble.d;
         }
-
+        setWindowTitle("LDMExplorer (LDM" + QString::number(value) + ")");
         filter->updateSettings(ldmGeomParams);
         switch (ldmModel){
          case 20:
@@ -789,7 +790,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         m_timer->start(250);
         break;
     case REQUEST_STATUS:                                                                //Пришло количество точек
-        m_console->putData(" :RECIEVED ANSWER_STATUS\n\n");
+        m_console->putData(" :RECIEVED ANSWER_STATUS\n");
         m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
         if (value != NO_DATA_READY) {
             dataReady = value;
@@ -824,10 +825,12 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             charToShort.ch[0] = bytes.at(4);
             charToShort.ch[1] = bytes.at(5);
             m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(static_cast<int>(m_ManagementWidget->m_plisSettings->nsTotugr*charToShort.sh + 0.5)));
+            //m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(charToShort.sh));
 
             charToShort.ch[0] = bytes.at(6);
             charToShort.ch[1] = bytes.at(7);
             m_ManagementWidget->m_plisSettings->lazer2Button->setText(QString::number(static_cast<int>(m_ManagementWidget->m_plisSettings->nsTotugr*charToShort.sh + 0.5)));
+            //m_ManagementWidget->m_plisSettings->lazer2Button->setText(QString::number(charToShort.sh));
 
             charToShort.ch[0] = bytes.at(8);
             charToShort.ch[1] = bytes.at(9);
@@ -859,12 +862,22 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             }
             if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
-                m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
-                m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2),'f',0) + ", " + QString::number(diameterPlis.at(3),'f',0));
-                m_MainControlWidget->m_resultWidget->radiusPLISX->setText("   Радиус X: " + QString::number(diameterPlis.at(0)));
-                m_MainControlWidget->m_resultWidget->radiusPLISY->setText("   Радиус Y: " + QString::number(diameterPlis.at(1)));
-                m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
-                m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
+                if(diameterPlis.at(0) > 0 && diameterPlis.at(1) > 0){
+                    m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
+                    m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2),'f',0) + ", " + QString::number(diameterPlis.at(3),'f',0));
+                    m_MainControlWidget->m_resultWidget->radiusPLISX->setText("   Радиус X: " + QString::number(diameterPlis.at(0)));
+                    m_MainControlWidget->m_resultWidget->radiusPLISY->setText("   Радиус Y: " + QString::number(diameterPlis.at(1)));
+                    m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
+                    m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
+                }
+                else{
+                    m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр:-");
+                    m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение:-");
+                    m_MainControlWidget->m_resultWidget->radiusPLISX->setText("Радиус X:-");
+                    m_MainControlWidget->m_resultWidget->radiusPLISY->setText("Радиус Y:-");
+                    m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(0,0);
+                    m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(0,0);
+                }
             }
 
             //32 байт финальные радиусы и центры
@@ -873,16 +886,16 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     charToDouble.ch[j] =  bytes.at(j+i*8);
                 finalDiamCenters[i] = charToDouble.d;
             }
-            m_MainControlWidget->m_resultWidget->radiusFinalX->setText("   Радиус Х (финал):  " +QString::number(finalDiamCenters.at(0)));
-            m_MainControlWidget->m_resultWidget->radiusFinalY->setText("   Радиус Y (финал):  " +QString::number(finalDiamCenters.at(1)));
-            m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("   Диаметр (финал):  " +QString::number(finalDiamCenters.at(0) + finalDiamCenters.at(1)));
+            m_MainControlWidget->m_resultWidget->radiusFinalX->setText("   Радиус Х (финал):  " +QString::number(finalDiamCenters.at(0)/2));
+            m_MainControlWidget->m_resultWidget->radiusFinalY->setText("   Радиус Y (финал):  " +QString::number(finalDiamCenters.at(1)/2));
+            m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("   Диаметр (финал):  " +QString::number(finalDiamCenters.at(0)/2 + finalDiamCenters.at(1)/2));
 
             if(notYetFlag)                                                             //Если есть непринятые каналы
                 manualGetShotButton();                                                  //Запрашиваем шот
         }
         else {
             dataReady = 0;
-            m_console->putData("Warning: MCU has no data\n\n");
+            m_console->putData("Warning: MCU has no data\n");
         }
         emit dataReadyUpdate(dataReady);
         break;
@@ -891,7 +904,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
       //Получили много экстремумов, по которым рассчитываем диаметры
      case REQUEST_DIAMETER:
         if(value!=0){
-            m_console->putData(" :RECIEVED ANSWER_DIAMETER\n\n");
+            m_console->putData(" :RECIEVED ANSWER_DIAMETER\n");
 
             r1FromMCU.clear();
             r2FromMCU.clear();
@@ -987,7 +1000,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
 
                 if (notYetFlag==0){                                                     //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
-                    m_console->putData("\n\n");
+                    m_console->putData("\n");
                     shotCountRecieved++;                                                //Увеличиваем счетчик пачек
                     m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(shotCountRecieved-1));
                     m_ManagementWidget->m_HistorySettings->shotsComboBox->setCurrentIndex(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()-1);
@@ -1002,12 +1015,12 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
         else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
             QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
-            m_console->putData("Warning: MCU has no data\n\n");
+            m_console->putData("Warning: MCU has no data\n");
             m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
         }
         else{
             statusBar->setMessageBar("Error: Wrong REQUEST_POINTS ansver message!");
-            m_console->putData("Warning: MCU has no data\n\n");
+            m_console->putData("Warning: MCU has no data\n");
             m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
         }
         break;
@@ -1091,9 +1104,9 @@ void MainWindow::selectShot(){
             m_MainControlWidget->m_resultWidget->radiusX->setText("   Радиус Х (внутр): " + QString::number(diameter.at(0)));
             m_MainControlWidget->m_resultWidget->radiusY->setText("   Радиус Y (внутр):" + QString::number(diameter.at(1)));
             m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр(внутр): " +QString::number(diameter.at(0) + diameter.at(1)));
-            //m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameter.at(2)/1000,diameter.at(3)/1000);
-            //m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameter.at(0)/1000,diameter.at(1)/1000);
-            //m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(2)) + ", " + QString::number(diameter.at(3)));
+//            m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameter.at(2)/1000,diameter.at(3)/1000);
+//            m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameter.at(0)/1000,diameter.at(1)/1000);
+//            m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(2)) + ", " + QString::number(diameter.at(3)));
         }
     }
 }
@@ -1125,7 +1138,7 @@ void MainWindow::handlerTimer() {
     emit infoUpdate(m_transp->getQueueCount());
     QByteArray data;
     if (m_online) {
-        sendByteToMK(REQUEST_STATUS,0,"SEND REQUEST_STATUS: ");
+        sendByteToMK(REQUEST_STATUS,0,"\nSEND REQUEST_STATUS: ");
         m_timer->stop();
     }
     else {
@@ -1276,7 +1289,7 @@ void MainWindow::on_action_triggered()
 // Обработчик таймаута запроса диаметра
 void MainWindow::handlerGettingDiameterTimer(){
     m_timer->stop();//Временно не запрашиваем статус
-    sendByteToMK(REQUEST_DIAMETER,0,"SEND REQUEST_DIAMETER: ");
+    sendByteToMK(REQUEST_DIAMETER,0,"\nSEND REQUEST_DIAMETER: ");
 }
 
 void MainWindow::addDataToGraph(){

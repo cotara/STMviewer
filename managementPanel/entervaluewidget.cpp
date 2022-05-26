@@ -42,6 +42,11 @@ void EnterValueWidget::on_buttonBox_accepted()
 
 void EnterValueWidget::on_buttonBox_rejected()
 {
+    setFocus();
+}
+
+void EnterValueWidget::setFocus()
+{
     ui->spinBox->setFocus();
 }
 

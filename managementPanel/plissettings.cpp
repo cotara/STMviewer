@@ -31,9 +31,10 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
 
     connect(lazer1Button, &AsynchronButton::sendValue,
           [=](int i){emit lazer1Send(static_cast<int>(i/nsTotugr + 0.5)); });
+          //[=](int i){emit lazer1Send(i);});
     connect(lazer2Button, &AsynchronButton::sendValue,
           [=](int i){emit lazer2Send(static_cast<int>(i/nsTotugr + 0.5)); });
-
+          //[=](int i){emit lazer2Send(i);});
 
 
     lazer1Button->setText(QString::number(0));
