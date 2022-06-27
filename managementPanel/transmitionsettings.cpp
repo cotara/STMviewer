@@ -16,6 +16,7 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный");
     ch4InCheckBox = new QCheckBox("Канал 2. Фильтрованный*");
 
+
     getButton = new QPushButton("Получать сигнал");
     getButton->setCheckable(true);
 
@@ -57,4 +58,7 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     getButton->setEnabled(false);
     connect(getButton,&QPushButton::clicked,this, &TransmitionSettings::getButtonClicked);
 
+    ch4InCheckBox->hide();
+    ch2InCheckBox->hide();
+    packetSizeLabel->hide();
 }

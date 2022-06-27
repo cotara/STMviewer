@@ -11,5 +11,5 @@ MainControlWidget::MainControlWidget(QWidget *parent) : QWidget(parent)
 
     layout->addWidget(m_signalErrWidget);
     layout->addWidget(m_resultWidget);
-
+    layout->addStretch(2);
 }

@@ -60,11 +60,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Левая панель
     m_MainControlWidget = new MainControlWidget(this);
-    m_MainControlWidget->setMinimumWidth(250);
+    m_MainControlWidget->setMinimumWidth(300);
 
     //Правая панель
     m_ManagementWidget = new ManagementWidget(this);
-    m_ManagementWidget->setMinimumWidth(270);
+    m_ManagementWidget->setMinimumWidth(300);
     packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
     xWindowDiameter = m_ManagementWidget->m_DiameterTransmition->xWindow->value();          //Сколько отображать точек
     m_windowSize = m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value();   //Окно медианного фильтра
@@ -138,7 +138,8 @@ MainWindow::MainWindow(QWidget *parent) :
           m_ManagementWidget->m_DiameterTransmition->setVisible(true);
         }
     });
-    emit m_tab->currentChanged(m_tab->currentIndex());
+    //ПРИНУДИТЕЛЬНО НАЖАТЬ ТАБ №1 emit m_tab->currentChanged(m_tab->currentIndex());
+
     //Разделители
     QWidget *container = new QWidget;
     QSplitter *splitterV = new QSplitter(Qt::Vertical, this);
@@ -221,46 +222,46 @@ MainWindow::MainWindow(QWidget *parent) :
     });
 
     //Тулбар
-    tableSizeSpinbox = new QSpinBox(this);
-    tableSizeLabel = new QLabel("Размер таблицы",this);
-    tableSizeSpinbox->setRange(1,1000);
-    tableSizeSpinbox->setValue(tableSize);
+//    tableSizeSpinbox = new QSpinBox(this);
+//    tableSizeLabel = new QLabel("Размер таблицы",this);
+//    tableSizeSpinbox->setRange(1,1000);
+//    tableSizeSpinbox->setValue(tableSize);
 
-    ui->mainToolBar->addWidget(tableSizeLabel);
-    ui->mainToolBar->addWidget(tableSizeSpinbox);
-    tableSizeSpinbox->setEnabled(false);
+//    ui->mainToolBar->addWidget(tableSizeLabel);
+//    ui->mainToolBar->addWidget(tableSizeSpinbox);
+//    tableSizeSpinbox->setEnabled(false);
 
     ui->ShowMainControl->setChecked(true);
     ui->ShowManagementPanel->setChecked(true);
     connect(ui->showConsole,&QAction::toggled,[=](bool i){if(i) {m_console->show(); m_console->clearAll();} else m_console->hide();});
-    connect(ui->TableShow,&QAction::toggled,[=](bool i){
-        if(i) {
-            m_table->show();
-            tableSizeSpinbox->setEnabled(true);
-        } else {
-            m_table->hide();
-            tableSizeSpinbox->setEnabled(false);
-        }
-    });
-    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
-            tableSize = val;
+//    connect(ui->TableShow,&QAction::toggled,[=](bool i){
+//        if(i) {
+//            m_table->show();
+//            tableSizeSpinbox->setEnabled(true);
+//        } else {
+//            m_table->hide();
+//            tableSizeSpinbox->setEnabled(false);
+//        }
+//    });
+//    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
+//            tableSize = val;
 
-            if(m_table->rowCount()>=tableSize){
-                for(int i=0;i<tableSize;i++)
-                     m_table->showRow(i);
-                for(int i=tableSize;i<m_table->rowCount();i++)
-                    m_table->hideRow(i);
-            }
-    });
+//            if(m_table->rowCount()>=tableSize){
+//                for(int i=0;i<tableSize;i++)
+//                     m_table->showRow(i);
+//                for(int i=tableSize;i<m_table->rowCount();i++)
+//                    m_table->hideRow(i);
+//            }
+//    });
 
     connect(ui->ShowMainControl,&QAction::toggled,[=](bool i){if(i) m_MainControlWidget->show(); else m_MainControlWidget->hide();});
     connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) m_ManagementWidget->show(); else m_ManagementWidget->hide();});
     connect(ui->AutoRange,&QAction::triggered,viewer, &ShotViewer::autoScale);
 
     //Пустой виджет, разделяющий кнопки на mainToolBar
-    QWidget* empty = new QWidget();
-    empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
-    ui->mainToolBar->insertWidget(ui->showConsole,empty);
+//    QWidget* empty = new QWidget();
+//    empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
+//    ui->mainToolBar->insertWidget(ui->showConsole,empty);
 
     //Логгирование
     log = new SaveLog(this);
@@ -281,6 +282,14 @@ MainWindow::MainWindow(QWidget *parent) :
        sendVectorToMK(NEWSHADFINDPAR,ShadowSettings->getShadowFindSettings(),"Новые параметры поиска диаметра отправлены в МК: ");//Засылаем настройки в МК
        sendByteToMK(REQUEST_MODEL,0,"\nSEND REQUEST_MODEL: ");                //Запрашиваем геометрические параметры
    });
+
+   ui->TableShow->setVisible(false);
+   ui->showConsole->setVisible(false);
+   ui->SaveLog->setVisible(false);
+   ui->action->setVisible(false);
+   ui->ShdowSet->setVisible(false);
+
+
    //Fir filter
    filter = new firFilter(ShadowSettings->getShadowFindSettings());//Инициализируем настройками из файла
 
@@ -415,7 +424,8 @@ MainWindow::MainWindow(QWidget *parent) :
     tempPlot2->replot();
 
 
-
+    m_tab->removeTab(2);
+    m_tab->removeTab(1);
 }
 
 MainWindow::~MainWindow(){

@@ -18,6 +18,7 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     rightShadow2Label = new QLabel("   Спад(внутр): -");
     m_centerViewer = new centerViewer(this,20);
     centerPositionLabel = new QLabel("Смещение: -");
+    centerPositionLabel->setObjectName("BigLabel");
 
     extr1Ch1 = new QLabel("   Экстр1: -");
     extr2Ch1 = new QLabel("   Экстр2: -");
@@ -32,12 +33,14 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     shad2Ch1 = new QLabel("   Спад: -");
     shad1Ch2 = new QLabel("   Фронт: -");
     shad2Ch2 = new QLabel("   Спад: -");
-    radiusX = new QLabel("   Радиус Х (внутр): -");
-    radiusY = new QLabel("   Радиус Y (внутр): -");
-    radiusPLISX = new QLabel("   Радиус Х: -");
-    radiusPLISY = new QLabel("   Радиус Y: -");
-    radiusFinalX = new QLabel("   Радиус Х (финал): -");
-    radiusFinalY = new QLabel("   Радиус Y (финал): -");
+    radiusX = new QLabel("Радиус Х (внутр): -");
+    radiusY = new QLabel("Радиус Y (внутр): -");
+    radiusPLISX = new QLabel("Радиус Х: -");
+    radiusPLISY = new QLabel("Радиус Y: -");
+    radiusFinalX = new QLabel("Радиус Х (финал): -");
+    radiusFinalX->setObjectName("BigLabel");
+    radiusFinalY = new QLabel("Радиус Y (финал): -");
+    radiusFinalY->setObjectName("BigLabel");
     ch1ShadowsLabel = new QLabel("Канал 1:");
     ch2ShadowsLabel = new QLabel("Канал 2:");
 
@@ -83,4 +86,31 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     layout->addWidget(m_centerViewer);
     m_centerViewer->setMinimumHeight(100);
     layout->addWidget(centerPositionLabel);
+
+
+    extr1Ch1->hide();
+    extr2Ch1->hide();
+    extr3Ch1->hide();
+    extr4Ch1->hide();
+    extr1Ch2->hide();
+    extr2Ch2->hide();
+    extr3Ch2->hide();
+    extr4Ch2->hide();
+    shad1Ch1->hide();
+    shad2Ch1->hide();
+    shad1Ch2->hide();
+    shad2Ch2->hide();
+    radiusX->hide();
+    radiusY->hide();
+    radiusPLISX->hide();
+    radiusPLISY->hide();
+    ch1ShadowsLabel->hide();
+    ch2ShadowsLabel->hide();
+    diametrLabel->hide();
+    diametrPlisLabel->hide();
+    leftShadow1Label->hide();
+    rightShadow1Label->hide();
+    leftShadow2Label->hide();
+    rightShadow2Label->hide();
+
 }
