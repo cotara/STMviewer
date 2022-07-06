@@ -1,5 +1,7 @@
 #include "maincontrolwidget.h"
 
+#include "centerviewer.h"
+
 MainControlWidget::MainControlWidget(QWidget *parent) : QWidget(parent)
 {
     setObjectName("maincontrolwidget");
@@ -11,5 +13,8 @@ MainControlWidget::MainControlWidget(QWidget *parent) : QWidget(parent)
 
     layout->addWidget(m_signalErrWidget);
     layout->addWidget(m_resultWidget);
-    layout->addStretch(2);
+    //layout->addStretch(0);
+
+    layout->setContentsMargins(0,0,0,0);
+
 }

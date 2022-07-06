@@ -144,23 +144,33 @@ MainWindow::MainWindow(QWidget *parent) :
     QWidget *container = new QWidget;
     QSplitter *splitterV = new QSplitter(Qt::Vertical, this);
     QSplitter *splitterH = new QSplitter(Qt::Horizontal, this);
+    QWidget *rightPanel = new QWidget;
     QVBoxLayout *qVBoxLayout  = new QVBoxLayout();
+    QVBoxLayout *rightPanelLayout  = new QVBoxLayout();
 
-    splitterH->addWidget(m_MainControlWidget);
     splitterH->addWidget(m_tab);
-    splitterH->addWidget(m_ManagementWidget);
+    splitterH->addWidget(rightPanel);
+    rightPanel->setLayout(rightPanelLayout);
+    rightPanelLayout->addWidget(m_ManagementWidget);
+    rightPanelLayout->addWidget(m_MainControlWidget);
+
+    //splitterH->addWidget(m_MainControlWidget);
+
+    //splitterH->addWidget(m_ManagementWidget);
+
+
     splitterH->addWidget(m_console);
     splitterH->addWidget(m_table);
     qVBoxLayout->addWidget(splitterH);
     container->setLayout(qVBoxLayout);
 
     splitterV->addWidget(container);
-    //splitterV->addWidget(m_console);
+    splitterV->addWidget(m_console);
     layoutV->addWidget(splitterV);
 
-    splitterH->setStretchFactor(0,1);
-    splitterH->setStretchFactor(1,40);
-    splitterH->setStretchFactor(2,2);
+    splitterH->setStretchFactor(0,10);
+    splitterH->setStretchFactor(1,1);
+
 
     //Коннекты от Настроек ПЛИС
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,[=](int i){sendByteToMK(LAZER1_SET,i,"Set Lazer1 Setting: ");});
@@ -233,6 +243,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->ShowMainControl->setChecked(true);
     ui->ShowManagementPanel->setChecked(true);
+
+    ui->ShowMainControl->setVisible(false);//**
     connect(ui->showConsole,&QAction::toggled,[=](bool i){if(i) {m_console->show(); m_console->clearAll();} else m_console->hide();});
 //    connect(ui->TableShow,&QAction::toggled,[=](bool i){
 //        if(i) {
@@ -254,8 +266,11 @@ MainWindow::MainWindow(QWidget *parent) :
 //            }
 //    });
 
+
     connect(ui->ShowMainControl,&QAction::toggled,[=](bool i){if(i) m_MainControlWidget->show(); else m_MainControlWidget->hide();});
-    connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) m_ManagementWidget->show(); else m_ManagementWidget->hide();});
+    connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) rightPanel->show(); else rightPanel->hide();});
+
+    //connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) m_ManagementWidget->show(); else m_ManagementWidget->hide();});
     connect(ui->AutoRange,&QAction::triggered,viewer, &ShotViewer::autoScale);
 
     //Пустой виджет, разделяющий кнопки на mainToolBar
@@ -874,7 +889,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
                 if(diameterPlis.at(0) > 0 && diameterPlis.at(1) > 0){
                     m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
-                    m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2),'f',0) + ", " + QString::number(diameterPlis.at(3),'f',0));
+                    m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2)/1000,'f',2) + ", " + QString::number(diameterPlis.at(3)/1000,'f',2) + "мм");
                     m_MainControlWidget->m_resultWidget->radiusPLISX->setText("   Радиус X: " + QString::number(diameterPlis.at(0)));
                     m_MainControlWidget->m_resultWidget->radiusPLISY->setText("   Радиус Y: " + QString::number(diameterPlis.at(1)));
                     m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
@@ -896,9 +911,9 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     charToDouble.ch[j] =  bytes.at(j+i*8);
                 finalDiamCenters[i] = charToDouble.d;
             }
-            m_MainControlWidget->m_resultWidget->radiusFinalX->setText("   Радиус Х (финал):  " +QString::number(finalDiamCenters.at(0)/2));
-            m_MainControlWidget->m_resultWidget->radiusFinalY->setText("   Радиус Y (финал):  " +QString::number(finalDiamCenters.at(1)/2));
-            m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("   Диаметр (финал):  " +QString::number(finalDiamCenters.at(0)/2 + finalDiamCenters.at(1)/2));
+            m_MainControlWidget->m_resultWidget->radiusFinalX->setText("Диаметр Х:  " +QString::number(finalDiamCenters.at(0)/1000,'f',3) + "мм");
+            m_MainControlWidget->m_resultWidget->radiusFinalY->setText("Диаметр Y:  " +QString::number(finalDiamCenters.at(1)/1000,'f',3) + "мм");
+            m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр:  " +QString::number(finalDiamCenters.at(0)/2/1000 + finalDiamCenters.at(1)/2/1000,'f',3) + "мм");
 
             if(notYetFlag)                                                             //Если есть непринятые каналы
                 manualGetShotButton();                                                  //Запрашиваем шот
@@ -1055,7 +1070,7 @@ void MainWindow::selectShot(){
             ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
             ch.prepend(shiftFactor,0);
             viewer->addUserGraph(ch,ch.size(),2);
-            viewer->addLines(tempPLISextremums1,1,1);
+            //viewer->addLines(tempPLISextremums1,1,1);
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},1,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Button->text().toInt())},1,3);
 
@@ -1088,7 +1103,7 @@ void MainWindow::selectShot(){
             ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
             ch.prepend(shiftFactor,0);
             viewer->addUserGraph(ch,ch.size(),4);
-            viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
+            //viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Button->text().toInt())},2,3);
         }

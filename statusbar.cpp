@@ -37,7 +37,9 @@ StatusBar::StatusBar(QStatusBar *statusBar)
     infoLabel->setMinimumWidth(20);
     infoLabel->setSizePolicy(QSizePolicy::Minimum,QSizePolicy::Minimum);
     infoLabel->setAlignment(Qt::AlignHCenter);
+    infoLabel->setVisible(false);
 }
+
 
 void StatusBar::setStatus(bool online) {
     if (online) {

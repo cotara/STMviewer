@@ -61,4 +61,5 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     ch4InCheckBox->hide();
     ch2InCheckBox->hide();
     packetSizeLabel->hide();
+    packetSizeSpinbox->hide();
 }

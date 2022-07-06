@@ -14,9 +14,10 @@ ManagementWidget::ManagementWidget(QWidget *parent) : QWidget(parent)
     layout->addWidget(m_HistorySettings);
     layout->addWidget(m_DiameterTransmition);
 
-    layout->addStretch(2);
+    //layout->addStretch(2);
 
     m_HistorySettings->setVisible(false);
     m_DiameterTransmition->setVisible(false);
     //setStyleSheet("background-color: #120A52;");
+    layout->setContentsMargins(0,0,0,0);
 }

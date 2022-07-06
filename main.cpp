@@ -6,8 +6,8 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     MainWindow w;
-    w.showMaximized();
-
+    //w.showMaximized();
+    w.show();
     QFontDatabase::addApplicationFont(":/fonts/Resources/Fonts/Nunito/Nunito-Light.ttf");
     QFontDatabase::addApplicationFont(":/fonts/Resources/Fonts/GranaPadano.ttf");
     QFontDatabase::addApplicationFont(":/fonts/Resources/Fonts/SF/SFUIText-Bold.ttf");

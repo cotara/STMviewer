@@ -5,6 +5,7 @@ centerViewer::centerViewer(QWidget *parent, int scale): QWidget(parent) {
     layoutV = new QVBoxLayout;
     setLayout(layoutV);
     m_scale = scale;
+    setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 }
 
 void centerViewer::setCoord(double x, double y)
@@ -29,6 +30,7 @@ void centerViewer::setScale(int scale)
 void centerViewer::paintEvent(QPaintEvent *e) {
 
   Q_UNUSED(e);
+
   widgetCenter.setX(this->size().width()/2);
   widgetCenter.setY(this->size().height()/2);
   QPainter qp(this);
@@ -40,7 +42,7 @@ void centerViewer::addCircle(QPainter *qp)
 
     qp->setPen(QPen(Qt::black, 3, Qt::SolidLine, Qt::FlatCap));
     int minDimention = qMin(widgetCenter.x(),widgetCenter.y());
-    qp->drawEllipse(widgetCenter, minDimention, minDimention);
+    qp->drawEllipse(widgetCenter, minDimention-3, minDimention-3);
     //Рисуем перекрестие
     QPoint d1(widgetCenter.x(),widgetCenter.y()+0.1*widgetCenter.y()),
            d2(widgetCenter.x(),widgetCenter.y()-0.1*widgetCenter.y()),

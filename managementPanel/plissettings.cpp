@@ -24,7 +24,7 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     lazer2SettingLayout->addWidget(lazer2Label);
     lazer2SettingLayout->addWidget(lazer2Button);
     lazerLayout->addWidget(saveButton);
-
+    lazerLayout->setAlignment(saveButton,Qt::AlignBottom);
     //lazer1Button->setEnabled(false);
     //lazer2Button->setEnabled(false);
     //saveButton->setEnabled(false);
@@ -112,4 +112,6 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     borderRightButton->setEnabled(false);
     compCH1Button->setEnabled(false);
     compCH2Button->setEnabled(false);
+
+
 }

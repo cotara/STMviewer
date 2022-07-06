@@ -18,9 +18,9 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     customPlot2->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     //Настройка CustomPlot
-    customPlot1->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    customPlot1->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
     customPlot1->axisRect()->setupFullAxesBox();
-    customPlot2->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
+    customPlot2->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
     customPlot2->axisRect()->setupFullAxesBox();
     customPlot1->plotLayout()->insertRow(0);
     QCPTextElement *title1 = new QCPTextElement(customPlot1, "Канал 1", QFont("sans", 14, QFont::Bold));

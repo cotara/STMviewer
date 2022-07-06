@@ -5,12 +5,13 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     setObjectName("resultswidget");
     layout = new QVBoxLayout(this);
     setTitle("Результаты расчетов");
+    setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     //Результат
     diametrLabel = new QLabel("Диаметр(внутр): -");
     diametrLabel->setObjectName("BigLabel");
     diametrPlisLabel = new QLabel("Диаметр: -");
     diametrPlisLabel->setObjectName("BigLabel");
-    diametrFinalLabel = new QLabel("Диаметр (финал): -");
+    diametrFinalLabel = new QLabel("Диаметр: -");
     diametrFinalLabel->setObjectName("BigLabel");
     leftShadow1Label = new QLabel("   Фронт(внутр): -");
     rightShadow1Label = new QLabel("   Спад(внутр): -");
@@ -37,9 +38,9 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     radiusY = new QLabel("Радиус Y (внутр): -");
     radiusPLISX = new QLabel("Радиус Х: -");
     radiusPLISY = new QLabel("Радиус Y: -");
-    radiusFinalX = new QLabel("Радиус Х (финал): -");
+    radiusFinalX = new QLabel("Диаметр Х: -");
     radiusFinalX->setObjectName("BigLabel");
-    radiusFinalY = new QLabel("Радиус Y (финал): -");
+    radiusFinalY = new QLabel("Диаметр Y: -");
     radiusFinalY->setObjectName("BigLabel");
     ch1ShadowsLabel = new QLabel("Канал 1:");
     ch2ShadowsLabel = new QLabel("Канал 2:");
@@ -49,6 +50,13 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     ch1ShadowsLabel->setObjectName("BigLabel");
     ch2ShadowsLabel->setObjectName("BigLabel");
 
+    layout->addWidget(m_centerViewer);
+    m_centerViewer->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    m_centerViewer->setMaximumHeight(1000);
+
+
+    //layout->addSpacing(200);
+    //layout->addSpacerItem(new QSpacerItem(0,10, QSizePolicy::Expanding, QSizePolicy::Expanding));
     layout->addWidget(ch1ShadowsLabel);
     layout->addWidget(leftShadow1Label);
     layout->addWidget(rightShadow1Label);
@@ -73,6 +81,7 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     line->setObjectName("line");
     line->setFrameShape(QFrame::HLine);
     line->setLineWidth(1);
+    line->hide();
     layout->addWidget(line);
     layout->addWidget(radiusX);
     layout->addWidget(radiusY);
@@ -83,10 +92,8 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     layout->addWidget(diametrLabel);
     layout->addWidget(diametrPlisLabel);
     layout->addWidget(diametrFinalLabel);
-    layout->addWidget(m_centerViewer);
-    m_centerViewer->setMinimumHeight(100);
-    layout->addWidget(centerPositionLabel);
 
+    layout->addWidget(centerPositionLabel);
 
     extr1Ch1->hide();
     extr2Ch1->hide();
@@ -112,5 +119,4 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     rightShadow1Label->hide();
     leftShadow2Label->hide();
     rightShadow2Label->hide();
-
 }
