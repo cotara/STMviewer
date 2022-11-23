@@ -49,7 +49,8 @@ private:
     QVector <double> NxV,NyV,HxV,HyV,CxV,CyV;
     bool dataCatched=false;//Данные на всех 9 точках собраны (могут быть невалидны)
     bool stopPressed=true;//остановка процесса подбора
-    int la=0,iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
+    int iNx=0,iNy=0,iHx=0,iHy=0,iCx=0,iCy=0;
+    double la = 0.905;
 signals:
     void setProgress(int progress);
     void saveBestParameters(QVector<double> &par);

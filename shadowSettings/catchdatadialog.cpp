@@ -39,7 +39,7 @@ void catchDataDialog::setButtonPushed(QVector <double> data, int i)
 
     if(data.size() == 9){//Если получены все экстремумы
         text+=QString::number(data.last());
-        data.pop_back();//Удаляем последний элемент
+        //data.pop_back();//Удаляем последний элемент
         if(data.at(0)<data.at(1) && data.at(1)<data.at(2) && data.at(2)<data.at(3)) //Если все экстремумы по порядку
             if(data.at(4)<data.at(5) && data.at(5)<data.at(6) && data.at(6)<data.at(7) && data.at(8)>0 ){
                 file.setFileName(":/qss/styleGreenButtons.css");                          //Красим кнопку зеленой

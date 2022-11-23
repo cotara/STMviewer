@@ -292,6 +292,7 @@ MainWindow::MainWindow(QWidget *parent) :
         temp.append(diameterPlis.at(0) + diameterPlis.at(1));
        ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
    });
+
    /*********                       ГЕНЕРИРУЕМ СИГНАЛ               **************/
 
     double T = 2;                       //длительность сигнала, с
@@ -307,7 +308,7 @@ MainWindow::MainWindow(QWidget *parent) :
      //dataIn.append(0.2* sin(2 * 3.14 * F * i/F_d)+ 2*sin(2 * 3.14 * 2*F * i/F_d));
      //dataIn.append(QRandomGenerator::global()->generateDouble());
     }
-
+/*
     // создаем план прямого преобазования фурье
     fftw_plan plan=fftw_plan_dft_1d(n, (fftw_complex*) &dataIn[0], (fftw_complex*) &dataOut[0], FFTW_FORWARD, FFTW_ESTIMATE);
     fftw_execute(plan);
@@ -413,7 +414,7 @@ MainWindow::MainWindow(QWidget *parent) :
     tempPlot2->rescaleAxes();
     tempPlot1->replot();
     tempPlot2->replot();
-
+*/
 
 
 }
