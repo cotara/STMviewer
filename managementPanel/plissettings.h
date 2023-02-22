@@ -17,14 +17,16 @@ class PlisSettings: public QGroupBox
 
 public:
     PlisSettings(QWidget *parent);
-    QVBoxLayout *layout, *lazer1SettingLayout, *lazer2SettingLayout,*borderLeftLayout,*borderRightLayout,*compCH1Layout,*compCH2Layout;
-    QHBoxLayout *lazerLayout, *borderLayout;
-    QLabel *lazer1Label, *lazer2Label, *borderLeftLabel, *borderRightLabel,*compCH1Label,*compCH2Label;;
+    QVBoxLayout *layout, *lazer1levelLayout,*lazer1averageLayout,*lazer1durationLayout, *lazer2levelLayout,*lazer2averageLayout,*lazer2durationLayout,*borderLeftLayout,*borderRightLayout,*compCH1Layout,*compCH2Layout;
+    QHBoxLayout *lazer1Layout,*lazer2Layout, *borderLayout;
+    QLabel *lazer1,*lazer2;
+    QLabel *lazer1levelLabel, *lazer1averageLabel,*lazer1durationLabel,*lazer2levelLabel, *lazer2averageLabel,*lazer2durationLabel, *borderLeftLabel, *borderRightLabel,*compCH1Label,*compCH2Label;;
+    QLabel *lazer1averageNum,*lazer1durationNum, *lazer2averageNum,*lazer2durationNum;
     AsynchronButton *lazer1Button, *lazer2Button;
     AsynchronButton *borderLeftButton, *borderRightButton, *compCH1Button, *compCH2Button;
     QPushButton *saveButton;
     EnterValueWidget *borderLeftWidget,*borderRightWidget,*compCH1Widget,*compCH2Widget;
-    const double nsTotugr = 25.0/6;
+    //const double nsTotugr = 25.0/6;
 
 signals:
     void lazer1Send(int i);

@@ -36,7 +36,11 @@ QLabel#BigLabel{
     font-family: SFUIText-Bold;
     font-size: 14px;
 }
-
+QLabel#BigBigLabel{
+    color:#003AA3;
+    font-family: SFUIText-Bold;
+    font-size: 16px;
+}
 QPushButton{
     background: white;
     color: #003AA3;

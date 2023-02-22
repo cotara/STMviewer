@@ -4,37 +4,93 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
 {
     setTitle("Настройки ПЛИС");
     setObjectName("plissettings");
-    layout = new QVBoxLayout(this);
-    lazerLayout = new QHBoxLayout();
-    //Настройки лазера
-    layout->addLayout(lazerLayout);
-    lazer1SettingLayout = new QVBoxLayout();
-    lazer2SettingLayout = new QVBoxLayout();
 
-    lazerLayout->addLayout(lazer1SettingLayout);
-    lazerLayout->addLayout(lazer2SettingLayout);
+    lazer1 = new QLabel("ЛАЗЕР 1");
+    lazer2 = new QLabel("ЛАЗЕР 2");
+    lazer1->setObjectName("BigLabel");
+    lazer2->setObjectName("BigLabel");
+
+    lazer1averageNum = new QLabel("0");
+    lazer1durationNum = new QLabel("0");
+    lazer2averageNum = new QLabel("0");
+    lazer2durationNum = new QLabel("0");
+
+    lazer1averageNum->setObjectName("BigBigLabel");
+    lazer1durationNum->setObjectName("BigBigLabel");
+    lazer2averageNum->setObjectName("BigBigLabel");
+    lazer2durationNum->setObjectName("BigBigLabel");
+
+    layout = new QVBoxLayout(this);
+    lazer1Layout = new QHBoxLayout();
+    lazer2Layout = new QHBoxLayout();
+    //Настройки лазера
+    layout->addWidget(lazer1);
+
+    layout->addLayout(lazer1Layout);
+    layout->addWidget(lazer2);
+    layout->addLayout(lazer2Layout);
+    lazer1levelLayout = new QVBoxLayout();
+    lazer1averageLayout = new QVBoxLayout();
+    lazer1durationLayout = new QVBoxLayout();
+    lazer2levelLayout = new QVBoxLayout();
+    lazer2averageLayout = new QVBoxLayout();
+    lazer2durationLayout = new QVBoxLayout();
+
+    lazer1Layout->addLayout(lazer1levelLayout);
+    lazer1Layout->addLayout(lazer1averageLayout);
+    lazer1Layout->addLayout(lazer1durationLayout);
+    lazer2Layout->addLayout(lazer2levelLayout);
+    lazer2Layout->addLayout(lazer2averageLayout);
+    lazer2Layout->addLayout(lazer2durationLayout);
+
     lazer1Button = new AsynchronButton(this,40,210);
     lazer2Button = new AsynchronButton(this,40,210);
-    lazer1Label = new QLabel("Лазер 1,нс");
-    lazer2Label = new QLabel("Лазер 2,нс");
+    lazer1levelLabel = new QLabel("Уровень");
+    lazer1averageLabel = new QLabel("Среднее");
+    lazer1durationLabel = new QLabel("Длительность");
+    lazer2levelLabel = new QLabel("Уровень");
+    lazer2averageLabel = new QLabel("Среднее");
+    lazer2durationLabel = new QLabel("Длительность");
+
+
+
     saveButton = new QPushButton("Сохранить");
 
-    lazer1SettingLayout->addWidget(lazer1Label);
-    lazer1SettingLayout->addWidget(lazer1Button);
-    lazer2SettingLayout->addWidget(lazer2Label);
-    lazer2SettingLayout->addWidget(lazer2Button);
-    lazerLayout->addWidget(saveButton);
-    lazerLayout->setAlignment(saveButton,Qt::AlignBottom);
+    lazer1levelLayout->addWidget(lazer1levelLabel);
+    lazer1levelLayout->addWidget(lazer1Button);
+    lazer1averageLayout->addWidget(lazer1averageLabel);
+    lazer1averageLayout->addWidget(lazer1averageNum);
+    lazer1durationLayout->addWidget(lazer1durationLabel);
+    lazer1durationLayout->addWidget(lazer1durationNum);
+
+    lazer2levelLayout->addWidget(lazer2levelLabel);
+    lazer2levelLayout->addWidget(lazer2Button);
+    lazer2averageLayout->addWidget(lazer2averageLabel);
+    lazer2averageLayout->addWidget(lazer2averageNum);
+    lazer2durationLayout->addWidget(lazer2durationLabel);
+    lazer2durationLayout->addWidget(lazer2durationNum);
+
+
+
+    lazer1averageLabel->setAlignment(Qt::AlignCenter);
+    lazer1averageNum->setAlignment(Qt::AlignCenter);
+    lazer1durationLabel->setAlignment(Qt::AlignCenter);
+    lazer1durationNum->setAlignment(Qt::AlignCenter);
+    lazer2averageLabel->setAlignment(Qt::AlignCenter);
+    lazer2averageNum->setAlignment(Qt::AlignCenter);
+    lazer2durationLabel->setAlignment(Qt::AlignCenter);
+    lazer2durationNum->setAlignment(Qt::AlignCenter);
+
+    //lazerLayout->setAlignment(saveButton,Qt::AlignBottom);
+
     //lazer1Button->setEnabled(false);
     //lazer2Button->setEnabled(false);
     //saveButton->setEnabled(false);
 
     connect(lazer1Button, &AsynchronButton::sendValue,
-          [=](int i){emit lazer1Send(static_cast<int>(i/nsTotugr + 0.5)); });
-          //[=](int i){emit lazer1Send(i);});
+          [=](int i){emit lazer1Send(i);});
     connect(lazer2Button, &AsynchronButton::sendValue,
-          [=](int i){emit lazer2Send(static_cast<int>(i/nsTotugr + 0.5)); });
-          //[=](int i){emit lazer2Send(i);});
+          [=](int i){emit lazer2Send(i);});
 
 
     lazer1Button->setText(QString::number(0));
@@ -91,6 +147,8 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     connect(compCH2Button, &AsynchronButton::sendValue,
           [=](int i){emit sendCompCH2(i); });
 
+
+    layout->addWidget(saveButton);
 
     connect(saveButton,&QPushButton::clicked,[=]{
         emit saveSend();
