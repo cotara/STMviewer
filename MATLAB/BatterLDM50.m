@@ -58,7 +58,7 @@ a=int32(a1*(2^24));
 ah = dec2hex(a);
 bh = dec2hex(b);
 y=filter(b,a,ch1(:,1)); 
-
+fir1
 for i=10:length(y)
     y(i-9)=y(i);
 end

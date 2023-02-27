@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui serialport printsupport
-
+QMAKE_LFLAGS = -static -static-libgcc
 greaterThan(QT_MAJOR_VERSION, 5): QT += widgets
 
 
@@ -74,5 +74,7 @@ LIBS += -fopenmp
 #LIBS += -lgomp -lpthread
 
 
-#INCLUDEPATH += "c:\fftw"
+INCLUDEPATH += "c:\fftw"
 LIBS += "$$PWD/libfftw3-3.dll"
+
+

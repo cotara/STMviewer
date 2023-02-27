@@ -914,6 +914,14 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_MainControlWidget->m_resultWidget->radiusFinalY->setText("Диаметр Y:  " +QString::number(finalDiamCenters.at(1)/1000,'f',3) + "мм");
             m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр:  " +QString::number(finalDiamCenters.at(0)/2/1000 + finalDiamCenters.at(1)/2/1000,'f',3) + "мм");
 
+            bytes.remove(0, 32);
+
+            m_ManagementWidget->m_plisSettings->lazer1averageNum->setText(QString::number(bytes.at(0)));
+            m_ManagementWidget->m_plisSettings->lazer1durationNum->setText(QString::number(bytes.at(1)));
+            m_ManagementWidget->m_plisSettings->lazer2averageNum->setText(QString::number(bytes.at(2)));
+            m_ManagementWidget->m_plisSettings->lazer2durationNum->setText(QString::number(bytes.at(3)));
+
+
             if(notYetFlag)                                                             //Если есть непринятые каналы
                 manualGetShotButton();                                                  //Запрашиваем шот
         }
