@@ -916,10 +916,18 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
             bytes.remove(0, 32);
 
-            m_ManagementWidget->m_plisSettings->lazer1averageNum->setText(QString::number(bytes.at(0)));
-            m_ManagementWidget->m_plisSettings->lazer1durationNum->setText(QString::number(bytes.at(1)));
-            m_ManagementWidget->m_plisSettings->lazer2averageNum->setText(QString::number(bytes.at(2)));
-            m_ManagementWidget->m_plisSettings->lazer2durationNum->setText(QString::number(bytes.at(3)));
+            charToShort.ch[0] = bytes.at(0);
+            charToShort.ch[1] = bytes.at(1);
+            m_ManagementWidget->m_plisSettings->lazer1averageNum->setText(QString::number(charToShort.sh));
+            charToShort.ch[0] = bytes.at(2);
+            charToShort.ch[1] = bytes.at(3);
+            m_ManagementWidget->m_plisSettings->lazer1durationNum->setText(QString::number(charToShort.sh));
+            charToShort.ch[0] = bytes.at(4);
+            charToShort.ch[1] = bytes.at(5);
+            m_ManagementWidget->m_plisSettings->lazer2averageNum->setText(QString::number(charToShort.sh));
+            charToShort.ch[0] = bytes.at(6);
+            charToShort.ch[1] = bytes.at(7);
+            m_ManagementWidget->m_plisSettings->lazer2durationNum->setText(QString::number(charToShort.sh));
 
 
             if(notYetFlag)                                                             //Если есть непринятые каналы
