@@ -787,15 +787,15 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
     case REQUEST_MODEL:
         m_console->putData(" :RECIEVED ANSWER_MODEL\n");
-        ldmModel = value;
-        ShadowSettings->ldmModel = value;
+        ldmModel = value & 0xFF;
+        ShadowSettings->ldmModel = ldmModel;
         m_MainControlWidget->m_resultWidget->m_centerViewer->setScale(ldmModel);
         for (int i = 0; i<6; i++){
             for (int j =0;j<8;j++)
                 charToDouble.ch[j] =  bytes.at(j+i*8);
             ldmGeomParams[i] = charToDouble.d;
         }
-        setWindowTitle("LDMExplorer (LDM" + QString::number(value) + ")");
+        setWindowTitle("LDMExplorer (LDM" + QString::number(ldmModel) + ")");
         filter->updateSettings(ldmGeomParams);
         switch (ldmModel){
          case 20:

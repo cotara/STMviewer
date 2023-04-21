@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui serialport printsupport
-QMAKE_LFLAGS = -static -static-libgcc
+#QMAKE_LFLAGS = -static -static-libgcc
 greaterThan(QT_MAJOR_VERSION, 5): QT += widgets
 
 
