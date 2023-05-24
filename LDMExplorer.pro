@@ -74,7 +74,6 @@ LIBS += -fopenmp
 #LIBS += -lgomp -lpthread
 
 
-INCLUDEPATH += "c:\fftw"
+#INCLUDEPATH += "c:\fftw"
 LIBS += "$$PWD/libfftw3-3.dll"
-
 
