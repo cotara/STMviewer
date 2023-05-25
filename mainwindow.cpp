@@ -808,6 +808,11 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             shiftFactor = 40;
             signalSize = 7700;
             break;
+        case 120:
+           filter->setResolution(ldm50Res);
+           shiftFactor = 0;
+           signalSize = 10800;
+           break;
         }
         viewer->rescaleX(0,signalSize);
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
