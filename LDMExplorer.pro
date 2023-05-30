@@ -28,6 +28,7 @@ CONFIG += c++11
 
 
 SOURCES += \
+    connectedstate.cpp \
     console.cpp \
     firfilter.cpp \
     main.cpp \
@@ -38,6 +39,7 @@ SOURCES += \
     statusbar.cpp \
 
 HEADERS += \
+    connectedstate.h \
     console.h \
     fftw3.h \
     firfilter.h \
@@ -49,6 +51,7 @@ HEADERS += \
     types.h \
 
 FORMS += \
+    connectedstate.ui \
         mainwindow.ui \
         savelog.ui \
 
