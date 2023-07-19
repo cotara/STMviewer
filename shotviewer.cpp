@@ -478,6 +478,7 @@ void ShotViewer::mousePress1(QMouseEvent* ){
   if (!customPlot1->selectedGraphs().isEmpty()){
       customPlot1->deselectAll();
       tracer1->setVisible(false);
+      customPlot1->replot();
   }
 }
 void ShotViewer::mousePress2(QMouseEvent* ){
@@ -510,8 +511,9 @@ void ShotViewer::mousePress2(QMouseEvent* ){
          customPlot2->yAxis->setRangeUpper(260);
   }
   if (!customPlot2->selectedGraphs().isEmpty()){
-      customPlot2->deselectAll();
+      customPlot2->deselectAll();      
       tracer2->setVisible(false);
+      customPlot2->replot();
   }
 }
 void ShotViewer::mouseWheel1(){
@@ -608,6 +610,7 @@ void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QM
         tracer1->setSize(7);
     }
     tracer1->setGraph(customPlot1->selectedGraphs().first());
+    tracer1->setVisible(true);
     //int y = plottable->interface1D()->dataMainValue(dataIndex);
     //QToolTip::showText(currentMousePosition,QString("%1 , %2").arg(dataIndex).arg(y));
     int coordX = customPlot1->xAxis->pixelToCoord(event->pos().x());
@@ -648,7 +651,7 @@ void ShotViewer::graphClicked2(QCPAbstractPlottable *, int ,QMouseEvent* event){
         tracer2->setSize(7);
     }
     tracer2->setGraph(customPlot2->selectedGraphs().first());
-
+    tracer2->setVisible(true);
     int coordX = customPlot2->xAxis->pixelToCoord(event->pos().x());
     tracer2->setGraphKey(coordX);
     tracer2->updatePosition();
