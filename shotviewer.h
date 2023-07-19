@@ -18,6 +18,7 @@ public:
         AllCH = CH1 | CH2
     };
     explicit ShotViewer(QWidget *parent = nullptr);
+    ~ShotViewer();
     void showGraphs(int);
     void clearGraphs(int);
     void autoScale();
@@ -54,6 +55,7 @@ private:
         QVBoxLayout *layoutV;
         QCustomPlot *customPlot1, *customPlot2;
         QPoint currentMousePosition;
+        QCPTextElement *title1,*title2;
         QCPItemText *textLabel1,*textLabel2;
         QCPItemTracer *tracer1=nullptr,*tracer2=nullptr;
         int signalSize = 10800;

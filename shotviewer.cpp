@@ -18,15 +18,15 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
     customPlot2->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     //Настройка CustomPlot
-    customPlot1->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
+    customPlot1->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectPlottables);
     customPlot1->axisRect()->setupFullAxesBox();
-    customPlot2->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
+    customPlot2->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectPlottables);
     customPlot2->axisRect()->setupFullAxesBox();
     customPlot1->plotLayout()->insertRow(0);
-    QCPTextElement *title1 = new QCPTextElement(customPlot1, "Канал 1", QFont("sans", 14, QFont::Bold));
+    title1 = new QCPTextElement(customPlot1, "Канал 1", QFont("sans", 14, QFont::Bold));
     customPlot1->plotLayout()->addElement(0, 0, title1);
     customPlot2->plotLayout()->insertRow(0);
-    QCPTextElement *title2 = new QCPTextElement(customPlot2, "Канал 2", QFont("sans", 14, QFont::Bold));
+    title2 = new QCPTextElement(customPlot2, "Канал 2", QFont("sans", 14, QFont::Bold));
     customPlot2->plotLayout()->addElement(0, 0, title2);
     //customPlot->xAxis->setLabel("X");
     //customPlot->yAxis->setLabel("Y");
@@ -89,6 +89,14 @@ ShotViewer::ShotViewer(QWidget *parent) : QWidget(parent)
 
     textLabel1 = new QCPItemText(customPlot1);
     textLabel2 = new QCPItemText(customPlot2);
+}
+
+ShotViewer::~ShotViewer(){
+    delete customPlot1;
+    delete customPlot2;
+    delete layoutV;
+
+
 }
 
 void ShotViewer::showGraphs(int state){
@@ -467,7 +475,10 @@ void ShotViewer::mousePress1(QMouseEvent* ){
     if(customPlot1->yAxis->range().upper >260)
          customPlot1->yAxis->setRangeUpper(260);
   }
-
+  if (!customPlot1->selectedGraphs().isEmpty()){
+      customPlot1->deselectAll();
+      tracer1->setVisible(false);
+  }
 }
 void ShotViewer::mousePress2(QMouseEvent* ){
   // if an axis is selected, only allow the direction of that axis to be dragged
@@ -497,6 +508,10 @@ void ShotViewer::mousePress2(QMouseEvent* ){
          customPlot2->yAxis->setRangeLower(-5);
     if(customPlot2->yAxis->range().upper >260)
          customPlot2->yAxis->setRangeUpper(260);
+  }
+  if (!customPlot2->selectedGraphs().isEmpty()){
+      customPlot2->deselectAll();
+      tracer2->setVisible(false);
   }
 }
 void ShotViewer::mouseWheel1(){
@@ -577,7 +592,7 @@ void ShotViewer::graphDoubleClicked2(){
 
 }
 
-void ShotViewer::graphClicked1(QCPAbstractPlottable *, int ,QMouseEvent* event){
+void ShotViewer::graphClicked1(QCPAbstractPlottable *plottable, int dataIndex,QMouseEvent* event){
   // since we know we only have QCPGraphs in the plot, we can immediately access interface1D()
   // usually it's better to first check whether interface1D() returns non-zero, and only then use it.
   /*double dataValue = plottable->interface1D()->dataMainValue(dataIndex);
