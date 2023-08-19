@@ -140,9 +140,7 @@
         <file>Resources/Shadow.png</file>
         <file>Resources/command-line.svg</file>
         <file>Resources/table.svg</file>
-        <file>Resources/scale.svg</file>
         <file>Resources/Leftsidebar.svg</file>
-        <file>Resources/Rightsidebar.svg</file>
         <file>Resources/logo_mini.jpg</file>
         <file>Resources/sound-1781570_960_720.png</file>
         <file>Resources/png-transparent-sound-wave-acoustic-wave-sound-sound-wave-curve-template-blue-angle.png</file>
@@ -153,6 +151,8 @@
         <file>Resources/open.png</file>
         <file>Resources/floppy-disk.png</file>
         <file>Resources/waiting.gif</file>
+        <file>Resources/Rightsidebar.png</file>
+        <file>Resources/scale.png</file>
     </qresource>
     <qresource prefix="/qss">
         <file>style.css</file>

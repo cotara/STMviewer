@@ -43,8 +43,8 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     lazer2Layout->addLayout(lazer2averageLayout);
     lazer2Layout->addLayout(lazer2durationLayout);
 
-    lazer1Button = new AsynchronButton(this,40,210);
-    lazer2Button = new AsynchronButton(this,40,210);
+    lazer1Button = new AsynchronButton(this,0,255);
+    lazer2Button = new AsynchronButton(this,0,255);
     lazer1levelLabel = new QLabel("Уровень");
     lazer1averageLabel = new QLabel("Среднее");
     lazer1durationLabel = new QLabel("Длительность");

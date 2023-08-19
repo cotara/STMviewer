@@ -197,7 +197,7 @@
    </property>
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/1/Resources/Rightsidebar.svg</normaloff>:/1/Resources/Rightsidebar.svg</iconset>
+     <normaloff>:/1/Resources/Rightsidebar.png</normaloff>:/1/Resources/Rightsidebar.png</iconset>
    </property>
    <property name="text">
     <string>Панель управления</string>
@@ -209,7 +209,7 @@
   <action name="AutoRange">
    <property name="icon">
     <iconset resource="res.qrc">
-     <normaloff>:/1/Resources/scale.svg</normaloff>:/1/Resources/scale.svg</iconset>
+     <normaloff>:/1/Resources/scale.png</normaloff>:/1/Resources/scale.png</iconset>
    </property>
    <property name="text">
     <string>Автомасштаб</string>
