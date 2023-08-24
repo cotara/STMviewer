@@ -147,6 +147,34 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     connect(compCH2Button, &AsynchronButton::sendValue,
           [=](int i){emit sendCompCH2(i); });
 
+    //Смещения green и blue каналов
+    offsetLayout =  new QHBoxLayout();
+    layout->addLayout(offsetLayout);
+    offsetGreenLayout= new QVBoxLayout();
+    offsetBlueLayout= new QVBoxLayout();
+    offsetLayout->addLayout(offsetGreenLayout);
+    offsetLayout->addLayout(offsetBlueLayout);
+
+    offsetGreenLabel = new QLabel("Offset Green");
+    offsetGreenLabel->setAlignment(Qt::AlignCenter);
+    offsetBlueLabel = new QLabel("Offset Blue");
+    offsetBlueLabel->setAlignment(Qt::AlignCenter);
+
+    offsetGreenButton = new AsynchronButton(this,0,255);
+    offsetGreenButton->setText(QString::number(0));
+    offsetBlueButton = new AsynchronButton(this,0,255);
+    offsetBlueButton->setText(QString::number(0));
+
+    offsetGreenLayout->addWidget(offsetGreenLabel);
+    offsetGreenLayout->addWidget(offsetGreenButton);
+    offsetBlueLayout->addWidget(offsetBlueLabel);
+    offsetBlueLayout->addWidget(offsetBlueButton);
+
+    connect(offsetGreenButton, &AsynchronButton::sendValue,
+          [=](int i){emit sendGreenOffset(i);});
+    connect(offsetBlueButton, &AsynchronButton::sendValue,
+          [=](int i){emit sendBlueOffset(i);});
+
 
     layout->addWidget(saveButton);
 
@@ -170,6 +198,6 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     borderRightButton->setEnabled(false);
     compCH1Button->setEnabled(false);
     compCH2Button->setEnabled(false);
-
-
+    offsetGreenButton->setEnabled(false);
+    offsetBlueButton->setEnabled(false);
 }

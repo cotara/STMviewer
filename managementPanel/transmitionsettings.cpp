@@ -17,13 +17,21 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     ch4InCheckBox = new QCheckBox("Канал 2. Фильтрованный*");
 
     //Сдвиг фильтрованного сигнала
+    shift1Layout = new QHBoxLayout();
+    shift1Label = new QLabel("Сдвиг фильтрованного сигнала");
     shiftSpinbox = new QSpinBox (this);
     shiftSpinbox->setRange(-100,100);
     shiftSpinbox->setValue(0);
+    shift1Layout->addWidget(shift1Label);
+    shift1Layout->addWidget(shiftSpinbox);
     //Сдвиг нефильтрованного сигнала
+    shift2Layout = new QHBoxLayout();
+    shift2Label = new QLabel("Сдвиг нефильтрованного сигнала");
     shift2Spinbox = new QSpinBox (this);
     shift2Spinbox->setRange(-100,100);
     shift2Spinbox->setValue(0);
+    shift2Layout->addWidget(shift2Label);
+    shift2Layout->addWidget(shift2Spinbox);
 
     getButton = new QPushButton("Получать сигнал");
     getButton->setCheckable(true);
@@ -36,8 +44,8 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     layout->addWidget(ch3CheckBox);
     layout->addWidget(ch4CheckBox);
     layout->addWidget(ch4InCheckBox);
-    layout->addWidget(shift2Spinbox);
-    layout->addWidget(shiftSpinbox);
+    layout->addLayout(shift1Layout);
+    layout->addLayout(shift2Layout);
 
 
     ch1CheckBox->setEnabled(false);

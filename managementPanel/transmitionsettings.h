@@ -16,11 +16,12 @@ class TransmitionSettings : public QGroupBox
 public:
     TransmitionSettings(QWidget *parent);
     QVBoxLayout *layout;
+    QHBoxLayout *shift1Layout,*shift2Layout;
     QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox,*ch2InCheckBox, *ch4InCheckBox;
     QSpinBox *packetSizeSpinbox, *shiftSpinbox, *shift2Spinbox;
     QPushButton *getButton;
     QSignalMapper *signalMapper;
-    QLabel *packetSizeLabel;
+    QLabel *packetSizeLabel,*shift1Label, *shift2Label;
 
 signals:
     void setPacketSize(int);

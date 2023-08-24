@@ -181,6 +181,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderRight,[=](int i){sendByteToMK(RIGHT_BORDER_SET, i,"Set right border: ");});
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH1,[=](int i){sendByteToMK(COMP_CH1_SET, i,"Set comp level CH1: ");});
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,[=](int i){sendByteToMK(COMP_CH2_SET, i,"Set comp level CH2: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendGreenOffset,[=](int i){sendByteToMK(OFFSET_GREEN_SET, i,"Set green offset: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBlueOffset,[=](int i){sendByteToMK(OFFSET_BLUE_SET, i,"Set blue offset: ");});
 
     //Коннекты от параметров передачи
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,[=](int n) {packetSize=n;});

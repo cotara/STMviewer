@@ -49,6 +49,8 @@ const char LEFT_BORDER_SET  = 0x13;
 const char RIGHT_BORDER_SET = 0x14;
 const char COMP_CH1_SET     = 0x15;
 const char COMP_CH2_SET     = 0x16;
+const char OFFSET_GREEN_SET = 0x20;
+const char OFFSET_BLUE_SET  = 0x21;
 const char NEWSHADFINDPAR   = 0x17;
 const char REQUEST_DIAMETER = 0x72;
 
