@@ -899,6 +899,16 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_ManagementWidget->m_plisSettings->lazer2durationNum->setText(QString::number(charToShort.sh));
             bytes.remove(0, 8);
 
+            //Параметры зеленого и голубого оффсета
+            charToShort.ch[0] = bytes.at(0);
+            charToShort.ch[1] = bytes.at(1);
+            m_ManagementWidget->m_plisSettings->offsetGreenButton->setText(QString::number(charToShort.sh));
+            charToShort.ch[0] = bytes.at(2);
+            charToShort.ch[1] = bytes.at(3);
+            m_ManagementWidget->m_plisSettings->offsetBlueButton->setText(QString::number(charToShort.sh));
+            bytes.remove(0, 4);
+
+
             if(tempPLISextremums1.size()==4){
                 shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
                 m_MainControlWidget->m_resultWidget->shad1Ch1->setText("   Фронт: " + QString::number(shadowsCh1Plis.at(0)));
