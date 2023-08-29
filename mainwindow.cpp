@@ -556,6 +556,8 @@ void MainWindow::on_connect_triggered()
         m_ManagementWidget->m_plisSettings->borderRightButton->setEnabled(true);
         m_ManagementWidget->m_plisSettings->compCH1Button->setEnabled(true);
         m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
 
         //Выключаем кнопку получать диаметры
         m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setEnabled(true);

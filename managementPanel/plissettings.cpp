@@ -189,6 +189,8 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
               compCH2Button->setStyleSheet(style);
               lazer1Button->setStyleSheet(style);
               lazer2Button->setStyleSheet(style);
+              offsetGreenButton->setStyleSheet(style);
+              offsetBlueButton->setStyleSheet(style);
         }});
     saveButton->setObjectName("saveButton");
 
