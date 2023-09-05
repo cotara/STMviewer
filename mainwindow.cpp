@@ -784,10 +784,17 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         case 120:
             m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
             m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
-           filter->setResolution(ldm50Res);
-           shiftFactor = 0;
-           signalSize = 10501;
-           break;
+            filter->setResolution(ldm120Res);
+            shiftFactor = 0;
+            signalSize = 10501;
+            break;
+        case 121:
+            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
+            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
+            filter->setResolution(ldm121Res);
+            shiftFactor = 0;
+            signalSize = 5250;
+            break;
         }
         viewer->rescaleX(0,signalSize);
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
