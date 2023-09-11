@@ -64,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //Правая панель
     m_ManagementWidget = new ManagementWidget(this);
+    //Включаем интерфейс
+    m_ManagementWidget->setEnabled(false);
     m_ManagementWidget->setMinimumWidth(300);
     packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
     xWindowDiameter = m_ManagementWidget->m_DiameterTransmition->xWindow->value();          //Сколько отображать точек
@@ -530,37 +532,14 @@ void MainWindow::on_connect_triggered()
         ui->disconnect->setEnabled(true);
 
         statusBar->clearReSent();
-        m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
         m_transp->clearQueue();
         serial->readAll();
-
-        m_ManagementWidget->m_HistorySettings->saveHistoryButton->setEnabled(true);
         if(channelsOrder!=0)
             sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
-        //Включаем галки приема-передачи
-        m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
-        m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
-        //Сбрасываем галки приема-передачи
-        m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setChecked(false);
-        m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setChecked(false);
-        m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setChecked(false);
-        m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setChecked(false);
-        m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setChecked(false);
-        m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setChecked(false);
-        //Включаем кнопки управления настройками ПЛИС
-        m_ManagementWidget->m_plisSettings->lazer1Button->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->lazer2Button->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->borderLeftButton->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->borderRightButton->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->compCH1Button->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
 
-        //Выключаем кнопку получать диаметры
-        m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setEnabled(true);
+        //Включаем интерфейс
+        m_ManagementWidget->setEnabled(true);
+
 
         //Запрашиваем модель
         sendByteToMK(REQUEST_MODEL,0,"\nSEND REQUEST_MODEL: ");
@@ -597,28 +576,11 @@ void MainWindow::on_disconnect_triggered(){
     emit dataReadyUpdate(-1);
     currentShot.clear();
 
-    m_ManagementWidget->m_HistorySettings->saveHistoryButton->setEnabled(false);
-
-    //Вырубаем автополучение на всякий
-    m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(false);
+    //Вырубаем автополучение на всякий  
     m_ManagementWidget->m_TransmitionSettings->getButton->setChecked(false);
+    //Вырубаем интерфейс
+    m_ManagementWidget->setEnabled(false);
 
-    m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(false);
-    m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(false);
-    m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(false);
-    m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(false);
-    m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(false);
-    m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(false);
-
-    m_ManagementWidget->m_plisSettings->lazer1Button->setEnabled(false);
-    m_ManagementWidget->m_plisSettings->lazer2Button->setEnabled(false);
-    m_ManagementWidget->m_plisSettings->borderLeftButton->setEnabled(false);
-    m_ManagementWidget->m_plisSettings->borderRightButton->setEnabled(false);
-    m_ManagementWidget->m_plisSettings->compCH1Button->setEnabled(false);
-    m_ManagementWidget->m_plisSettings->compCH2Button->setEnabled(false);
-
-    m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setEnabled(false);
-    m_ManagementWidget->m_DiameterTransmition->gettingDiameterButton->setChecked(false);
 
 }
 
@@ -806,20 +768,33 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         filter->updateSettings(ldmGeomParams);
         switch (ldmModel){
          case 20:
+            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
+            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
             filter->setResolution(ldm20Res);
             shiftFactor = 10;
             signalSize = 10800;
             break;
          case 50:
+            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
+            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
             filter->setResolution(ldm50Res);
             shiftFactor = 40;
             signalSize = 7700;
             break;
         case 120:
-           filter->setResolution(ldm50Res);
-           shiftFactor = 0;
-           signalSize = 10501;
-           break;
+            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
+            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
+            filter->setResolution(ldm120Res);
+            shiftFactor = 0;
+            signalSize = 10501;
+            break;
+        case 121:
+            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
+            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
+            filter->setResolution(ldm121Res);
+            shiftFactor = 0;
+            signalSize = 5250;
+            break;
         }
         viewer->rescaleX(0,signalSize);
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
@@ -856,6 +831,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_MainControlWidget->m_resultWidget->extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
             bytes.remove(0, 16);
             //16 байт - ошибки и значения параметров ПЛИС
+            errorCh1 = bytes.at(0);
+            errorCh2 = bytes.at(2);
             m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(0),1);   //Младшие значащие байты
             m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(2),2);
 
@@ -901,15 +878,16 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_ManagementWidget->m_plisSettings->lazer2durationNum->setText(QString::number(charToShort.sh));
             bytes.remove(0, 8);
 
-            //Параметры зеленого и голубого оффсета
-            charToShort.ch[0] = bytes.at(0);
-            charToShort.ch[1] = bytes.at(1);
-            m_ManagementWidget->m_plisSettings->offsetGreenButton->setText(QString::number(charToShort.sh));
-            charToShort.ch[0] = bytes.at(2);
-            charToShort.ch[1] = bytes.at(3);
-            m_ManagementWidget->m_plisSettings->offsetBlueButton->setText(QString::number(charToShort.sh));
-            bytes.remove(0, 4);
-
+            if(ldmModel==20){
+                //Параметры зеленого и голубого оффсета
+                charToShort.ch[0] = bytes.at(0);
+                charToShort.ch[1] = bytes.at(1);
+                m_ManagementWidget->m_plisSettings->offsetGreenButton->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(2);
+                charToShort.ch[1] = bytes.at(3);
+                m_ManagementWidget->m_plisSettings->offsetBlueButton->setText(QString::number(charToShort.sh));
+                bytes.remove(0, 4);
+            }
 
             if(tempPLISextremums1.size()==4){
                 shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
@@ -947,14 +925,21 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     charToDouble.ch[j] =  bytes.at(j+i*8);
                 finalDiamCenters[i] = charToDouble.d;
             }
-            m_MainControlWidget->m_resultWidget->radiusFinalX->setText("Диаметр Х:  " +QString::number(finalDiamCenters.at(0)/1000,'f',3) + "мм");
-            m_MainControlWidget->m_resultWidget->radiusFinalY->setText("Диаметр Y:  " +QString::number(finalDiamCenters.at(1)/1000,'f',3) + "мм");
-            m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр:  " +QString::number(finalDiamCenters.at(0)/2/1000 + finalDiamCenters.at(1)/2/1000,'f',3) + "мм");
+            if(errorCh1==0)
+                m_MainControlWidget->m_resultWidget->radiusFinalX->setText("Диаметр Х:  " +QString::number(finalDiamCenters.at(0)/1000,'f',3) + "мм");
+            else
+                m_MainControlWidget->m_resultWidget->radiusFinalX->setText("Диаметр Х: - мм");
+            if(errorCh2==0)
+                m_MainControlWidget->m_resultWidget->radiusFinalY->setText("Диаметр Y:  " +QString::number(finalDiamCenters.at(1)/1000,'f',3) + "мм");
+            else
+                m_MainControlWidget->m_resultWidget->radiusFinalY->setText("Диаметр Y: - мм");
+
+            if(errorCh1==0 && errorCh2==0)
+                m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр:  " +QString::number(finalDiamCenters.at(0)/2/1000 + finalDiamCenters.at(1)/2/1000,'f',3) + "мм");
+            else
+                m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр: - мм");
 
             bytes.remove(0, 32);
-
-
-
 
             if(notYetFlag)                                                             //Если есть непринятые каналы
                 manualGetShotButton();                                                  //Запрашиваем шот

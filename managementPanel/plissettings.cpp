@@ -175,6 +175,8 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     connect(offsetBlueButton, &AsynchronButton::sendValue,
           [=](int i){emit sendBlueOffset(i);});
 
+    offsetGreenButton->setEnabled(false);
+    offsetBlueButton->setEnabled(false);
 
     layout->addWidget(saveButton);
 
@@ -193,13 +195,4 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
               offsetBlueButton->setStyleSheet(style);
         }});
     saveButton->setObjectName("saveButton");
-
-    lazer1Button->setEnabled(false);
-    lazer2Button->setEnabled(false);
-    borderLeftButton->setEnabled(false);
-    borderRightButton->setEnabled(false);
-    compCH1Button->setEnabled(false);
-    compCH2Button->setEnabled(false);
-    offsetGreenButton->setEnabled(false);
-    offsetBlueButton->setEnabled(false);
 }

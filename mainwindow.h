@@ -191,11 +191,11 @@ private:
 
    const QVector<double> ldm20Params = {5320,5320,207400,207400,73400,73400};
    const QVector<double> ldm50Params = {3750,3750,283500,283500,56400,56400};
-   const double ldm20Res = 4, ldm50Res = 9.325;
+   const double ldm20Res = 4, ldm50Res = 9.325, ldm120Res = 40, ldm121Res = 20;
    int ldmModel = 20;
    int shiftFactor = 0,shift2Factor = 0;
    QVector<double> ldmGeomParams = ldm20Params;
-
+   char errorCh1=0, errorCh2=0;
 
 };
 

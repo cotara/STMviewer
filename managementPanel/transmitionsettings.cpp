@@ -47,13 +47,6 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     layout->addLayout(shift1Layout);
     layout->addLayout(shift2Layout);
 
-
-    ch1CheckBox->setEnabled(false);
-    ch2CheckBox->setEnabled(false);
-    ch2InCheckBox->setEnabled(false);
-    ch3CheckBox->setEnabled(false);
-    ch4CheckBox->setEnabled(false);
-    ch4InCheckBox->setEnabled(false);
     layout->addWidget(getButton);
 
     packetSizeSpinbox->setRange(50,15000);
@@ -75,7 +68,7 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
          connect(ch3CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
          connect(ch4CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
 
-    getButton->setEnabled(false);
+
     connect(getButton,&QPushButton::clicked,this, &TransmitionSettings::getButtonClicked);
 
     ch4InCheckBox->hide();
