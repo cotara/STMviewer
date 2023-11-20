@@ -774,9 +774,16 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             shiftFactor = 10;
             signalSize = 10800;
             break;
+        case 40:
+           m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
+           m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
+           filter->setResolution(ldm20Res);
+           shiftFactor = 10;
+           signalSize = 10800;
+           break;
          case 50:
-            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
-            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
+            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
+            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
             filter->setResolution(ldm50Res);
             shiftFactor = 40;
             signalSize = 7700;
@@ -878,7 +885,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_ManagementWidget->m_plisSettings->lazer2durationNum->setText(QString::number(charToShort.sh));
             bytes.remove(0, 8);
 
-            if(ldmModel==20){
+            if(ldmModel==20 || ldmModel==40 || ldmModel==50){
                 //Параметры зеленого и голубого оффсета
                 charToShort.ch[0] = bytes.at(0);
                 charToShort.ch[1] = bytes.at(1);
