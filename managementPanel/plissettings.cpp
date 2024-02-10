@@ -10,15 +10,31 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     lazer1->setObjectName("BigLabel");
     lazer2->setObjectName("BigLabel");
 
-    lazer1averageNum = new QLabel("0");
-    lazer1durationNum = new QLabel("0");
-    lazer2averageNum = new QLabel("0");
-    lazer2durationNum = new QLabel("0");
+    lazer1averageNum1 = new QLabel("0");
+    lazer1averageNum2 = new QLabel("0");
+    lazer1averageNum3 = new QLabel("0");
+    lazer1durationNum1 = new QLabel("0");
+    lazer1durationNum2 = new QLabel("0");
+    lazer1durationNum3 = new QLabel("0");
+    lazer2averageNum1 = new QLabel("0");
+    lazer2averageNum2 = new QLabel("0");
+    lazer2averageNum3 = new QLabel("0");
+    lazer2durationNum1 = new QLabel("0");
+    lazer2durationNum2 = new QLabel("0");
+    lazer2durationNum3 = new QLabel("0");
 
-    lazer1averageNum->setObjectName("BigBigLabel");
-    lazer1durationNum->setObjectName("BigBigLabel");
-    lazer2averageNum->setObjectName("BigBigLabel");
-    lazer2durationNum->setObjectName("BigBigLabel");
+    lazer1averageNum1->setObjectName("BigBigLabel");
+    lazer1averageNum2->setObjectName("BigBigLabel");
+    lazer1averageNum3->setObjectName("BigBigLabel");
+    lazer1durationNum1->setObjectName("BigBigLabel");
+    lazer1durationNum2->setObjectName("BigBigLabel");
+    lazer1durationNum3->setObjectName("BigBigLabel");
+    lazer2averageNum1->setObjectName("BigBigLabel");
+    lazer2averageNum2->setObjectName("BigBigLabel");
+    lazer2averageNum3->setObjectName("BigBigLabel");
+    lazer2durationNum1->setObjectName("BigBigLabel");
+    lazer2durationNum2->setObjectName("BigBigLabel");
+    lazer2durationNum3->setObjectName("BigBigLabel");
 
     layout = new QVBoxLayout(this);
     lazer1Layout = new QHBoxLayout();
@@ -35,6 +51,11 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     lazer2levelLayout = new QVBoxLayout();
     lazer2averageLayout = new QVBoxLayout();
     lazer2durationLayout = new QVBoxLayout();
+
+    lazer1AverageValueLayout = new QHBoxLayout();
+    lazer2AverageValueLayout = new QHBoxLayout();
+    lazer1DurationValueLayout = new QHBoxLayout();
+    lazer2DurationValueLayout = new QHBoxLayout();
 
     lazer1Layout->addLayout(lazer1levelLayout);
     lazer1Layout->addLayout(lazer1averageLayout);
@@ -59,27 +80,47 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     lazer1levelLayout->addWidget(lazer1levelLabel);
     lazer1levelLayout->addWidget(lazer1Button);
     lazer1averageLayout->addWidget(lazer1averageLabel);
-    lazer1averageLayout->addWidget(lazer1averageNum);
+    lazer1averageLayout->addLayout(lazer1AverageValueLayout);
     lazer1durationLayout->addWidget(lazer1durationLabel);
-    lazer1durationLayout->addWidget(lazer1durationNum);
+    lazer1durationLayout->addLayout(lazer1DurationValueLayout);
+
 
     lazer2levelLayout->addWidget(lazer2levelLabel);
     lazer2levelLayout->addWidget(lazer2Button);
     lazer2averageLayout->addWidget(lazer2averageLabel);
-    lazer2averageLayout->addWidget(lazer2averageNum);
+    lazer2averageLayout->addLayout(lazer2AverageValueLayout);
     lazer2durationLayout->addWidget(lazer2durationLabel);
-    lazer2durationLayout->addWidget(lazer2durationNum);
+    lazer2durationLayout->addLayout(lazer2DurationValueLayout);
 
-
+    lazer1AverageValueLayout->addWidget(lazer1averageNum1);
+    lazer1AverageValueLayout->addWidget(lazer1averageNum2);
+    lazer1AverageValueLayout->addWidget(lazer1averageNum3);
+    lazer1DurationValueLayout->addWidget(lazer1durationNum1);
+    lazer1DurationValueLayout->addWidget(lazer1durationNum2);
+    lazer1DurationValueLayout->addWidget(lazer1durationNum3);
+    lazer2AverageValueLayout->addWidget(lazer2averageNum1);
+    lazer2AverageValueLayout->addWidget(lazer2averageNum2);
+    lazer2AverageValueLayout->addWidget(lazer2averageNum3);
+    lazer2DurationValueLayout->addWidget(lazer2durationNum1);
+    lazer2DurationValueLayout->addWidget(lazer2durationNum2);
+    lazer2DurationValueLayout->addWidget(lazer2durationNum3);
 
     lazer1averageLabel->setAlignment(Qt::AlignCenter);
-    lazer1averageNum->setAlignment(Qt::AlignCenter);
+    lazer1averageNum1->setAlignment(Qt::AlignCenter);
+    lazer1averageNum2->setAlignment(Qt::AlignCenter);
+    lazer1averageNum3->setAlignment(Qt::AlignCenter);
     lazer1durationLabel->setAlignment(Qt::AlignCenter);
-    lazer1durationNum->setAlignment(Qt::AlignCenter);
+    lazer1durationNum1->setAlignment(Qt::AlignCenter);
+    lazer1durationNum2->setAlignment(Qt::AlignCenter);
+    lazer1durationNum3->setAlignment(Qt::AlignCenter);
     lazer2averageLabel->setAlignment(Qt::AlignCenter);
-    lazer2averageNum->setAlignment(Qt::AlignCenter);
+    lazer2averageNum1->setAlignment(Qt::AlignCenter);
+    lazer2averageNum2->setAlignment(Qt::AlignCenter);
+    lazer2averageNum3->setAlignment(Qt::AlignCenter);
     lazer2durationLabel->setAlignment(Qt::AlignCenter);
-    lazer2durationNum->setAlignment(Qt::AlignCenter);
+    lazer2durationNum1->setAlignment(Qt::AlignCenter);
+    lazer2durationNum2->setAlignment(Qt::AlignCenter);
+    lazer2durationNum3->setAlignment(Qt::AlignCenter);
 
     //lazerLayout->setAlignment(saveButton,Qt::AlignBottom);
 
@@ -177,6 +218,23 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
 
     offsetGreenButton->setEnabled(false);
     offsetBlueButton->setEnabled(false);
+
+    multyLaserMode = new QHBoxLayout();
+    autoModeRadio = new QRadioButton("Авто", this);
+    centerModeRadio = new QRadioButton("Центральный", this);
+    rearModeRadio = new QRadioButton("Боковые", this);
+    autoModeRadio->setObjectName("BigRadio");
+    centerModeRadio->setObjectName("BigRadio");
+    rearModeRadio->setObjectName("BigRadio");
+
+    layout->addLayout(multyLaserMode);
+    multyLaserMode->addWidget(autoModeRadio);
+    multyLaserMode->addWidget(centerModeRadio);
+    multyLaserMode->addWidget(rearModeRadio);
+
+    connect(autoModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(0);});
+    connect(centerModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(1);});
+    connect(rearModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(2);});
 
     layout->addWidget(saveButton);
 

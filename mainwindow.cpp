@@ -185,6 +185,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,[=](int i){sendByteToMK(COMP_CH2_SET, i,"Set comp level CH2: ");});
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendGreenOffset,[=](int i){sendByteToMK(OFFSET_GREEN_SET, i,"Set green offset: ");});
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBlueOffset,[=](int i){sendByteToMK(OFFSET_BLUE_SET, i,"Set blue offset: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendMultyLaserMode,[=](int i){sendByteToMK(MULTY_LASER_MODE, i,"Set Mylty Laser Mode: ");});
 
     //Коннекты от параметров передачи
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,[=](int n) {packetSize=n;});
@@ -766,24 +767,31 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         }
         setWindowTitle("LDMExplorer (LDM" + QString::number(ldmModel) + ")");
         filter->updateSettings(ldmGeomParams);
+        m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
+        m_ManagementWidget->m_plisSettings->autoModeRadio->setEnabled(false);
+        m_ManagementWidget->m_plisSettings->centerModeRadio->setEnabled(false);
+        m_ManagementWidget->m_plisSettings->rearModeRadio->setEnabled(false);
+        m_ManagementWidget->m_plisSettings->lazer1averageNum2->setVisible(false);
+        m_ManagementWidget->m_plisSettings->lazer1averageNum3->setVisible(false);
+        m_ManagementWidget->m_plisSettings->lazer1durationNum2->setVisible(false);
+        m_ManagementWidget->m_plisSettings->lazer1durationNum3->setVisible(false);
+        m_ManagementWidget->m_plisSettings->lazer2averageNum2->setVisible(false);
+        m_ManagementWidget->m_plisSettings->lazer2averageNum3->setVisible(false);
+        m_ManagementWidget->m_plisSettings->lazer2durationNum2->setVisible(false);
+        m_ManagementWidget->m_plisSettings->lazer2durationNum3->setVisible(false);
         switch (ldmModel){
          case 20:
-            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
-            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
             filter->setResolution(ldm20Res);
             shiftFactor = 10;
             signalSize = 10800;
             break;
         case 40:
-           m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
-           m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
            filter->setResolution(ldm20Res);
            shiftFactor = 10;
            signalSize = 10800;
            break;
          case 50:
-            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
-            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
             filter->setResolution(ldm50Res);
             shiftFactor = 40;
             signalSize = 7700;
@@ -795,13 +803,20 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             shiftFactor = 0;
             signalSize = 10501;
             break;
-        case 121:
-            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
-            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
-            filter->setResolution(ldm121Res);
+         case 200:
+            m_ManagementWidget->m_plisSettings->autoModeRadio->setEnabled(true);
+            m_ManagementWidget->m_plisSettings->centerModeRadio->setEnabled(true);
+            m_ManagementWidget->m_plisSettings->rearModeRadio->setEnabled(true);
+            m_ManagementWidget->m_plisSettings->lazer1averageNum2->setVisible(true);
+            m_ManagementWidget->m_plisSettings->lazer1averageNum3->setVisible(true);
+            m_ManagementWidget->m_plisSettings->lazer1durationNum2->setVisible(true);
+            m_ManagementWidget->m_plisSettings->lazer1durationNum3->setVisible(true);
+            m_ManagementWidget->m_plisSettings->lazer2averageNum2->setVisible(true);
+            m_ManagementWidget->m_plisSettings->lazer2averageNum3->setVisible(true);
+            m_ManagementWidget->m_plisSettings->lazer2durationNum2->setVisible(true);
+            m_ManagementWidget->m_plisSettings->lazer2durationNum3->setVisible(true);
             shiftFactor = 0;
-            signalSize = 5250;
-            break;
+            signalSize = 10501;
         }
         viewer->rescaleX(0,signalSize);
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
@@ -836,7 +851,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_MainControlWidget->m_resultWidget->extr2Ch2->setText("   Экстр2: " + QString::number(tempPLISextremums2.at(1)));
             m_MainControlWidget->m_resultWidget->extr3Ch2->setText("   Экстр3: " + QString::number(tempPLISextremums2.at(2)));
             m_MainControlWidget->m_resultWidget->extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
-            bytes.remove(0, 16);
+            if( bytes.size()>=16) bytes.remove(0, 16);
             //16 байт - ошибки и значения параметров ПЛИС
             errorCh1 = bytes.at(0);
             errorCh2 = bytes.at(2);
@@ -868,22 +883,64 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             charToShort.ch[1] = bytes.at(15);
             m_ManagementWidget->m_plisSettings->compCH2Button->setText(QString::number(charToShort.sh));
 
-            bytes.remove(0, 16);
+            if( bytes.size()>=16) bytes.remove(0, 16);
+            //Средние и длительности
+            if(ldmModel==200){
+                charToShort.ch[0] = bytes.at(0);
+                charToShort.ch[1] = bytes.at(1);
+                m_ManagementWidget->m_plisSettings->lazer1averageNum1->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(2);
+                charToShort.ch[1] = bytes.at(3);
+                m_ManagementWidget->m_plisSettings->lazer1averageNum2->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(4);
+                charToShort.ch[1] = bytes.at(5);
+                m_ManagementWidget->m_plisSettings->lazer1averageNum3->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(6);
+                charToShort.ch[1] = bytes.at(7);
+                m_ManagementWidget->m_plisSettings->lazer1durationNum1->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(8);
+                charToShort.ch[1] = bytes.at(9);
+                m_ManagementWidget->m_plisSettings->lazer1durationNum2->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(10);
+                charToShort.ch[1] = bytes.at(11);
+                m_ManagementWidget->m_plisSettings->lazer1durationNum3->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(12);
+                charToShort.ch[1] = bytes.at(13);
+                m_ManagementWidget->m_plisSettings->lazer2averageNum1->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(14);
+                charToShort.ch[1] = bytes.at(15);
+                m_ManagementWidget->m_plisSettings->lazer2averageNum2->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(16);
+                charToShort.ch[1] = bytes.at(17);
+                m_ManagementWidget->m_plisSettings->lazer2averageNum3->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(18);
+                charToShort.ch[1] = bytes.at(19);
+                m_ManagementWidget->m_plisSettings->lazer2durationNum1->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(20);
+                charToShort.ch[1] = bytes.at(21);
+                m_ManagementWidget->m_plisSettings->lazer2durationNum2->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(22);
+                charToShort.ch[1] = bytes.at(23);
+                m_ManagementWidget->m_plisSettings->lazer2durationNum3->setText(QString::number(charToShort.sh));
 
-            charToShort.ch[0] = bytes.at(0);
-            charToShort.ch[1] = bytes.at(1);
-            m_ManagementWidget->m_plisSettings->lazer1averageNum->setText(QString::number(charToShort.sh));
-            charToShort.ch[0] = bytes.at(2);
-            charToShort.ch[1] = bytes.at(3);
-            m_ManagementWidget->m_plisSettings->lazer2averageNum->setText(QString::number(charToShort.sh));
-            charToShort.ch[0] = bytes.at(4);
-            charToShort.ch[1] = bytes.at(5);
-            m_ManagementWidget->m_plisSettings->lazer1durationNum->setText(QString::number(charToShort.sh));
+                if( bytes.size()>=24) bytes.remove(0,24);
+            }
+            else{
+                charToShort.ch[0] = bytes.at(0);
+                charToShort.ch[1] = bytes.at(1);
+                m_ManagementWidget->m_plisSettings->lazer1averageNum1->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(2);
+                charToShort.ch[1] = bytes.at(3);
+                m_ManagementWidget->m_plisSettings->lazer2averageNum1->setText(QString::number(charToShort.sh));
+                charToShort.ch[0] = bytes.at(4);
+                charToShort.ch[1] = bytes.at(5);
+                m_ManagementWidget->m_plisSettings->lazer1durationNum1->setText(QString::number(charToShort.sh));
 
-            charToShort.ch[0] = bytes.at(6);
-            charToShort.ch[1] = bytes.at(7);
-            m_ManagementWidget->m_plisSettings->lazer2durationNum->setText(QString::number(charToShort.sh));
-            bytes.remove(0, 8);
+                charToShort.ch[0] = bytes.at(6);
+                charToShort.ch[1] = bytes.at(7);
+                 m_ManagementWidget->m_plisSettings->lazer2durationNum1->setText(QString::number(charToShort.sh));
+                if( bytes.size()>=8) bytes.remove(0, 8);
+            }
 
             if(ldmModel==20 || ldmModel==40 || ldmModel==50){
                 //Параметры зеленого и голубого оффсета
@@ -893,7 +950,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 charToShort.ch[0] = bytes.at(2);
                 charToShort.ch[1] = bytes.at(3);
                 m_ManagementWidget->m_plisSettings->offsetBlueButton->setText(QString::number(charToShort.sh));
-                bytes.remove(0, 4);
+                if( bytes.size()>=4) bytes.remove(0, 4);
             }
 
             if(tempPLISextremums1.size()==4){
@@ -946,7 +1003,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             else
                 m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр: - мм");
 
-            bytes.remove(0, 32);
+            if( bytes.size()>=32) bytes.remove(0, 32);
 
             if(notYetFlag)                                                             //Если есть непринятые каналы
                 manualGetShotButton();                                                  //Запрашиваем шот

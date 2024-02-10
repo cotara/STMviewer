@@ -41,6 +41,11 @@ QLabel#BigBigLabel{
     font-family: SFUIText-Bold;
     font-size: 16px;
 }
+QRadioButton#BigRadio{
+    color:#003AA3;
+    font-family: SFUIText-Bold;
+    font-size: 14px;
+}
 QPushButton{
     background: white;
     color: #003AA3;
