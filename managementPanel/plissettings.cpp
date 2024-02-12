@@ -228,13 +228,14 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     rearModeRadio->setObjectName("BigRadio");
 
     layout->addLayout(multyLaserMode);
-    multyLaserMode->addWidget(autoModeRadio);
+
     multyLaserMode->addWidget(centerModeRadio);
     multyLaserMode->addWidget(rearModeRadio);
+    multyLaserMode->addWidget(autoModeRadio);
 
-    connect(autoModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(0);});
-    connect(centerModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(1);});
-    connect(rearModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(2);});
+    connect(autoModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(2);});
+    connect(centerModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(0);});
+    connect(rearModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(1);});
 
     layout->addWidget(saveButton);
 
