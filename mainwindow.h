@@ -212,6 +212,7 @@ private:
    int shiftFactor = 0,shift2Factor = 0;
    QVector<double> ldmGeomParams = ldm20Params;
    char errorCh1=0, errorCh2=0;
+   bool wordLen=false;
 
 };
 

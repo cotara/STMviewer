@@ -173,6 +173,49 @@ void ShotViewer::addUserGraph(QByteArray &buf, int len, int ch){
         customPlot2->graph()->setPen(graphPen);
     }
 }
+void ShotViewer::addUserGraph(QVector<unsigned short> &buf, int len, int ch){
+    QVector<double> x(len), y(len);
+    QPen graphPen;
+    QColor color;
+
+    for (int i=0; i<len; i++){
+      x[i] = i;
+      y[i] = (unsigned short)buf.at(i);
+    }
+
+    if (ch==1 || ch==2){
+        customPlot1->addGraph();
+        customPlot1->graph()->setData(x, y);
+
+
+        if (ch==1){
+            customPlot1->graph()->setName(QString("Канал 1. Нефильтрованный"));
+            color =  Qt::black;
+
+        }
+        else{
+            customPlot1->graph()->setName(QString("Канал 1. Фильтрованный"));
+            color =  Qt::darkGreen;
+        }
+        graphPen.setColor(color);
+        customPlot1->graph()->setPen(graphPen);
+    }
+    else if(ch==3 || ch==4){
+        customPlot2->addGraph();
+        customPlot2->graph()->setData(x, y);
+        if (ch==3){
+            customPlot2->graph()->setName(QString("Канал 2. Нефильтрованный"));
+            color =  Qt::darkMagenta;
+        }
+        else{
+            customPlot2->graph()->setName(QString("Канал 2. Фильтрованный"));
+            color =  Qt::red;
+        }
+        graphPen.setColor(color);
+        customPlot2->graph()->setPen(graphPen);
+    }
+}
+
 void ShotViewer::addDots(QVector<QVector<double> > dots, int ch){
     int dotsSize = dots.size();
     QVector<double> x(dotsSize), y(dotsSize);

@@ -786,6 +786,12 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             shiftFactor = 10;
             signalSize = 10800;
             break;
+        case 35:
+            wordLen = true;
+            filter->setResolution(ldm20Res);
+            shiftFactor = 10;
+            signalSize = 10800;
+            break;
         case 40:
            filter->setResolution(ldm20Res);
            shiftFactor = 10;
@@ -1052,6 +1058,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
     case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
+            if(wordLen) countRecievedDots*=2;
             statusBar->setDownloadBarValue(countRecievedDots);                          //Прогресс бар апгрейд
             currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
             if(countRecievedDots>=countWaitingDots){                                    //Приняли канал целиком
@@ -1146,6 +1153,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 void MainWindow::selectShot(){
     if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
         QByteArray ch;
+        QVector<unsigned short> chWord;
         int shotNum = m_ManagementWidget->m_HistorySettings->shotsComboBox->currentText().toInt();
         viewer->clearGraphs(ShotViewer::AllCH);
         //Первый канал
@@ -1159,7 +1167,16 @@ void MainWindow::selectShot(){
                 ch.remove(0,-shift2Factor);                                       //Сдвигаем нефильтрованный сигнал влево на количество ячеек в зависимости от модели
                 ch.append(-shift2Factor,0);
             }
-            viewer->addUserGraph(ch,ch.size(),1);
+            /***************************************************************/
+            if(wordLen){
+                for(int i=0;i<ch.size()-1;i+=2){
+                    chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
+                }
+                 viewer->addUserGraph(chWord,chWord.size(),1);
+            }
+            /***************************************************************/
+            else
+                viewer->addUserGraph(ch,ch.size(),1);
         }
         if(shotsCH2.contains(shotNum)){
             ch = shotsCH2[shotNum];
@@ -1171,7 +1188,16 @@ void MainWindow::selectShot(){
                 ch.remove(0,-shiftFactor);                                       //Сдвигаем фильтрованный сигнал влево на количество ячеек в зависимости от модели
                 ch.append(-shiftFactor,0);
             }
-            viewer->addUserGraph(ch,ch.size(),2);
+            /***************************************************************/
+            if(wordLen){
+                for(int i=0;i<ch.size()-1;i+=2){
+                    chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
+                }
+                 viewer->addUserGraph(chWord,chWord.size(),2);
+            }
+            /***************************************************************/
+            else
+                viewer->addUserGraph(ch,ch.size(),2);
             //viewer->addLines(tempPLISextremums1,1,1);
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},1,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Button->text().toInt())},1,3);
@@ -1202,7 +1228,16 @@ void MainWindow::selectShot(){
                 ch.remove(0,-shift2Factor);                                       //Сдвигаем нефильтрованный сигнал влево на количество ячеек в зависимости от модели
                 ch.append(-shift2Factor,0);
             }
-            viewer->addUserGraph(ch,ch.size(),3);
+            /***************************************************************/
+            if(wordLen){
+                for(int i=0;i<ch.size()-1;i+=2){
+                    chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
+                }
+                 viewer->addUserGraph(chWord,chWord.size(),3);
+            }
+            /***************************************************************/
+            else
+                viewer->addUserGraph(ch,ch.size(),3);
         }
         if(shotsCH4.contains(shotNum)){
             ch = shotsCH4[shotNum];
@@ -1214,7 +1249,17 @@ void MainWindow::selectShot(){
                 ch.remove(0,-shiftFactor);                                       //Сдвигаем фильтрованный сигнал влево на количество ячеек в зависимости от модели
                 ch.append(-shiftFactor,0);
             }
-            viewer->addUserGraph(ch,ch.size(),4);
+            /***************************************************************/
+            if(wordLen){
+                for(int i=0;i<ch.size()-1;i+=2){
+                    chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
+                }
+                 viewer->addUserGraph(chWord,chWord.size(),4);
+            }
+            /***************************************************************/
+            else
+                viewer->addUserGraph(ch,ch.size(),4);
+
             //viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
             viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);
             viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Button->text().toInt())},2,3);

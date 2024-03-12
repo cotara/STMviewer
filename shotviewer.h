@@ -23,6 +23,7 @@ public:
     void clearGraphs(int);
     void autoScale();
     void addUserGraph(QByteArray &buf, int len, int ch);
+    void addUserGraph(QVector<unsigned short> &buf, int len, int ch);
     void addDots(QVector<QVector<double>> dots, int ch);
     void addDots(QVector<QVector<unsigned int>> dots, int ch);
     void addLines(QVector<double> dots, int ch, int w);
