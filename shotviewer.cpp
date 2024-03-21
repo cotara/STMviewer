@@ -504,8 +504,8 @@ void ShotViewer::mousePress1(QMouseEvent* ){
    customPlot1->axisRect()->setRangeDrag(customPlot1->yAxis->orientation());
    if(customPlot1->yAxis->range().lower <-5)
         customPlot1->yAxis->setRangeLower(-5);
-   if(customPlot1->yAxis->range().upper >260)
-        customPlot1->yAxis->setRangeUpper(260);
+  // if(customPlot1->yAxis->range().upper >260)
+    //    customPlot1->yAxis->setRangeUpper(260);
   }
   else{
     customPlot1->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
@@ -515,8 +515,8 @@ void ShotViewer::mousePress1(QMouseEvent* ){
          customPlot1->xAxis->setRangeUpper(signalSize);
     if(customPlot1->yAxis->range().lower <-5)
          customPlot1->yAxis->setRangeLower(-5);
-    if(customPlot1->yAxis->range().upper >260)
-         customPlot1->yAxis->setRangeUpper(260);
+   // if(customPlot1->yAxis->range().upper >260)
+   //      customPlot1->yAxis->setRangeUpper(260);
   }
   if (!customPlot1->selectedGraphs().isEmpty()){
       customPlot1->deselectAll();
@@ -539,8 +539,8 @@ void ShotViewer::mousePress2(QMouseEvent* ){
    customPlot2->axisRect()->setRangeDrag(customPlot2->yAxis->orientation());
    if(customPlot2->yAxis->range().lower <-5)
         customPlot2->yAxis->setRangeLower(-5);
-   if(customPlot2->yAxis->range().upper >260)
-        customPlot2->yAxis->setRangeUpper(260);
+   //if(customPlot2->yAxis->range().upper >260)
+   //     customPlot2->yAxis->setRangeUpper(260);
   }
   else{
     customPlot2->axisRect()->setRangeDrag(Qt::Horizontal|Qt::Vertical);
@@ -550,8 +550,8 @@ void ShotViewer::mousePress2(QMouseEvent* ){
          customPlot2->xAxis->setRangeUpper(signalSize);
     if(customPlot2->yAxis->range().lower <-5)
          customPlot2->yAxis->setRangeLower(-5);
-    if(customPlot2->yAxis->range().upper >260)
-         customPlot2->yAxis->setRangeUpper(260);
+   // if(customPlot2->yAxis->range().upper >260)
+    //     customPlot2->yAxis->setRangeUpper(260);
   }
   if (!customPlot2->selectedGraphs().isEmpty()){
       customPlot2->deselectAll();      
@@ -575,8 +575,8 @@ void ShotViewer::mouseWheel1(){
     customPlot1->axisRect()->setRangeZoom(customPlot1->yAxis->orientation());
     if(customPlot1->yAxis->range().lower <-1)
          customPlot1->yAxis->setRangeLower(-1);
-    if(customPlot1->yAxis->range().upper >260)
-         customPlot1->yAxis->setRangeUpper(260);
+   // if(customPlot1->yAxis->range().upper >260)                                                                ]
+     //    customPlot1->yAxis->setRangeUpper(260);
   }
   else{
     customPlot1->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
@@ -586,8 +586,8 @@ void ShotViewer::mouseWheel1(){
          customPlot1->xAxis->setRangeUpper(signalSize);
     if(customPlot1->yAxis->range().lower <-1)
          customPlot1->yAxis->setRangeLower(-1);
-    if(customPlot1->yAxis->range().upper >260)
-         customPlot1->yAxis->setRangeUpper(260);
+  //  if(customPlot1->yAxis->range().upper >260)
+    //     customPlot1->yAxis->setRangeUpper(260);
    }
 
 }
@@ -607,8 +607,8 @@ void ShotViewer::mouseWheel2(){
     customPlot2->axisRect()->setRangeZoom(customPlot2->yAxis->orientation());
     if(customPlot2->yAxis->range().lower <-1)
          customPlot2->yAxis->setRangeLower(-1);
-    if(customPlot2->yAxis->range().upper >260)
-         customPlot2->yAxis->setRangeUpper(260);
+ //   if(customPlot2->yAxis->range().upper >260)
+   //      customPlot2->yAxis->setRangeUpper(260);
   }
   else{
     customPlot2->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
@@ -618,8 +618,8 @@ void ShotViewer::mouseWheel2(){
          customPlot2->xAxis->setRangeUpper(signalSize);
     if(customPlot2->yAxis->range().lower <-1)
          customPlot2->yAxis->setRangeLower(-1);
-    if(customPlot2->yAxis->range().upper >260)
-         customPlot2->yAxis->setRangeUpper(260);
+    //if(customPlot2->yAxis->range().upper >260)
+      //   customPlot2->yAxis->setRangeUpper(260);
   }
 }
 

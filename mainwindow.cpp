@@ -789,8 +789,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         case 35:
             wordLen = true;
             filter->setResolution(ldm20Res);
-            shiftFactor = 10;
-            signalSize = 10800;
+            shiftFactor = 0;
+            signalSize = 130;
             break;
         case 40:
            filter->setResolution(ldm20Res);
@@ -827,7 +827,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         viewer->rescaleX(0,signalSize);
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
         ShadowSettings->filLabels(ldmGeomParams);
-        m_timer->start(250);
+        m_timer->start(100);
         break;
     case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n");
@@ -973,19 +973,16 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
                 if(diameterPlis.at(0) > 0 && diameterPlis.at(1) > 0){
                     m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
-                    m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameterPlis.at(2)/1000,'f',2) + ", " + QString::number(diameterPlis.at(3)/1000,'f',2) + "мм");
                     m_MainControlWidget->m_resultWidget->radiusPLISX->setText("   Радиус X: " + QString::number(diameterPlis.at(0)));
                     m_MainControlWidget->m_resultWidget->radiusPLISY->setText("   Радиус Y: " + QString::number(diameterPlis.at(1)));
-                    m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
-                    m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
+
                 }
                 else{
                     m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр:-");
-                    m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение:-");
+
                     m_MainControlWidget->m_resultWidget->radiusPLISX->setText("Радиус X:-");
                     m_MainControlWidget->m_resultWidget->radiusPLISY->setText("Радиус Y:-");
-                    m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(0,0);
-                    m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(0,0);
+
                 }
             }
 
@@ -1004,10 +1001,18 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             else
                 m_MainControlWidget->m_resultWidget->radiusFinalY->setText("Диаметр Y: - мм");
 
-            if(errorCh1==0 && errorCh2==0)
+            if(errorCh1==0 && errorCh2==0){
                 m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр:  " +QString::number(finalDiamCenters.at(0)/2/1000 + finalDiamCenters.at(1)/2/1000,'f',3) + "мм");
-            else
+                m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(finalDiamCenters.at(2)/1000,'f',2) + ", " + QString::number(finalDiamCenters.at(3)/1000,'f',2) + "мм");
+                m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
+                m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
+            }
+            else{
                 m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр: - мм");
+                m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение:-");
+                m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(0,0);
+                m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(0,0);
+            }
 
             if( bytes.size()>=32) bytes.remove(0, 32);
 
@@ -1054,11 +1059,12 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         m_timer->start();//Продолжаем запрос статуса
         break;
 
-
+//тУТ ОЧЕНЬ ПЛОХОЙ ИНТЕРНЕТ. у МЕНЯ ЗАДЕРЖКА СЕКУНД 10.
+        //ЩАС НЕ ТРОГАЙТЕ, ПАЖАЛУКЙСТА
     case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
-            if(wordLen) countRecievedDots*=2;
+            if(wordLen) countRecievedDots/=2;
             statusBar->setDownloadBarValue(countRecievedDots);                          //Прогресс бар апгрейд
             currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
             if(countRecievedDots>=countWaitingDots){                                    //Приняли канал целиком
@@ -1069,8 +1075,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH1";
                     }
                     chName="CH1_NF";
-                    currentShot=currentShot.mid(16);                                    //Смещение влево
-                    currentShot.append(16,0);
+                    //currentShot=currentShot.mid(16);                                    //Смещение влево
+                    //currentShot.append(16,0);
                     shotsCH1.insert(shotCountRecieved,currentShot);                     //Добавили пришедший канал в мап с текущим индексом
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
 
@@ -1079,14 +1085,15 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                         shotsCH2In.insert(shotCountRecieved,filtered);
                     }
                 }
-                else if(value == CH2){
+                else if(value == CH2){  // ха ха ха!!! несерьёзно. смотри почему  len  = 140 становится!
+
                    if(shotsCH2.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
                         shotCountRecieved++;                                           //Начинаем следующую пачку
                         qDebug() << "Attantion! Dublicate CH2";
                    }
                    chName="CH1_F";
-                   currentShot=currentShot.mid(38);                                 //Смещение отфильтрованного сигнала из плисы
-                   currentShot.append(38,0);
+                   //currentShot=currentShot.mid(38);                                 //Смещение отфильтрованного сигнала из плисы
+                   //currentShot.append(38,0);
                    shotsCH2.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
                 }
@@ -1096,8 +1103,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH3";
                      }
                      chName="CH2_NF";
-                     currentShot=currentShot.mid(16);                                    //Смещение влево
-                     currentShot.append(16,0);
+                     //currentShot=currentShot.mid(16);                                    //Смещение влево
+                    // currentShot.append(16,0);
                      shotsCH3.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
                      if(m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
@@ -1111,8 +1118,8 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                          qDebug() << "Attantion! Dublicate CH4";
                      }
                      chName="CH2_F";
-                     currentShot=currentShot.mid(38);                                 //Смещение отфильтрованного сигнала из плисы
-                     currentShot.append(38,0);
+                     //currentShot=currentShot.mid(38);                                 //Смещение отфильтрованного сигнала из плисы
+                     //currentShot.append(38,0);
                      shotsCH4.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
                 }
@@ -1159,6 +1166,7 @@ void MainWindow::selectShot(){
         //Первый канал
         if(shotsCH1.contains(shotNum)){
             ch = shotsCH1[shotNum];
+            chWord.clear();
             if(shift2Factor>0){
                 ch.remove(ch.size()-shift2Factor,shift2Factor);                   //Сдвигаем нефильтрованный сигнал вправо на количество ячеек в зависимости от модели
                 ch.prepend(shift2Factor,0xFF);
@@ -1180,6 +1188,7 @@ void MainWindow::selectShot(){
         }
         if(shotsCH2.contains(shotNum)){
             ch = shotsCH2[shotNum];
+            chWord.clear();
             if(shiftFactor>0){
                 ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
                 ch.prepend(shiftFactor,0xFF);
@@ -1220,6 +1229,7 @@ void MainWindow::selectShot(){
         //Второй канал
         if(shotsCH3.contains(shotNum)){
             ch = shotsCH3[shotNum];
+            chWord.clear();
             if(shift2Factor>0){
                 ch.remove(ch.size()-shift2Factor,shift2Factor);                   //Сдвигаем нефильтрованный сигнал вправо на количество ячеек в зависимости от модели
                 ch.prepend(shift2Factor,0xFF);
@@ -1241,6 +1251,7 @@ void MainWindow::selectShot(){
         }
         if(shotsCH4.contains(shotNum)){
             ch = shotsCH4[shotNum];
+            chWord.clear();
             if(shiftFactor>0){
                 ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
                 ch.prepend(shiftFactor,0xFF);
