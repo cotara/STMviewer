@@ -71,7 +71,7 @@ DISTFILES +=
 QMAKE_CXXFLAGS += -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 LIBS += -fopenmp
-#LIBS += -lgomp -lpthread
+LIBS += -lgomp -lpthread
 
 
 INCLUDEPATH += "c:\fftw"

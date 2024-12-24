@@ -129,6 +129,7 @@ private slots:
 
     void mouseWheel1();
     void mouseWheel2();
+
 private:
     Ui::MainWindow *ui;
     SerialSettings *settings_ptr;

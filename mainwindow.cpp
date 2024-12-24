@@ -1059,8 +1059,6 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         m_timer->start();//Продолжаем запрос статуса
         break;
 
-//тУТ ОЧЕНЬ ПЛОХОЙ ИНТЕРНЕТ. у МЕНЯ ЗАДЕРЖКА СЕКУНД 10.
-        //ЩАС НЕ ТРОГАЙТЕ, ПАЖАЛУКЙСТА
     case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
             countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
@@ -1766,3 +1764,5 @@ void MainWindow::mouseWheel2(){
   else
     spectrePlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
 }
+
+

@@ -706,6 +706,9 @@ void ShotViewer::graphClicked2(QCPAbstractPlottable *, int ,QMouseEvent* event){
     emit graph_selected(dataMap2);
 }
 void ShotViewer::autoScale(){
+    double upper, lower;
+    lower=customPlot1->xAxis->range().lower;
+    upper =customPlot1->xAxis->range().upper;
         customPlot1->rescaleAxes();
         customPlot1->yAxis->setRange(customPlot1->yAxis->range().lower-1,customPlot1->yAxis->range().upper+5);
         customPlot1->xAxis->setRange(customPlot1->xAxis->range().lower-20,customPlot1->xAxis->range().upper+100 );
