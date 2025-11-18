@@ -3,7 +3,9 @@
 ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
 {
     setObjectName("resultswidget");
-    layout = new QVBoxLayout(this);
+    hLayout = new QHBoxLayout(this);
+    layout = new QVBoxLayout();
+
     setTitle("Результаты расчетов");
     setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     //Результат
@@ -50,7 +52,10 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     ch1ShadowsLabel->setObjectName("BigLabel");
     ch2ShadowsLabel->setObjectName("BigLabel");
 
-    layout->addWidget(m_centerViewer);
+    hLayout->addWidget(m_centerViewer);
+    hLayout->addLayout(layout);
+    hLayout->setStretchFactor(layout,1);
+    hLayout->setStretchFactor(m_centerViewer,1);
     m_centerViewer->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     m_centerViewer->setMaximumHeight(1000);
 
@@ -94,6 +99,8 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     layout->addWidget(diametrFinalLabel);
 
     layout->addWidget(centerPositionLabel);
+
+
 
     extr1Ch1->hide();
     extr2Ch1->hide();

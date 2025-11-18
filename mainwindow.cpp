@@ -67,7 +67,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //Включаем интерфейс
     m_ManagementWidget->setEnabled(false);
     m_ManagementWidget->setMinimumWidth(300);
-    packetSize = m_ManagementWidget->m_TransmitionSettings->packetSizeSpinbox->value();
+    packetSize = 11000;
     xWindowDiameter = m_ManagementWidget->m_DiameterTransmition->xWindow->value();          //Сколько отображать точек
     m_windowSize = m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value();   //Окно медианного фильтра
     m_average  = m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value();        //Усреднение медианного фильтра
@@ -188,11 +188,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendMultyLaserMode,[=](int i){sendByteToMK(MULTY_LASER_MODE, i,"Set Mylty Laser Mode: ");});
 
     //Коннекты от параметров передачи
-    connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::setPacketSize,[=](int n) {packetSize=n;});
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::chChooseChanged,this,&MainWindow::chOrderSend);
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::getButtonClicked,this,&MainWindow::getButtonClicked);
-    connect(m_ManagementWidget->m_TransmitionSettings->shiftSpinbox, QOverload<int>::of(&QSpinBox::valueChanged), [=](int i){ shiftFactor = i;});
-    connect(m_ManagementWidget->m_TransmitionSettings->shift2Spinbox, QOverload<int>::of(&QSpinBox::valueChanged), [=](int i){ shift2Factor = i;});
+    connect(m_ManagementWidget->m_TransmitionSettings, &TransmitionSettings::shiftChanged, [=](int ch, int val){
+        if(ch==1) shift1Factor = val;
+        else      shift2Factor = val;  });
+
 
 
     //Коннекты от истории
@@ -449,6 +450,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_tab->removeTab(2);
     m_tab->removeTab(1);
+
+    m_ManagementWidget->m_plisSettings->setEnabled(false);
+    QShortcut *shortcut = new QShortcut(QKeySequence("Ctrl+F5"), this);
+    connect(shortcut, &QShortcut::activated, this, &MainWindow::onCtrlF5Pressed);
 }
 
 MainWindow::~MainWindow(){
@@ -578,7 +583,7 @@ void MainWindow::on_disconnect_triggered(){
     currentShot.clear();
 
     //Вырубаем автополучение на всякий  
-    m_ManagementWidget->m_TransmitionSettings->getButton->setChecked(false);
+    m_ManagementWidget->m_TransmitionSettings->setGetButton(false);
     //Вырубаем интерфейс
     m_ManagementWidget->setEnabled(false);
 
@@ -633,40 +638,7 @@ void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &
 //Подсчет количества отмеченных каналов
 void MainWindow::chOrderSend(int ch)
 {
-    switch (ch){
-    case 1:
-       if(m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->isChecked()){
-           channelsOrder|=0x01;
-           m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(true);
-       }
-       else{
-          channelsOrder&=~0x01;
-          m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->setEnabled(false);
-       }
-        break;
-    case 2:
-       if(m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->isChecked())
-           channelsOrder|=0x02;
-       else
-          channelsOrder&=~0x02;
-        break;
-    case 3:
-       if(m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->isChecked()){
-           channelsOrder|=0x04;
-           m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(true);
-       }
-       else{
-          channelsOrder&=~0x04;
-          m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->setEnabled(false);
-       }
-        break;
-    case 4:
-       if(m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->isChecked())
-           channelsOrder|=0x08;
-       else
-          channelsOrder&=~0x08;
-        break;
-    }
+    channelsOrder = ch;
     sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
 }
 
@@ -684,24 +656,11 @@ void MainWindow::getButtonClicked(bool checked)
 {
     if(checked){
         notYetFlag = countCheckedCH();  //На старте передачи запоминаем сколько надо ждать каналов
-        if(notYetFlag==0){
-            statusBar->setMessageBar("Внимание!, Не выбрано ни одного канала!");
-            QMessageBox::warning(this, "Внимание!", "Не выбрано ни одного канала!",QMessageBox::Ok);
-            m_ManagementWidget->m_TransmitionSettings->getButton->setChecked(false);
-            return;
-        }
-        m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(false);
-        m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(false);
-        m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(false);
-        m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(false);
+        m_ManagementWidget->m_TransmitionSettings->setChEn(false);
     }
     else {
-        if(notYetFlag==0){//Если передача всех каналов пачки завершена
-            m_ManagementWidget->m_TransmitionSettings->ch1CheckBox->setEnabled(true);
-            m_ManagementWidget->m_TransmitionSettings->ch2CheckBox->setEnabled(true);
-            m_ManagementWidget->m_TransmitionSettings->ch3CheckBox->setEnabled(true);
-            m_ManagementWidget->m_TransmitionSettings->ch4CheckBox->setEnabled(true);
-         }
+        if(notYetFlag==0)//Если передача всех каналов пачки завершена
+            m_ManagementWidget->m_TransmitionSettings->setChEn(true);
     }
 }
 
@@ -783,30 +742,30 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         switch (ldmModel){
          case 20:
             filter->setResolution(ldm20Res);
-            shiftFactor = 10;
+            shift1Factor = 10;
             signalSize = 10800;
             break;
         case 35:
             wordLen = true;
             filter->setResolution(ldm20Res);
-            shiftFactor = 0;
+            shift1Factor = 0;
             signalSize = 130;
             break;
         case 40:
            filter->setResolution(ldm20Res);
-           shiftFactor = 10;
+           shift1Factor = 10;
            signalSize = 10800;
            break;
          case 50:
             filter->setResolution(ldm50Res);
-            shiftFactor = 40;
+            shift1Factor = 40;
             signalSize = 7700;
             break;
         case 120:
             m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
             m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
             filter->setResolution(ldm120Res);
-            shiftFactor = 0;
+            shift1Factor = 0;
             signalSize = 10501;
             break;
          case 200:
@@ -821,7 +780,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             m_ManagementWidget->m_plisSettings->lazer2averageNum3->setVisible(true);
             m_ManagementWidget->m_plisSettings->lazer2durationNum2->setVisible(true);
             m_ManagementWidget->m_plisSettings->lazer2durationNum3->setVisible(true);
-            shiftFactor = 0;
+            shift1Factor = 0;
             signalSize = 10501;
         }
         viewer->rescaleX(0,signalSize);
@@ -1078,10 +1037,10 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     shotsCH1.insert(shotCountRecieved,currentShot);                     //Добавили пришедший канал в мап с текущим индексом
                     m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
 
-                    if(m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->isChecked()) {                //Если нужна фильтрация (внутренняя)
-                        QByteArray filtered = filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
-                        shotsCH2In.insert(shotCountRecieved,filtered);
-                    }
+                    // if(m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->isChecked()) {                //Если нужна фильтрация (внутренняя)
+                    //     QByteArray filtered = filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                    //     shotsCH2In.insert(shotCountRecieved,filtered);
+                    // }
                 }
                 else if(value == CH2){  // ха ха ха!!! несерьёзно. смотри почему  len  = 140 становится!
 
@@ -1105,10 +1064,10 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     // currentShot.append(16,0);
                      shotsCH3.insert(shotCountRecieved,currentShot);
                      m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
-                     if(m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
-                        QByteArray filtered =filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
-                        shotsCH4In.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
-                     }
+                     // if(m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
+                     //    QByteArray filtered =filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
+                     //    shotsCH4In.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
+                     // }
                 }
                 else if(value == CH4){
                      if(shotsCH4.contains(shotCountRecieved)) {
@@ -1131,7 +1090,7 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                     shotCountRecieved++;                                                //Увеличиваем счетчик пачек
                     m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(shotCountRecieved-1));
                     m_ManagementWidget->m_HistorySettings->shotsComboBox->setCurrentIndex(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()-1);
-                    if(m_ManagementWidget->m_TransmitionSettings->getButton->isChecked()) //Если кнопка все еще нажата
+                    if(m_ManagementWidget->m_TransmitionSettings->getStatusGetButton()) //Если кнопка все еще нажата
                         getButtonClicked(true);                                           //Вызываем слот нажатия кнопки и инициации получения новой пачки
                     else
                         getButtonClicked(false);                                          //Иначе обнуляем все счетчики, разблокируем чекбоксы и т.д.
@@ -1143,12 +1102,12 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
             QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
             m_console->putData("Warning: MCU has no data\n");
-            m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
+            m_ManagementWidget->m_TransmitionSettings->setGetButton(true);
         }
         else{
             statusBar->setMessageBar("Error: Wrong REQUEST_POINTS ansver message!");
             m_console->putData("Warning: MCU has no data\n");
-            m_ManagementWidget->m_TransmitionSettings->getButton->setEnabled(true);
+            m_ManagementWidget->m_TransmitionSettings->setGetButton(true);
         }
         break;
    }
@@ -1187,13 +1146,13 @@ void MainWindow::selectShot(){
         if(shotsCH2.contains(shotNum)){
             ch = shotsCH2[shotNum];
             chWord.clear();
-            if(shiftFactor>0){
-                ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
-                ch.prepend(shiftFactor,0xFF);
+            if(shift1Factor>0){
+                ch.remove(ch.size()-shift1Factor,shift1Factor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
+                ch.prepend(shift1Factor,0xFF);
             }
-            else if(shiftFactor<0){
-                ch.remove(0,-shiftFactor);                                       //Сдвигаем фильтрованный сигнал влево на количество ячеек в зависимости от модели
-                ch.append(-shiftFactor,0);
+            else if(shift1Factor<0){
+                ch.remove(0,-shift1Factor);                                       //Сдвигаем фильтрованный сигнал влево на количество ячеек в зависимости от модели
+                ch.append(-shift1Factor,0);
             }
             /***************************************************************/
             if(wordLen){
@@ -1250,13 +1209,13 @@ void MainWindow::selectShot(){
         if(shotsCH4.contains(shotNum)){
             ch = shotsCH4[shotNum];
             chWord.clear();
-            if(shiftFactor>0){
-                ch.remove(ch.size()-shiftFactor,shiftFactor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
-                ch.prepend(shiftFactor,0xFF);
+            if(shift1Factor>0){
+                ch.remove(ch.size()-shift1Factor,shift1Factor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
+                ch.prepend(shift1Factor,0xFF);
             }
-            else if(shiftFactor<0){
-                ch.remove(0,-shiftFactor);                                       //Сдвигаем фильтрованный сигнал влево на количество ячеек в зависимости от модели
-                ch.append(-shiftFactor,0);
+            else if(shift1Factor<0){
+                ch.remove(0,-shift1Factor);                                       //Сдвигаем фильтрованный сигнал влево на количество ячеек в зависимости от модели
+                ch.append(-shift1Factor,0);
             }
             /***************************************************************/
             if(wordLen){
@@ -1763,6 +1722,10 @@ void MainWindow::mouseWheel2(){
 
   else
     spectrePlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
+}
+
+void MainWindow::onCtrlF5Pressed(){
+    m_ManagementWidget->m_plisSettings->setEnabled(true);
 }
 
 

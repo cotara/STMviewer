@@ -32,8 +32,8 @@ SOURCES += \
     firfilter.cpp \
     main.cpp \
     mainwindow.cpp \
-    savelog.cpp \
     qcustomplot/qcustomplot.cpp \
+    savelog.cpp \
     shotviewer.cpp \
     statusbar.cpp \
 
@@ -42,8 +42,8 @@ HEADERS += \
     fftw3.h \
     firfilter.h \
     mainwindow.h \
-    savelog.h \
     qcustomplot/qcustomplot.h \
+    savelog.h \
     shotviewer.h \
     statusbar.h \
     types.h \

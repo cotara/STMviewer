@@ -128,9 +128,9 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     //lazer2Button->setEnabled(false);
     //saveButton->setEnabled(false);
 
-    connect(lazer1Button, &AsynchronButton::sendValue,
+    connect(lazer1Button, &AsynchronButton::sendValue,this,
           [=](int i){emit lazer1Send(i);});
-    connect(lazer2Button, &AsynchronButton::sendValue,
+    connect(lazer2Button, &AsynchronButton::sendValue,this,
           [=](int i){emit lazer2Send(i);});
 
 
@@ -179,13 +179,13 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     compCH2Layout->addWidget(compCH2Label);
     compCH2Layout->addWidget(compCH2Button);
 
-    connect(borderLeftButton, &AsynchronButton::sendValue,
+    connect(borderLeftButton, &AsynchronButton::sendValue,this,
           [=](int i){emit sendBorderLeft(i); });
-    connect(borderRightButton, &AsynchronButton::sendValue,
+    connect(borderRightButton, &AsynchronButton::sendValue,this,
           [=](int i){emit sendBorderRight(i); });
-    connect(compCH1Button, &AsynchronButton::sendValue,
+    connect(compCH1Button, &AsynchronButton::sendValue,this,
           [=](int i){emit sendCompCH1(i); });
-    connect(compCH2Button, &AsynchronButton::sendValue,
+    connect(compCH2Button, &AsynchronButton::sendValue,this,
           [=](int i){emit sendCompCH2(i); });
 
     //Смещения green и blue каналов
@@ -211,9 +211,9 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     offsetBlueLayout->addWidget(offsetBlueLabel);
     offsetBlueLayout->addWidget(offsetBlueButton);
 
-    connect(offsetGreenButton, &AsynchronButton::sendValue,
+    connect(offsetGreenButton, &AsynchronButton::sendValue,this,
           [=](int i){emit sendGreenOffset(i);});
-    connect(offsetBlueButton, &AsynchronButton::sendValue,
+    connect(offsetBlueButton, &AsynchronButton::sendValue,this,
           [=](int i){emit sendBlueOffset(i);});
 
     offsetGreenButton->setEnabled(false);
@@ -233,13 +233,13 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     multyLaserMode->addWidget(rearModeRadio);
     multyLaserMode->addWidget(autoModeRadio);
 
-    connect(autoModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(2);});
-    connect(centerModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(0);});
-    connect(rearModeRadio,&QRadioButton::clicked,[=](){emit sendMultyLaserMode(1);});
+    connect(autoModeRadio,&QRadioButton::clicked,this,[=](){emit sendMultyLaserMode(2);});
+    connect(centerModeRadio,&QRadioButton::clicked,this,[=](){emit sendMultyLaserMode(0);});
+    connect(rearModeRadio,&QRadioButton::clicked,this,[=](){emit sendMultyLaserMode(1);});
 
     layout->addWidget(saveButton);
 
-    connect(saveButton,&QPushButton::clicked,[=]{
+    connect(saveButton,&QPushButton::clicked,this,[=]{
         emit saveSend();
         QFile file(":/qss/styleWhiteButtons.css");
           if(file.open(QFile::ReadOnly)){

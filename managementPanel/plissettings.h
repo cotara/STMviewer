@@ -23,7 +23,7 @@ public:
     QHBoxLayout *lazer1AverageValueLayout,*lazer2AverageValueLayout,*lazer1DurationValueLayout,*lazer2DurationValueLayout;
     QHBoxLayout *multyLaserMode;
     QLabel *lazer1,*lazer2;
-    QLabel *lazer1levelLabel, *lazer1averageLabel,*lazer1durationLabel,*lazer2levelLabel, *lazer2averageLabel,*lazer2durationLabel, *borderLeftLabel, *borderRightLabel,*compCH1Label,*compCH2Label;;
+    QLabel *lazer1levelLabel, *lazer1averageLabel,*lazer1durationLabel,*lazer2levelLabel, *lazer2averageLabel,*lazer2durationLabel, *borderLeftLabel, *borderRightLabel,*compCH1Label,*compCH2Label;
     QLabel *lazer1averageNum1,*lazer1averageNum2,*lazer1averageNum3,*lazer1durationNum1,*lazer1durationNum2,*lazer1durationNum3, *lazer2averageNum1,*lazer2averageNum2,*lazer2averageNum3,*lazer2durationNum1,*lazer2durationNum2,*lazer2durationNum3;
     QLabel *offsetGreenLabel, *offsetBlueLabel;
     AsynchronButton *offsetGreenButton, *offsetBlueButton;

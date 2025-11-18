@@ -129,6 +129,7 @@ private slots:
 
     void mouseWheel1();
     void mouseWheel2();
+    void onCtrlF5Pressed();
 
 private:
     Ui::MainWindow *ui;
@@ -162,7 +163,7 @@ private:
     int shotCountRecieved=0;                                        //Текущее количество отмеченных каналов и текущее количество принятых шотов
     int packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
     int signalSize = 10800;
-    int countRecievedDots=0, channelsOrder=0;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
+    int countRecievedDots=0, channelsOrder=10;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
     QVector<double> shadowsCh1,shadowsCh2,shadowsCh1Plis,shadowsCh2Plis;
     QVector<double> diameter, diameterPlis;
@@ -210,7 +211,7 @@ private:
    const QVector<double> ldm50Params = {3750,3750,283500,283500,56400,56400};
    const double ldm20Res = 4, ldm50Res = 9.325, ldm120Res = 40, ldm121Res = 20;
    int ldmModel = 20;
-   int shiftFactor = 0,shift2Factor = 0;
+   int shift1Factor = 0,shift2Factor = 0;
    QVector<double> ldmGeomParams = ldm20Params;
    char errorCh1=0, errorCh2=0;
    bool wordLen=false;

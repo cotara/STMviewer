@@ -127,7 +127,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
 
 
     /********************************КОННЕКТЫ*********************************************************/
-    connect(gettingDiameterButton,&QPushButton::clicked,[=](bool checked){
+    connect(gettingDiameterButton,&QPushButton::clicked,this,[=](bool checked){
         if(medianFilterCheckbox->isChecked() || diemetersCheckBox->isChecked() || centersCheckBox->isChecked())
             emit getDiameterChanged(checked);
         else{
@@ -135,24 +135,24 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
             gettingDiameterButton->setChecked(false);
         }
     });
-    connect(reqFreqSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){ emit reqFreqValueChanged(i); });
+    connect(reqFreqSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),this,[=](int i){ emit reqFreqValueChanged(i); });
 
-    connect(xWindow, &QSlider::valueChanged,[=](int value) {sliderValue->setNum(value); emit xWindowChanged(value);});
-    connect(medianFilterCheckbox, &QCheckBox::stateChanged,averageSpinbox,&QSpinBox::setEnabled);
-    connect(medianFilterCheckbox, &QCheckBox::stateChanged,windowSizeSpinbox,&QSpinBox::setEnabled);
-    connect(medianFilterCheckbox, &QCheckBox::stateChanged,limitSpinbox,&QSpinBox::setEnabled);
-    connect(averageSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit averageChanged(i);});
-    connect(limitSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){   emit limitChanged(i);});
-    connect(windowSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){  emit windowSizeChanged(i);});
-    connect(furieLimitSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int i){  emit furieLimitChanged(i);});
+    connect(xWindow, &QSlider::valueChanged,this,[=](int value) {sliderValue->setNum(value); emit xWindowChanged(value);});
+    connect(medianFilterCheckbox, &QCheckBox::checkStateChanged,averageSpinbox,&QSpinBox::setEnabled);
+    connect(medianFilterCheckbox, &QCheckBox::checkStateChanged,windowSizeSpinbox,&QSpinBox::setEnabled);
+    connect(medianFilterCheckbox, &QCheckBox::checkStateChanged,limitSpinbox,&QSpinBox::setEnabled);
+    connect(averageSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),this,[=](int i){   emit averageChanged(i);});
+    connect(limitSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),this,[=](int i){   emit limitChanged(i);});
+    connect(windowSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),this,[=](int i){  emit windowSizeChanged(i);});
+    connect(furieLimitSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),this,[=](int i){  emit furieLimitChanged(i);});
 
-    connect(continiousMode, &QRadioButton::clicked,[=](bool checked){
+    connect(continiousMode, &QRadioButton::clicked,this,[=](bool checked){
         emit diameterModeChanged(false);
         collectMode->setChecked(!checked);
         collectLabel->setVisible(!checked);
         collectCountLabel->setVisible(!checked);
     });
-    connect(collectMode, &QRadioButton::clicked,[=](bool checked){
+    connect(collectMode, &QRadioButton::clicked,this,[=](bool checked){
         emit diameterModeChanged(true);
         continiousMode->setChecked(!checked);
         collectLabel->setVisible(checked);

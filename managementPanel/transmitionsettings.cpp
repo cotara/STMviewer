@@ -1,4 +1,5 @@
 #include "transmitionsettings.h"
+#include "qmessagebox.h"
 
 TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
 {
@@ -7,23 +8,20 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     layout = new QVBoxLayout(this);
 
     //Настройки передачи
-    packetSizeLabel = new QLabel("Размер пакета:",this);
-    packetSizeSpinbox = new QSpinBox(this);
-    ch1CheckBox = new QCheckBox("Канал 1. Нефильтрованный");
-    ch2CheckBox = new QCheckBox("Канал 1. Фильтрованный");
-    ch2InCheckBox = new QCheckBox("Канал 1. Фильтрованный*");
-    ch3CheckBox = new QCheckBox("Канал 2. Нефильтрованный");
-    ch4CheckBox = new QCheckBox("Канал 2. Фильтрованный");
-    ch4InCheckBox = new QCheckBox("Канал 2. Фильтрованный*");
+    chCheckBox.append(new QCheckBox("Канал 1. Нефильтрованный"));
+    chCheckBox.append(new QCheckBox("Канал 1. Фильтрованный"));
+    chCheckBox.append(new QCheckBox("Канал 2. Нефильтрованный"));
+    chCheckBox.append(new QCheckBox("Канал 2. Фильтрованный"));
+
 
     //Сдвиг фильтрованного сигнала
     shift1Layout = new QHBoxLayout();
     shift1Label = new QLabel("Сдвиг фильтрованного сигнала");
-    shiftSpinbox = new QSpinBox (this);
-    shiftSpinbox->setRange(-100,100);
-    shiftSpinbox->setValue(0);
+    shift1Spinbox = new QSpinBox (this);
+    shift1Spinbox->setRange(-100,100);
+    shift1Spinbox->setValue(0);
     shift1Layout->addWidget(shift1Label);
-    shift1Layout->addWidget(shiftSpinbox);
+    shift1Layout->addWidget(shift1Spinbox);
     //Сдвиг нефильтрованного сигнала
     shift2Layout = new QHBoxLayout();
     shift2Label = new QLabel("Сдвиг нефильтрованного сигнала");
@@ -33,46 +31,52 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     shift2Layout->addWidget(shift2Label);
     shift2Layout->addWidget(shift2Spinbox);
 
-    getButton = new QPushButton("Получать сигнал");
-    getButton->setCheckable(true);
+    connect(shift1Spinbox,&QSpinBox::valueChanged, this, [=](int val) {emit shiftChanged(1, val);});
+    connect(shift2Spinbox,&QSpinBox::valueChanged, this, [=](int val) {emit shiftChanged(2, val);});
 
-    layout->addWidget(packetSizeLabel);
-    layout->addWidget(packetSizeSpinbox);
-    layout->addWidget(ch1CheckBox);
-    layout->addWidget(ch2CheckBox);
-    layout->addWidget(ch2InCheckBox);
-    layout->addWidget(ch3CheckBox);
-    layout->addWidget(ch4CheckBox);
-    layout->addWidget(ch4InCheckBox);
     layout->addLayout(shift1Layout);
     layout->addLayout(shift2Layout);
 
+    getButton = new QPushButton("Получать сигнал");
+    getButton->setCheckable(true);
     layout->addWidget(getButton);
+    connect(getButton,&QPushButton::clicked,this, [=](bool en){
+        if(order==0){
+            QMessageBox::warning(this, "Внимание!", "Не выбрано ни одного канала!",QMessageBox::Ok);
+            return;
+        }
+        emit getButtonClicked(en);
+    });
 
-    packetSizeSpinbox->setRange(50,15000);
-    packetSizeSpinbox->setValue(11000);
+    for(int i=0;i<chCheckBox.count();i++){
+        layout->addWidget(chCheckBox.at(i));
+        connect(chCheckBox.at(i),&QCheckBox::checkStateChanged,this, [=](){
+            if(chCheckBox.at(i)->isChecked()){
+                order|= 1<<i;
+            }
+            else
+                order&=~(1<<i);
+
+            emit chChooseChanged(order);
+        });
+    }
 
 
-    connect(packetSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged), [=](int i){ emit setPacketSize(i);});
 
+    chCheckBox.at(1)->setChecked(true);
+    chCheckBox.at(3)->setChecked(true);
+}
 
-    signalMapper = new QSignalMapper(this);
-    connect(signalMapper, QOverload<int>::of(&QSignalMapper::mapped), [=](int i){ chChooseChanged(i); });
-         signalMapper->setMapping(ch1CheckBox, 1);
-         signalMapper->setMapping(ch2CheckBox, 2);
-         signalMapper->setMapping(ch3CheckBox, 3);
-         signalMapper->setMapping(ch4CheckBox, 4);
+//Включение / отключение выбора каналов
+void TransmitionSettings::setChEn(bool en){
+    for(int i=0;i<chCheckBox.count();i++)
+        (chCheckBox.at(i)->setEnabled(en));
+}
 
-         connect(ch1CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
-         connect(ch2CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
-         connect(ch3CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
-         connect(ch4CheckBox,SIGNAL(stateChanged(int)),signalMapper,SLOT(map()));
+void TransmitionSettings::setGetButton(bool en){
+    getButton->setChecked(en);
+}
 
-
-    connect(getButton,&QPushButton::clicked,this, &TransmitionSettings::getButtonClicked);
-
-    ch4InCheckBox->hide();
-    ch2InCheckBox->hide();
-    packetSizeLabel->hide();
-    packetSizeSpinbox->hide();
+bool TransmitionSettings::getStatusGetButton(){
+    return getButton->isChecked();
 }

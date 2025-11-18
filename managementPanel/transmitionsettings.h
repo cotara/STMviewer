@@ -8,26 +8,34 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
-#include <QSignalMapper>
+#include <QMessageBox>
 class TransmitionSettings : public QGroupBox
 {
     Q_OBJECT
 
 public:
     TransmitionSettings(QWidget *parent);
+
+public slots:
+    void setChEn(bool en);
+    void setGetButton(bool en);
+    bool getStatusGetButton();
+private:
     QVBoxLayout *layout;
     QHBoxLayout *shift1Layout,*shift2Layout;
-    QCheckBox *ch1CheckBox, *ch2CheckBox, *ch3CheckBox, *ch4CheckBox,*ch2InCheckBox, *ch4InCheckBox;
-    QSpinBox *packetSizeSpinbox, *shiftSpinbox, *shift2Spinbox;
+    QList<QCheckBox*>chCheckBox;
+
+    QSpinBox *shift1Spinbox, *shift2Spinbox;
     QPushButton *getButton;
-    QSignalMapper *signalMapper;
-    QLabel *packetSizeLabel,*shift1Label, *shift2Label;
+    QLabel *shift1Label, *shift2Label;
+
+    int order=0;
 
 signals:
-    void setPacketSize(int);
     void chChooseChanged(int);
     void getButtonClicked(bool);
-    void autoGetCheckBoxChanged(int);
+    void shiftChanged(int ch, int val);
+
 };
 
 #endif // TRANSMITIONSETTINGS_H
