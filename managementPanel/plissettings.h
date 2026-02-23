@@ -12,12 +12,26 @@
 #include "entervaluewidget.h"
 #include <QFile>
 #include "asynchronbutton.h"
-class PlisSettings: public QGroupBox
+#include "collapsiblegroupbox.h"
+
+class PlisSettings: public CollapsibleGroupBox
 {
     Q_OBJECT
 
 public:
     PlisSettings(QWidget *parent);
+
+public slots:
+    void setEn200Mode(bool en);
+    void setEnOffsetsTool(bool en);
+    void setButtonsData(const QVector <short>& data);
+    void setLazersData(const QVector <short>& data);
+    void setOffsetsData(const QVector <short>& data);
+    int borderLeft();
+    int borderRight();
+    int compLevel(int ch);
+
+private:
     QVBoxLayout *layout, *lazer1levelLayout,*lazer1averageLayout,*lazer1durationLayout, *lazer2levelLayout,*lazer2averageLayout,*lazer2durationLayout,*borderLeftLayout,*borderRightLayout,*compCH1Layout,*compCH2Layout, *offsetGreenLayout,*offsetBlueLayout;
     QHBoxLayout *lazer1Layout,*lazer2Layout, *borderLayout, *offsetLayout;
     QHBoxLayout *lazer1AverageValueLayout,*lazer2AverageValueLayout,*lazer1DurationValueLayout,*lazer2DurationValueLayout;

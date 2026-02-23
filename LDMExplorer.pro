@@ -28,7 +28,9 @@ CONFIG += c++11
 
 
 SOURCES += \
+    collapsiblegroupbox.cpp \
     console.cpp \
+    diameterviewer.cpp \
     firfilter.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -38,7 +40,9 @@ SOURCES += \
     statusbar.cpp \
 
 HEADERS += \
+    collapsiblegroupbox.h \
     console.h \
+    diameterviewer.h \
     fftw3.h \
     firfilter.h \
     mainwindow.h \
@@ -53,7 +57,6 @@ FORMS += \
         savelog.ui \
 
 include(managementPanel/managementPanel.pri)
-include(controlPanel/controlPanel.pri)
 include(shadowSettings/shadowSettings.pri)
 include(transport/transport.pri)
 

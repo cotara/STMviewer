@@ -9,7 +9,9 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
-class TransmitionSettings : public QGroupBox
+#include "collapsiblegroupbox.h"
+
+class TransmitionSettings : public CollapsibleGroupBox
 {
     Q_OBJECT
 
@@ -22,7 +24,7 @@ public slots:
     bool getStatusGetButton();
 private:
     QVBoxLayout *layout;
-    QHBoxLayout *shift1Layout,*shift2Layout;
+    QHBoxLayout *shift1Layout,*shift2Layout,*chChkLayout;
     QList<QCheckBox*>chCheckBox;
 
     QSpinBox *shift1Spinbox, *shift2Spinbox;

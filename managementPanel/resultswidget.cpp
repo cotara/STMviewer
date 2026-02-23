@@ -1,10 +1,11 @@
 #include "resultswidget.h"
 
-ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
+ResultsWidget::ResultsWidget(QWidget *parent) : CollapsibleGroupBox(parent)
 {
     setObjectName("resultswidget");
     hLayout = new QHBoxLayout(this);
     layout = new QVBoxLayout();
+    errLayout= new QVBoxLayout();
 
     setTitle("Результаты расчетов");
     setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
@@ -47,6 +48,11 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     ch1ShadowsLabel = new QLabel("Канал 1:");
     ch2ShadowsLabel = new QLabel("Канал 2:");
 
+    errorMarker1 = new ErrorMarker(this, "Канал 1");
+    errorMarker2 = new ErrorMarker(this, "Канал 2");
+    errLayout->addWidget(errorMarker1);
+    errLayout->addWidget(errorMarker2);
+
     ch1ShadowsLabel->setAlignment(Qt::AlignCenter);
     ch2ShadowsLabel->setAlignment(Qt::AlignCenter);
     ch1ShadowsLabel->setObjectName("BigLabel");
@@ -54,8 +60,11 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
 
     hLayout->addWidget(m_centerViewer);
     hLayout->addLayout(layout);
+    hLayout->addLayout(errLayout);
+
     hLayout->setStretchFactor(layout,1);
     hLayout->setStretchFactor(m_centerViewer,1);
+    hLayout->setStretchFactor(errLayout,1);
     m_centerViewer->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     m_centerViewer->setMaximumHeight(1000);
 
@@ -99,8 +108,6 @@ ResultsWidget::ResultsWidget(QWidget *parent) : QGroupBox(parent)
     layout->addWidget(diametrFinalLabel);
 
     layout->addWidget(centerPositionLabel);
-
-
 
     extr1Ch1->hide();
     extr2Ch1->hide();
@@ -167,7 +174,7 @@ void ResultsWidget::setData(const QVector<double> &data)
 
     if(data.at(14) != 0 && data.at(15) != 0){
         diametrFinalLabel->setText("Диаметр:  " +QString::number((data.at(14)/1000 + data.at(15)/1000),'f',3) + "мм");
-        centerPositionLabel->setText("Смещение: " + QString::number(60-data.at(16)/1000,'f',2) + ", " + QString::number(60-data.at(17)/1000,'f',2) + "мм");
+        centerPositionLabel->setText("Смещение: " + QString::number(data.at(16)/1000,'f',2) + ", " + QString::number(data.at(17)/1000,'f',2) + "мм");
         m_centerViewer->setCoord(data.at(16)/1000/1000,data.at(17)/1000/1000);
         m_centerViewer->setRad(data.at(14)/1000/1000,data.at(15)/1000/1000);
     }
@@ -181,4 +188,9 @@ void ResultsWidget::setData(const QVector<double> &data)
 
 void ResultsWidget::setModel(int model){
     m_centerViewer->setScale(model);
+}
+
+void ResultsWidget::setError(const QByteArray &bytes){
+    errorMarker1->setError(bytes.at(0));
+    errorMarker2->setError(bytes.at(2));
 }

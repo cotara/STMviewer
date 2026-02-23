@@ -1,7 +1,7 @@
 #include "diametertransmition.h"
 #include <QMessageBox>
 
-DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
+DiameterTransmition::DiameterTransmition(QWidget *parent): CollapsibleGroupBox(parent){
 
     setTitle("График диаметра");
     layout = new QVBoxLayout(this);
@@ -15,13 +15,16 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
 
     gettingDiameterButton = new QPushButton("Получать радиус");
     gettingDiameterButton->setCheckable(true);
-    gettingDiameterButton->setEnabled(false);
+    //gettingDiameterButton->setEnabled(false);
 
 
 
     diemetersCheckBox = new QCheckBox("Выводить диаметры",this);
+    connect(diemetersCheckBox, &QCheckBox::checkStateChanged, this,&DiameterTransmition::diameterCheckChanged);
     centersCheckBox= new QCheckBox("Выводить центры",this);
+    connect(centersCheckBox, &QCheckBox::checkStateChanged, this,&DiameterTransmition::offsetsCheckChanged);
     medianFilterCheckbox = new QCheckBox("Медианный фильтр",this);
+    connect(medianFilterCheckbox, &QCheckBox::checkStateChanged, this,&DiameterTransmition::filteredCheckChanged);
 
     windowSizeSpinbox = new QSpinBox(this);
     windowSizeSpinbox->setEnabled(false);
@@ -78,7 +81,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     averageSpinbox->setValue(100);
     limitSpinbox->setRange(10,1000);
     limitSpinbox->setValue(100);
-    reqFreqSpinbox->setRange(1,7);
+    reqFreqSpinbox->setRange(1,50);
     reqFreqSpinbox->setValue(5);
 
     //Частота опроса
@@ -103,7 +106,7 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
     furieLimitLayout->addWidget(furieLimitSpinbox);
     layout->addLayout(furieLimitLayout);
     layout->addWidget(furieCheckbox);
-
+    connect(furieCheckbox, &QCheckBox::checkStateChanged, this,&DiameterTransmition::furieCheckChanged);
 
     //КНОПКА
     layout->addWidget(gettingDiameterButton);
@@ -128,8 +131,11 @@ DiameterTransmition::DiameterTransmition(QWidget *parent): QGroupBox(parent){
 
     /********************************КОННЕКТЫ*********************************************************/
     connect(gettingDiameterButton,&QPushButton::clicked,this,[=](bool checked){
-        if(medianFilterCheckbox->isChecked() || diemetersCheckBox->isChecked() || centersCheckBox->isChecked())
+        if(medianFilterCheckbox->isChecked() || diemetersCheckBox->isChecked() || centersCheckBox->isChecked()){
             emit getDiameterChanged(checked);
+            continiousMode->setEnabled(!checked);
+            collectMode->setEnabled(!checked);
+        }
         else{
             QMessageBox::warning(this, "Внимание!", "Не выбрано данных для вывода!",QMessageBox::Ok);
             gettingDiameterButton->setChecked(false);

@@ -1,6 +1,6 @@
 #include "plissettings.h"
 
-PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
+PlisSettings::PlisSettings(QWidget *parent) : CollapsibleGroupBox(parent)
 {
     setTitle("Настройки ПЛИС");
     setObjectName("plissettings");
@@ -216,9 +216,6 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
     connect(offsetBlueButton, &AsynchronButton::sendValue,this,
           [=](int i){emit sendBlueOffset(i);});
 
-    offsetGreenButton->setEnabled(false);
-    offsetBlueButton->setEnabled(false);
-
     multyLaserMode = new QHBoxLayout();
     autoModeRadio = new QRadioButton("Авто", this);
     centerModeRadio = new QRadioButton("Центральный", this);
@@ -254,4 +251,83 @@ PlisSettings::PlisSettings(QWidget *parent) : QGroupBox(parent)
               offsetBlueButton->setStyleSheet(style);
         }});
     saveButton->setObjectName("saveButton");
+
+    setEn200Mode(false);
+    setEnOffsetsTool(false);
+}
+
+void PlisSettings::setEn200Mode(bool en){
+    autoModeRadio->setVisible(en);
+    centerModeRadio->setVisible(en);
+    rearModeRadio->setVisible(en);
+    lazer1averageNum2->setVisible(en);
+    lazer1averageNum3->setVisible(en);
+    lazer1durationNum2->setVisible(en);
+    lazer1durationNum3->setVisible(en);
+    lazer2averageNum2->setVisible(en);
+    lazer2averageNum3->setVisible(en);
+    lazer2durationNum2->setVisible(en);
+    lazer2durationNum3->setVisible(en);
+}
+
+void PlisSettings::setEnOffsetsTool(bool en){
+    offsetGreenButton->setVisible(en);
+    offsetBlueButton->setVisible(en);
+}
+
+void PlisSettings::setButtonsData(const QVector<short> &data){
+
+    lazer1Button->setText(QString::number(data.at(0)));
+    lazer2Button->setText(QString::number(data.at(1)));
+    borderLeftButton->setText(QString::number(data.at(2)));
+    borderRightButton->setText(QString::number(data.at(3)));
+    compCH1Button->setText(QString::number(data.at(4)));
+    compCH2Button->setText(QString::number(data.at(5)));
+}
+
+void PlisSettings::setLazersData(const QVector<short> &data)
+{
+    if(data.count() == 12){
+        lazer1averageNum2->setText(QString::number(data.at(0)));
+        lazer2averageNum2->setText(QString::number(data.at(1)));
+        lazer1averageNum3->setText(QString::number(data.at(2)));
+        lazer2averageNum1->setText(QString::number(data.at(3)));
+        lazer1averageNum1->setText(QString::number(data.at(4)));
+        lazer2averageNum3->setText(QString::number(data.at(5)));
+        lazer1durationNum2->setText(QString::number(data.at(6)));
+        lazer2durationNum2->setText(QString::number(data.at(7)));
+        lazer1durationNum3->setText(QString::number(data.at(8)));
+        lazer2durationNum1->setText(QString::number(data.at(9)));
+        lazer1durationNum1->setText(QString::number(data.at(10)));
+        lazer2durationNum3->setText(QString::number(data.at(11)));
+    }
+    else{
+        lazer1averageNum1->setText(QString::number(data.at(0)));
+        lazer2averageNum1->setText(QString::number(data.at(1)));
+        lazer1durationNum1->setText(QString::number(data.at(2)));
+        lazer2durationNum1->setText(QString::number(data.at(3)));
+    }
+}
+
+void PlisSettings::setOffsetsData(const QVector<short> &data){
+    offsetGreenButton->setText(QString::number(data.at(0)));
+    offsetBlueButton->setText(QString::number(data.at(1)));
+
+}
+
+int PlisSettings::borderLeft(){
+    return borderLeftButton->text().toInt();
+}
+
+int PlisSettings::borderRight(){
+    return borderRightButton->text().toInt();
+}
+
+int PlisSettings::compLevel(int ch){
+    if(ch==1)
+        return compCH1Button->text().toInt();
+    else if(ch==2)
+        return compCH2Button->text().toInt();
+    else
+        return -1;
 }

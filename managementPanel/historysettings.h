@@ -7,23 +7,34 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QPushButton>
+#include "collapsiblegroupbox.h"
 
-class HistorySettings : public QGroupBox
+class HistorySettings : public CollapsibleGroupBox
 {
     Q_OBJECT
 
 public:
     HistorySettings(QWidget *parent);
 
+public slots:
+    void addShot(int val);
+    int curShot();
+
+private:
     QVBoxLayout *layout;
-    QPushButton *saveHistoryButton;
+    QHBoxLayout *butLayout;
+    QPushButton *saveButton, *loadButton,*clearButton;
     QComboBox *shotsComboBox;
-    QPushButton *clearButton;
+
+private slots:
+    void clear();
 
 signals:
-    void saveHistoryPushed(int);
+    void saveHistory();
+    void loadHistory();
+    void clearHistory();
     void shotSelected(int);
-    void clearButtonClicked(bool);
+
 
 };
 

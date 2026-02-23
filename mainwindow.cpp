@@ -7,10 +7,8 @@
 #include "statusbar.h"
 #include <QSplitter>
 
-#include <complex>
-#include <fftw3.h>
 #include <QRandomGenerator>
-
+#include <QtGlobal>
 //#define TEST_MODE
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -21,13 +19,17 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle("LDMExplorer");
     ui->disconnect->setEnabled(false);
 
+
     settings_ptr = new SerialSettings(this);
     serial = new QSerialPort();
 
     m_timer = new QTimer(this);
+    m_timer->setInterval(100);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::handlerTimer);
-    m_GettingDiameterTimer=new QTimer(this);
-    connect(m_GettingDiameterTimer, &QTimer::timeout, this, &MainWindow::handlerGettingDiameterTimer);
+
+    //Логгирование
+    log = new SaveLog(this);
+    connect(log,&SaveLog::SaveToFolder,this,[=](QString &dirname){saveHistory(dirname);});
 
     //Консоль
     m_console = new Console(this);
@@ -41,37 +43,25 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_transp, &Transp::answerReceive, this, &MainWindow::handlerTranspAnswerReceive);
     connect(m_transp, &Transp::transpError, this, &MainWindow::handlerTranspError);
     connect(m_transp, &Transp::reSentInc,this, &MainWindow::reSentInc);
-    //Интерфейс
-    //Здесь нужно создавать виджет(главный), устанавливать его, как центральный и передавать в конструктор лайонута уже его..
-    //widget = QWidget(self)
-    //self.setCentralWidget(widget)
-    //hbox = QHBoxLayout(widget)
-    // hbox.setSpacing(10)
 
     //Статус бар
     statusBar = new StatusBar(ui->statusBar);
-    connect(this, &MainWindow::statusUpdate, [this](bool online) { statusBar->setStatus(online); });
-    connect(this, &MainWindow::dataReadyUpdate, [this](int ready) { statusBar->setDataReady(ready); });
-    connect(this, &MainWindow::infoUpdate, [this](int info) { statusBar->setInfo(info); });
 
     //Виджеты интерфейса
     layoutV = new QVBoxLayout();
     centralWidget()->setLayout(layoutV);
 
-    //Левая панель
-    m_MainControlWidget = new MainControlWidget(this);
-    m_MainControlWidget->setMinimumWidth(300);
-
-    //Правая панель
+    //Правая управления(настройки ПЛИС / настройка запросов / диаметры)
     m_ManagementWidget = new ManagementWidget(this);
+
     //Включаем интерфейс
     m_ManagementWidget->setEnabled(false);
     m_ManagementWidget->setMinimumWidth(300);
-    packetSize = 11000;
-    xWindowDiameter = m_ManagementWidget->m_DiameterTransmition->xWindow->value();          //Сколько отображать точек
+
     m_windowSize = m_ManagementWidget->m_DiameterTransmition->windowSizeSpinbox->value();   //Окно медианного фильтра
     m_average  = m_ManagementWidget->m_DiameterTransmition->averageSpinbox->value();        //Усреднение медианного фильтра
     m_limit=m_ManagementWidget->m_DiameterTransmition->limitSpinbox->value();               //Лимит срабатывания медианного фильтра
+
 
     //Таблица
     m_table = new QTableWidget(this);
@@ -87,46 +77,19 @@ MainWindow::MainWindow(QWidget *parent) :
     //ТАБЫ
     m_tab = new QTabWidget(this);
 
-    //Центр
+    //Центральный виджет с графиками
     viewer = new ShotViewer(m_tab);
     connect(viewer,&ShotViewer::graph_selected,this,&MainWindow::fillTable);
 
-
-    //ПОСТРОЕНИЕ ДИАМЕТРА
-    QWidget *diameterPlot = new QWidget(m_tab);
-    QVBoxLayout *diameterPlotLayout = new QVBoxLayout(diameterPlot);
-    diametersPlot = new QCustomPlot(diameterPlot);
-    spectrePlot = new QCustomPlot(diameterPlot);
-    diameterPlotLayout->addWidget(diametersPlot);
-    diameterPlotLayout->addWidget(spectrePlot);
-
-    diametersPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
-    diametersPlot->axisRect()->setupFullAxesBox();
-    spectrePlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
-    spectrePlot->axisRect()->setupFullAxesBox();
-
-    QFont legendFont = font();
-    legendFont.setPointSize(10);
-    diametersPlot->xAxis->setRangeLower(0);
-    diametersPlot->xAxis->setRangeUpper(5000);
-    diametersPlot->yAxis->setRangeLower(-2);
-    diametersPlot->yAxis->setRangeUpper(2);
-    diametersPlot->legend->setVisible(true);
-    diametersPlot->legend->setFont(legendFont);
-    diametersPlot->legend->setSelectedFont(legendFont);
-    diametersPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
-
-    spectrePlot->legend->setVisible(true);
-    spectrePlot->legend->setFont(legendFont);
-    spectrePlot->legend->setSelectedFont(legendFont);
-    spectrePlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
-
+    //Центральный виджет с диаметром и Фурьем
+    d_viewer = new DiameterViewer(m_tab);
+    d_viewer->setWindow(m_ManagementWidget->m_DiameterTransmition->xWindow->value()); //Сколько отображать точек
 
     //ТАБЫ
     m_tab->addTab(viewer, "Сигнал");
-    m_tab->addTab(diameterPlot, "Диаметр");
+    m_tab->addTab(d_viewer, "Диаметр");
     m_tab->setTabBarAutoHide(true);
-    connect(m_tab,&QTabWidget::currentChanged,[=](int index){
+    connect(m_tab,&QTabWidget::currentChanged,this,[=](int index){
         if(index==0){
             m_ManagementWidget->m_plisSettings->setVisible(true);
             m_ManagementWidget->m_TransmitionSettings->setVisible(true);
@@ -154,12 +117,6 @@ MainWindow::MainWindow(QWidget *parent) :
     splitterH->addWidget(rightPanel);
     rightPanel->setLayout(rightPanelLayout);
     rightPanelLayout->addWidget(m_ManagementWidget);
-    rightPanelLayout->addWidget(m_MainControlWidget);
-
-    //splitterH->addWidget(m_MainControlWidget);
-
-    //splitterH->addWidget(m_ManagementWidget);
-
 
     splitterH->addWidget(m_console);
     splitterH->addWidget(m_table);
@@ -170,135 +127,111 @@ MainWindow::MainWindow(QWidget *parent) :
     splitterV->addWidget(m_console);
     layoutV->addWidget(splitterV);
 
-    splitterH->setStretchFactor(0,10);
-    splitterH->setStretchFactor(1,1);
+    splitterH->setStretchFactor(0,15);
+    splitterH->setStretchFactor(1,2);
 
 
     //Коннекты от Настроек ПЛИС
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,[=](int i){sendByteToMK(LAZER1_SET,i,"Set Lazer1 Setting: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,[=](int i){sendByteToMK(LAZER2_SET, i,"Set Lazer2 Setting: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::saveSend,[=]{sendByteToMK(LAZERS_SAVE, 0,"Save lazer's parameters to EEPROM: ");});//?? проверить работу
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer1Send,this,[=](int i){sendByteToMK(LAZER1_SET,i,"Set Lazer1 Setting: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::lazer2Send,this,[=](int i){sendByteToMK(LAZER2_SET, i,"Set Lazer2 Setting: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::saveSend,this,[=]{sendByteToMK(LAZERS_SAVE, 0,"Save lazer's parameters to EEPROM: ");});//?? проверить работу
 
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderLeft,[=](int i){sendByteToMK(LEFT_BORDER_SET, i,"Set left border: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderRight,[=](int i){sendByteToMK(RIGHT_BORDER_SET, i,"Set right border: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH1,[=](int i){sendByteToMK(COMP_CH1_SET, i,"Set comp level CH1: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,[=](int i){sendByteToMK(COMP_CH2_SET, i,"Set comp level CH2: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendGreenOffset,[=](int i){sendByteToMK(OFFSET_GREEN_SET, i,"Set green offset: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBlueOffset,[=](int i){sendByteToMK(OFFSET_BLUE_SET, i,"Set blue offset: ");});
-    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendMultyLaserMode,[=](int i){sendByteToMK(MULTY_LASER_MODE, i,"Set Mylty Laser Mode: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderLeft,this,[=](int i){sendByteToMK(LEFT_BORDER_SET, i,"Set left border: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBorderRight,this,[=](int i){sendByteToMK(RIGHT_BORDER_SET, i,"Set right border: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH1,this,[=](int i){sendByteToMK(COMP_CH1_SET, i,"Set comp level CH1: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendCompCH2,this,[=](int i){sendByteToMK(COMP_CH2_SET, i,"Set comp level CH2: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendGreenOffset,this,[=](int i){sendByteToMK(OFFSET_GREEN_SET, i,"Set green offset: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendBlueOffset,this,[=](int i){sendByteToMK(OFFSET_BLUE_SET, i,"Set blue offset: ");});
+    connect(m_ManagementWidget->m_plisSettings,&PlisSettings::sendMultyLaserMode,this,[=](int i){sendByteToMK(MULTY_LASER_MODE, i,"Set Mylty Laser Mode: ");});
 
     //Коннекты от параметров передачи
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::chChooseChanged,this,&MainWindow::chOrderSend);
     connect(m_ManagementWidget->m_TransmitionSettings,&TransmitionSettings::getButtonClicked,this,&MainWindow::getButtonClicked);
-    connect(m_ManagementWidget->m_TransmitionSettings, &TransmitionSettings::shiftChanged, [=](int ch, int val){
-        if(ch==1) shift1Factor = val;
-        else      shift2Factor = val;  });
-
-
+    connect(m_ManagementWidget->m_TransmitionSettings, &TransmitionSettings::shiftChanged,this, [=](int ch, int val){ shiftFactor[ch] = val;});
 
     //Коннекты от истории
-    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::saveHistoryPushed,[=]{saveHistory(dirnameDefault);});
     connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::shotSelected,this,&MainWindow::selectShot);
-    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::clearButtonClicked,this,&MainWindow::on_clearButton);
+    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::saveHistory,log,&SaveLog::show);
+    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::loadHistory,this,&MainWindow::loadHistory);
+    connect(m_ManagementWidget->m_HistorySettings,&HistorySettings::clearHistory,this,&MainWindow::on_clearButton);
 
     //Коннекты от графика диаметра
-    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::getDiameterChanged,[=](int state){
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::getDiameterChanged,this,[=](int state){
         if(state){
-            m_GettingDiameterTimer->setInterval(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
+            m_timer->setInterval(1000/m_ManagementWidget->m_DiameterTransmition->reqFreqSpinbox->value());
+            //m_timer->setInterval(1000);
             filled =0;
-            lastIndex=0;
-            clearDiameterVectors();
-            m_GettingDiameterTimer->start();
-            m_ManagementWidget->m_DiameterTransmition->continiousMode->setEnabled(false);
-            m_ManagementWidget->m_DiameterTransmition->collectMode->setEnabled(false);
+            d_viewer->clearGraphs();
         }
         else{
-            m_ManagementWidget->m_DiameterTransmition->continiousMode->setEnabled(true);
-            m_ManagementWidget->m_DiameterTransmition->collectMode->setEnabled(true);
-            m_GettingDiameterTimer->stop();
+            m_timer->setInterval(100);
         }
     });
-    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::reqFreqValueChanged,[=](int value){ m_GettingDiameterTimer->setInterval(1000/value); });
-    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::xWindowChanged, [=](int value){ xWindowDiameter = value; });
-    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::diameterModeChanged, [=](bool mode){ diameterMode = mode; clearDiameterVectors(); });   //Изменен режим запроса диаметров
-    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::windowSizeChanged, [=](int value){ m_windowSize = value;});   //Окно фильтра изменилось
-    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::averageChanged, [=](int value){ m_average = value; });   //Усреднение изменилось
-    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::furieLimitChanged, [=](int value){ m_furieLimit = value; });
-
-    connect(diametersPlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel1()));
-    connect(spectrePlot, SIGNAL(mouseWheel(QWheelEvent*)), this, SLOT(mouseWheel2()));
-    connect(ui->AutoRange,&QAction::triggered,viewer,[=]{
-        diametersPlot->yAxis->rescale();
-        diametersPlot->yAxis->setRangeLower(diametersPlot->yAxis->range().lower-10);
-        diametersPlot->yAxis->setRangeUpper(diametersPlot->yAxis->range().upper+10);
-        diametersPlot->replot();
-
-        spectrePlot->yAxis->rescale();
-        spectrePlot->xAxis->rescale();
-        spectrePlot->yAxis->setRangeLower(spectrePlot->yAxis->range().lower-5);
-        spectrePlot->yAxis->setRangeUpper(spectrePlot->yAxis->range().upper+10);
-        spectrePlot->replot();
-    });
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::xWindowChanged, this,[=](int value){ d_viewer->setWindow(value); });
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::diameterModeChanged,this, [=](bool mode){ d_viewer->setDiamPlotMode(mode);});   //Изменен режим запроса диаметров
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::windowSizeChanged, this,[=](int value){ m_windowSize = value;});   //Окно фильтра изменилось
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::averageChanged, this,[=](int value){ m_average = value; });   //Усреднение изменилось
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::furieLimitChanged, this,[=](int value){ m_furieLimit = value; });
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::diameterCheckChanged, this,[=](int value){ d_viewer->setDiamEnPlot(value); });
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::offsetsCheckChanged, this,[=](int value){ d_viewer->setOffsetsEnPlot(value); });
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::filteredCheckChanged, this,[=](int value){ d_viewer->setFilteredEnPlot(value); });
+    connect(m_ManagementWidget->m_DiameterTransmition,&DiameterTransmition::furieCheckChanged, this,[=](int value){ d_viewer->setFurieEnPlot(value); });
 
     //Тулбар
-//    tableSizeSpinbox = new QSpinBox(this);
-//    tableSizeLabel = new QLabel("Размер таблицы",this);
-//    tableSizeSpinbox->setRange(1,1000);
-//    tableSizeSpinbox->setValue(tableSize);
+    tableSizeSpinbox = new QSpinBox(this);
+    tableSizeSpinbox->setRange(1,1000);
+    tableSizeSpinbox->setValue(tableSize);
+    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),this,[=](int val){
+        tableSize = val;
 
-//    ui->mainToolBar->addWidget(tableSizeLabel);
-//    ui->mainToolBar->addWidget(tableSizeSpinbox);
-//    tableSizeSpinbox->setEnabled(false);
+        if(m_table->rowCount()>=tableSize){
+            for(int i=0;i<tableSize;i++)
+                m_table->showRow(i);
+            for(int i=tableSize;i<m_table->rowCount();i++)
+                m_table->hideRow(i);
+        }
+    });
+    tableSizeSpinbox->setVisible(false);
 
-    ui->ShowMainControl->setChecked(true);
-    ui->ShowManagementPanel->setChecked(true);
-
-    ui->ShowMainControl->setVisible(false);//**
-    connect(ui->showConsole,&QAction::toggled,[=](bool i){if(i) {m_console->show(); m_console->clearAll();} else m_console->hide();});
-//    connect(ui->TableShow,&QAction::toggled,[=](bool i){
-//        if(i) {
-//            m_table->show();
-//            tableSizeSpinbox->setEnabled(true);
-//        } else {
-//            m_table->hide();
-//            tableSizeSpinbox->setEnabled(false);
-//        }
-//    });
-//    connect(tableSizeSpinbox, QOverload<int>::of(&QSpinBox::valueChanged),[=](int val){
-//            tableSize = val;
-
-//            if(m_table->rowCount()>=tableSize){
-//                for(int i=0;i<tableSize;i++)
-//                     m_table->showRow(i);
-//                for(int i=tableSize;i<m_table->rowCount();i++)
-//                    m_table->hideRow(i);
-//            }
-//    });
+    tableSizeLabel = new QLabel("Размер таблицы",this);
+    tableSizeLabel->setVisible(false);
 
 
-    connect(ui->ShowMainControl,&QAction::toggled,[=](bool i){if(i) m_MainControlWidget->show(); else m_MainControlWidget->hide();});
-    connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) rightPanel->show(); else rightPanel->hide();});
+    ui->ShowRightPanel->setChecked(true);
 
-    //connect(ui->ShowManagementPanel,&QAction::toggled,[=](bool i){if(i) m_ManagementWidget->show(); else m_ManagementWidget->hide();});
+    //connect(ui->ShowMainControl,&QAction::toggled,this,[=](bool i){if(i) m_MainControlWidget->show(); else m_MainControlWidget->hide();});
+    connect(ui->ShowRightPanel,&QAction::toggled,this,[=](bool i){if(i) rightPanel->show(); else rightPanel->hide();});
+
+
+    connect(ui->showConsole,&QAction::toggled,this,[=](bool i){if(i) {m_console->show(); m_console->clearAll();} else m_console->hide();});
+    connect(ui->TableShow,&QAction::toggled,this,[=](bool i){
+       if(i) {
+           m_table->show();
+           //tableSizeSpinbox->setEnabled(true);
+       } else {
+           m_table->hide();
+           //tableSizeSpinbox->setEnabled(false);
+       }
+    });
+
+    connect(ui->AutoRange,&QAction::triggered,d_viewer,&DiameterViewer::autoScale);
     connect(ui->AutoRange,&QAction::triggered,viewer, &ShotViewer::autoScale);
+    connect(ui->ShowRightPanel,&QAction::toggled,[=](bool i){if(i) m_ManagementWidget->show(); else m_ManagementWidget->hide();});
 
     //Пустой виджет, разделяющий кнопки на mainToolBar
-//    QWidget* empty = new QWidget();
-//    empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
-//    ui->mainToolBar->insertWidget(ui->showConsole,empty);
+   QWidget* empty = new QWidget();
+   empty->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
+   ui->mainToolBar->insertWidget(ui->showConsole,empty);
 
-    //Логгирование
-    log = new SaveLog(this);
-    connect(log,&SaveLog::SaveToFolder,[=](QString &dirname){saveHistory(dirname);});
-    connect(ui->SaveLog,&QAction::triggered,[=]{log->show();});
+
+
+
     //Создание папки с логами, если ее нет.
     dir = new QDir(dirnameDefault);
     if (!dir->exists()) {
         dir->mkdir(dirnameDefault);
     }
     dir->setFilter( QDir::NoDotAndDotDot);
-
-    file= new QFile();
 
    ShadowSettings = new SettingsShadowsFindDialog(this);
    connect(ShadowSettings, &SettingsShadowsFindDialog::settingsChanged,this,&MainWindow::settingsChanged);//Обновляем настройки в фильтре
@@ -307,11 +240,6 @@ MainWindow::MainWindow(QWidget *parent) :
        sendByteToMK(REQUEST_MODEL,0,"\nSEND REQUEST_MODEL: ");                //Запрашиваем геометрические параметры
    });
 
-   ui->TableShow->setVisible(false);
-   ui->showConsole->setVisible(false);
-   ui->SaveLog->setVisible(false);
-   ui->action->setVisible(false);
-   ui->ShdowSet->setVisible(false);
 
 
    //Fir filter
@@ -325,135 +253,18 @@ MainWindow::MainWindow(QWidget *parent) :
         temp.append(diameterPlis.at(0) + diameterPlis.at(1));
        ShadowSettings->wizard->catchData->setButtonPushed(temp,i);
    });
-   /*********                       ГЕНЕРИРУЕМ СИГНАЛ               **************/
-
-    double T = 2;                       //длительность сигнала, с
-    double F = 10;                      //частота сигнала, Гц
-    double F_d = 512;                   //частота дискретизации, Гц
-    int n = static_cast<int>(T * F_d);          //Количество точек
-    double delta=F_d/n;   //Шаг АЧХ
-    //Генерируем сигнал
-    QVector<std::complex<double> > dataIn,dataOut(n,0),dataBack(n,0);
-    for (int i =0;i<n;i++){
-     //dataIn.append(sin(i/10.) + sin(i/5.) +  sin(i/1.)+  sin(i/3.));
-     dataIn.append(sin(2 * 3.14 * F * i/F_d) );
-     //dataIn.append(0.2* sin(2 * 3.14 * F * i/F_d)+ 2*sin(2 * 3.14 * 2*F * i/F_d));
-     //dataIn.append(QRandomGenerator::global()->generateDouble());
-    }
-
-    // создаем план прямого преобазования фурье
-    fftw_plan plan=fftw_plan_dft_1d(n, (fftw_complex*) &dataIn[0], (fftw_complex*) &dataOut[0], FFTW_FORWARD, FFTW_ESTIMATE);
-    fftw_execute(plan);
-    fftw_destroy_plan(plan);
-
-
-    QWidget *tempPLot = new QWidget(m_tab);
-    QVBoxLayout *tempLayout = new QVBoxLayout(tempPLot);
-    QCustomPlot *tempPlot1 = new QCustomPlot(tempPLot);
-    QCustomPlot *tempPlot2 = new QCustomPlot(tempPLot);
-    tempLayout->addWidget(tempPlot1);
-    tempLayout->addWidget(tempPlot2);
-
-    tempPlot1->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
-    tempPlot1->axisRect()->setupFullAxesBox();
-
-    tempPlot2->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectLegend | QCP::iSelectPlottables);
-    tempPlot2->axisRect()->setupFullAxesBox();
-
-    tempPlot1->legend->setVisible(true);
-    tempPlot1->legend->setFont(legendFont);
-    tempPlot1->legend->setSelectedFont(legendFont);
-    tempPlot1->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
-    tempPlot2->legend->setVisible(true);
-    tempPlot2->legend->setFont(legendFont);
-    tempPlot2->legend->setSelectedFont(legendFont);
-    tempPlot2->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
-
-    m_tab->addTab(tempPLot, "ТЕСТ");
-    QCPGraph *tempG1 = tempPlot1->addGraph();
-    tempG1->setName("Исходный график");
-    QCPGraph *tempG2 = tempPlot2->addGraph();
-    tempG2->setName("АЧХ");
-    QCPGraph *tempG2_ = tempPlot2->addGraph();
-    tempG2_->setName("АЧХ отфильтрованное");
-    QCPGraph *tempG3 = tempPlot1->addGraph();
-    tempG3->setName("Обратно Преобразованный");
-
-    QCPGraph *tempG4 = tempPlot1->addGraph();
-    tempG4->setName("Обратно Преобразованный IMAG");
-
-    QVector<double> xTemp1,xTemp2,y1Temp,y2Temp,y2Temp_,y3Temp,y4Temp;
-
-    //Входной массив на график
-    for (int i=0;i<n;i++){
-      xTemp1.append(i);
-      y1Temp.append(dataIn.at(i).real());
-    }
-    //Преобразуем выход фурья в децибелы
-    double freqX = 0;
-    for (int i=0;i<n/2+1;i++){
-      freqX+=delta;
-      xTemp2.append(freqX);
-      y2Temp.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
-    }
-
-    double re,im;
-    double decr = 1;
-    double limit=10;
-    //Фильтрация
-    for (int i=0;i<n/2+1;i++){
-        if(y2Temp.at(i)>limit){
-            decr = pow(10,(y2Temp.at(i)-limit)/10);
-            re = dataOut.at(i).real()/decr;
-            im = dataOut.at(i).imag()/decr;
-            dataOut[i].real(re);
-            dataOut[i].imag(im);
-            dataOut[n-i-1].real(re);
-            dataOut[n-i-1].imag(im);
-        }
-        y2Temp_.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
-    }
-
-    // создаем план обратного преобазования фурье
-    fftw_plan plan2=fftw_plan_dft_1d(dataOut.size(), (fftw_complex*) &dataOut[0], (fftw_complex*) &dataBack[0], FFTW_BACKWARD , FFTW_ESTIMATE);
-    fftw_execute(plan2);
-    fftw_destroy_plan(plan2);
-
-    for (int i=0;i<n;i++){
-      y3Temp.append(dataBack.at(i).real()/n);
-      y4Temp.append(dataBack.at(i).imag()/n);
-    }
-
-    tempG1->setData(xTemp1,y1Temp);
-    tempG2->setData(xTemp2,y2Temp);
-    tempG2_->setData(xTemp2,y2Temp_);
-    tempG3->setData(xTemp1,y3Temp);
-    tempG4->setData(xTemp1,y4Temp);
-
-    QPen m_pen;
-    m_pen.setColor(Qt::red);
-    tempG1->setPen(m_pen);
-
-    m_pen.setColor(Qt::blue);
-    tempG2->setPen(m_pen);
-    m_pen.setColor(Qt::red);
-    tempG2_->setPen(m_pen);
-
-    m_pen.setColor(Qt::black);
-    tempG3->setPen(m_pen);
-
-    tempPlot1->rescaleAxes();
-    tempPlot2->rescaleAxes();
-    tempPlot1->replot();
-    tempPlot2->replot();
-
-
-    m_tab->removeTab(2);
-    m_tab->removeTab(1);
 
     m_ManagementWidget->m_plisSettings->setEnabled(false);
     QShortcut *shortcut = new QShortcut(QKeySequence("Ctrl+F5"), this);
     connect(shortcut, &QShortcut::activated, this, &MainWindow::onCtrlF5Pressed);
+
+    for(int i=0;i<4;i++)
+        shots.append(QMap<int,QByteArray>());
+
+    //Отключаем
+    ui->TableShow->setVisible(false);
+    ui->showConsole->setVisible(false);
+    ui->ShdowSet->setVisible(false);
 }
 
 MainWindow::~MainWindow(){
@@ -466,7 +277,7 @@ MainWindow::~MainWindow(){
 }
 
 
-//Настройки, коннекты
+//Открыть настройки связи
 void MainWindow::on_settings_triggered(){
     settings_ptr->show();
 }
@@ -506,7 +317,6 @@ void MainWindow::toDeveloperMode()
         command.append(char(crc&0xFF));
         command.append(char((crc>>8)&0xFF));//CRC
 
-
         serial->write(command);           //Засылаем пакет
         //waitingD->waitingStart(3000);       //Запускаем анимацию
 
@@ -519,6 +329,7 @@ void MainWindow::toDeveloperMode()
         QMessageBox::critical(this, "Ошибка!","Невозможно открыть указанный COM-порт!",QMessageBox::Ok);
 }
 
+//Нажата кнопка "ПОДКЛЮЧИТЬСЯ"
 void MainWindow::on_connect_triggered()
 { 
     toDeveloperMode();
@@ -546,17 +357,16 @@ void MainWindow::on_connect_triggered()
         //Включаем интерфейс
         m_ManagementWidget->setEnabled(true);
 
-
         //Запрашиваем модель
         sendByteToMK(REQUEST_MODEL,0,"\nSEND REQUEST_MODEL: ");
-
     }
     else{
          statusBar->setMessageBar("Невозможно подключиться COM-порту");
     }
 }
-void MainWindow::on_disconnect_triggered(){
 
+//Нажата кнопка "ОТКЛЮЧИТЬСЯ"
+void MainWindow::on_disconnect_triggered(){
     if(serial->isOpen()){
         serial->close();
         statusBar->setMessageBar("Отключено от " + settings_ptr->getName());
@@ -566,7 +376,6 @@ void MainWindow::on_disconnect_triggered(){
         statusBar->setMessageBar("Невозможно отключиться от COM-порта");
     }
 
-
     ui->connect->setEnabled(true);
     ui->settings->setEnabled(true);
     ui->disconnect->setEnabled(false);
@@ -574,22 +383,20 @@ void MainWindow::on_disconnect_triggered(){
     m_timer->stop();
     m_online=false;
 
-    emit statusUpdate(m_online);
+    statusBar->setStatus(m_online);
     countRecievedDots=0;
     countAvaibleDots=0;
     notYetFlag=0;
     statusBar->setDownloadBarValue(0);
-    emit dataReadyUpdate(-1);
-    currentShot.clear();
+    statusBar->setDataReady(countAvaibleDots);
 
     //Вырубаем автополучение на всякий  
     m_ManagementWidget->m_TransmitionSettings->setGetButton(false);
     //Вырубаем интерфейс
     m_ManagementWidget->setEnabled(false);
-
-
 }
 
+//Отправка 1 байт в прибор
 void MainWindow::sendByteToMK(char dst, int dataByte, const QString &msg)
 {
     QByteArray data;
@@ -609,6 +416,7 @@ void MainWindow::sendByteToMK(char dst, int dataByte, const QString &msg)
     }
 }
 
+//Отправить вектор Double в прибор
 void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &msg){
     conversation_t conv;
     QByteArray data;
@@ -635,15 +443,14 @@ void MainWindow::sendVectorToMK(char dst, QVector<double> dataV, const QString &
     }
 }
 
-//Подсчет количества отмеченных каналов
-void MainWindow::chOrderSend(int ch)
-{
+//Отправка комбинации отмеченных каналов
+void MainWindow::chOrderSend(int ch){
     channelsOrder = ch;
     sendByteToMK(CH_ORDER,channelsOrder,"SEND CH_ORDER: ");
 }
 
-int MainWindow::countCheckedCH()
-{
+//Подсчет количества отмеченных каналов
+int MainWindow::countCheckedCH(){
     int chCountChecked=0;
     for (int i=0;i<4;i++){
         if(channelsOrder&(1<<i))
@@ -652,10 +459,10 @@ int MainWindow::countCheckedCH()
     return chCountChecked;
 }
 
-void MainWindow::getButtonClicked(bool checked)
-{
+//Нажата кнопка "ПОЛУЧИТЬ СИГНАЛ"
+void MainWindow::getButtonClicked(bool checked){
     if(checked){
-        notYetFlag = countCheckedCH();  //На старте передачи запоминаем сколько надо ждать каналов
+        notYetFlag = countCheckedCH();                              //На старте передачи запоминаем сколько надо ждать каналов
         m_ManagementWidget->m_TransmitionSettings->setChEn(false);
     }
     else {
@@ -665,60 +472,70 @@ void MainWindow::getButtonClicked(bool checked)
 }
 
 /////////////////////////////////////////////////////ОСНОВНЫЕ МЕТОДЫ///////////////////////////////////////////////////////////
-//Запрос канала, отмеченного в чекбоксах chXCheckBox
-//Метод вызывается в трех случаях:
-//1. Нажата кнопка "Получить точки".
-//2. Отмечено "Автополучение по готовноси"
-//3. Запрос следующего выбранного канала
-//Последовательность отправки знает плата. Клиент только отправляет однотипные зарпосы
-//В этом случае счетчик notYetFlag устанавливается по количеству отмеченных каналов (1 или 2)
-//отправляется первый запрос. Плата отвечает тем, что считает нужным.
-//После успешного приема первого канала, notYetFlag уменьшается на единицу и если отмечено 2 канала, то происходит повторный запрос
-void MainWindow::manualGetShotButton(){
-    statusBar->setMessageBar("");
-    if(countAvaibleDots){
-        m_timer->stop();                                              //Останавливаем запрос статусов
-        countWaitingDots = countAvaibleDots;                          //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
-        statusBar->setDownloadBarRange(countAvaibleDots);
-        statusBar->setDownloadBarValue(0);
-        while (countAvaibleDots>0){                                   //Отправляем запрос несоклько раз по packetSize точек.
-            sendByteToMK(REQUEST_POINTS,countAvaibleDots>packetSize?packetSize:countAvaibleDots, "REQUEST_POINTS: ");
-            countAvaibleDots-=packetSize;
+// Обработчик таймаута отправки запросов
+void MainWindow::handlerTimer() {
+    statusBar->setInfo(m_transp->getQueueCount());
+    QByteArray data;
+    if (m_online) {
+        if(notYetFlag){    //Хотим получать сигнал
+            statusBar->setMessageBar("");
+            if(countAvaibleDots){
+                countWaitingDots = countAvaibleDots;                          //Запоминаем, сколько точек всего придет в одном канале                                                                           //заправшиваем новую пачку
+                sendByteToMK(REQUEST_POINTS,countAvaibleDots, "REQUEST_POINTS: ");                                  //Отправляем запрос на точки
+                notYetFlag--;
+            }
+            else
+                statusBar->setMessageBar("ОШИБКА!, Данные не готовы для получения!");
         }
-        notYetFlag--;
+        else if(m_ManagementWidget->m_DiameterTransmition->isButtonChecked()){       //Если хотим запрашивать диаметр
+            sendByteToMK(REQUEST_DIAMETER,0,"\nSEND REQUEST_DIAMETER: ");
+        }
+        else
+            sendByteToMK(REQUEST_STATUS,0,"\nSEND REQUEST_STATUS: ");
+
+
     }
-    else
-         statusBar->setMessageBar("ОШИБКА!, Данные не готовы для получения!");
+    else {
+        if (serial->isOpen())
+            sendByteToMK(ASK_MCU,0,"SEND ASK_MCU: ");
+    }
+    m_timer->stop();
 }
 
 //Обработка входящих пакетов
 void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
+    if(bytes.size()<3){
+        m_timer->start();
+        m_console->putData(" !!small Message!!!\n");
+        return;
+    }
     unsigned char cmd = static_cast<unsigned char>(bytes[0]);
     charToShort.ch[0]=bytes[2];
     charToShort.ch[1]=bytes[1];
     unsigned short value = charToShort.sh;
-    int dataReady=-1;
-    QString chName;
-    bytes.remove(0, 3);                                                         //Удалили 3 байта (команду и значение)
-    emit infoUpdate(m_transp->getQueueCount());                          //Обновляем статус бар
+    bytes.remove(0, 3);                                                     //Удалили 3 байта (команду и значение)
+    statusBar->setInfo(m_transp->getQueueCount());                          //Обновляем статус бар
+
     switch(cmd){
     case ASK_MCU:                                                           //Пришел ответ, mcu жив
         if (value == OK) {
             m_online = true;
             m_console->putData(" :RECIEVED ANSWER_MCU\n");
-            emit statusUpdate(m_online);
         }
         else{
+            m_online = false;
             statusBar->setMessageBar("Error: Wrong ASK_MCU ansver message!");
             m_console->putData("Error: Wrong ASK_MCU ansver message!\n");
         }
+        statusBar->setStatus(m_online);
+        m_timer->start();
         break;
 
     case REQUEST_MODEL:
         m_console->putData(" :RECIEVED ANSWER_MODEL\n");
         ldmModel = value & 0xFF;
         ShadowSettings->ldmModel = ldmModel;
-        m_MainControlWidget->m_resultWidget->m_centerViewer->setScale(ldmModel);
+        m_ManagementWidget->m_resultWidget->setModel(ldmModel);
         for (int i = 0; i<6; i++){
             for (int j =0;j<8;j++)
                 charToDouble.ch[j] =  bytes.at(j+i*8);
@@ -726,76 +543,52 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
         }
         setWindowTitle("LDMExplorer (LDM" + QString::number(ldmModel) + ")");
         filter->updateSettings(ldmGeomParams);
-        m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(true);
-        m_ManagementWidget->m_plisSettings->autoModeRadio->setEnabled(false);
-        m_ManagementWidget->m_plisSettings->centerModeRadio->setEnabled(false);
-        m_ManagementWidget->m_plisSettings->rearModeRadio->setEnabled(false);
-        m_ManagementWidget->m_plisSettings->lazer1averageNum2->setVisible(false);
-        m_ManagementWidget->m_plisSettings->lazer1averageNum3->setVisible(false);
-        m_ManagementWidget->m_plisSettings->lazer1durationNum2->setVisible(false);
-        m_ManagementWidget->m_plisSettings->lazer1durationNum3->setVisible(false);
-        m_ManagementWidget->m_plisSettings->lazer2averageNum2->setVisible(false);
-        m_ManagementWidget->m_plisSettings->lazer2averageNum3->setVisible(false);
-        m_ManagementWidget->m_plisSettings->lazer2durationNum2->setVisible(false);
-        m_ManagementWidget->m_plisSettings->lazer2durationNum3->setVisible(false);
+
+        m_ManagementWidget->m_plisSettings->setEn200Mode(false);
+        m_ManagementWidget->m_plisSettings->setEnOffsetsTool(true);
         switch (ldmModel){
          case 20:
             filter->setResolution(ldm20Res);
-            shift1Factor = 10;
+            shiftFactor[0] = 10;
             signalSize = 10800;
             break;
         case 35:
             wordLen = true;
             filter->setResolution(ldm20Res);
-            shift1Factor = 0;
+            shiftFactor[0] = 0;
             signalSize = 130;
             break;
         case 40:
            filter->setResolution(ldm20Res);
-           shift1Factor = 10;
+           shiftFactor[0] = 10;
            signalSize = 10800;
            break;
          case 50:
             filter->setResolution(ldm50Res);
-            shift1Factor = 40;
+            shiftFactor[0] = 40;
             signalSize = 7700;
             break;
         case 120:
-            m_ManagementWidget->m_plisSettings->offsetGreenButton->setEnabled(false);
-            m_ManagementWidget->m_plisSettings->offsetBlueButton->setEnabled(false);
+            m_ManagementWidget->m_plisSettings->setEnOffsetsTool(false);
             filter->setResolution(ldm120Res);
-            shift1Factor = 0;
+            shiftFactor[0] = 0;
             signalSize = 10501;
             break;
          case 200:
-            m_ManagementWidget->m_plisSettings->autoModeRadio->setEnabled(true);
-            m_ManagementWidget->m_plisSettings->centerModeRadio->setEnabled(true);
-            m_ManagementWidget->m_plisSettings->rearModeRadio->setEnabled(true);
-            m_ManagementWidget->m_plisSettings->lazer1averageNum2->setVisible(true);
-            m_ManagementWidget->m_plisSettings->lazer1averageNum3->setVisible(true);
-            m_ManagementWidget->m_plisSettings->lazer1durationNum2->setVisible(true);
-            m_ManagementWidget->m_plisSettings->lazer1durationNum3->setVisible(true);
-            m_ManagementWidget->m_plisSettings->lazer2averageNum2->setVisible(true);
-            m_ManagementWidget->m_plisSettings->lazer2averageNum3->setVisible(true);
-            m_ManagementWidget->m_plisSettings->lazer2durationNum2->setVisible(true);
-            m_ManagementWidget->m_plisSettings->lazer2durationNum3->setVisible(true);
-            shift1Factor = 0;
+            m_ManagementWidget->m_plisSettings->setEn200Mode(true);
+            shiftFactor[0] = 0;
             signalSize = 10501;
         }
         viewer->rescaleX(0,signalSize);
         ShadowSettings->updateSettingsStructSlot(ldmGeomParams);
         ShadowSettings->filLabels(ldmGeomParams);
-        m_timer->start(100);
+        m_timer->start();
         break;
     case REQUEST_STATUS:                                                                //Пришло количество точек
         m_console->putData(" :RECIEVED ANSWER_STATUS\n");
-        m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
+
         if (value != NO_DATA_READY) {
-            dataReady = value;
             countAvaibleDots=value;
-            //signalSize = value;
-            //viewer->rescaleX(0,signalSize);
 
             //Забираем 16 байт метаданных
             tempPLISextremums1.clear();
@@ -808,141 +601,77 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 charToShort.ch[1] = bytes.at(i+9);
                 tempPLISextremums1.prepend(charToShort.sh);
             }
-            m_MainControlWidget->m_resultWidget->extr1Ch1->setText("   Экстр1: " + QString::number(tempPLISextremums1.at(0)));
-            m_MainControlWidget->m_resultWidget->extr2Ch1->setText("   Экстр2: " + QString::number(tempPLISextremums1.at(1)));
-            m_MainControlWidget->m_resultWidget->extr3Ch1->setText("   Экстр3: " + QString::number(tempPLISextremums1.at(2)));
-            m_MainControlWidget->m_resultWidget->extr4Ch1->setText("   Экстр4: " + QString::number(tempPLISextremums1.at(3)));
-            m_MainControlWidget->m_resultWidget->extr1Ch2->setText("   Экстр1: " + QString::number(tempPLISextremums2.at(0)));
-            m_MainControlWidget->m_resultWidget->extr2Ch2->setText("   Экстр2: " + QString::number(tempPLISextremums2.at(1)));
-            m_MainControlWidget->m_resultWidget->extr3Ch2->setText("   Экстр3: " + QString::number(tempPLISextremums2.at(2)));
-            m_MainControlWidget->m_resultWidget->extr4Ch2->setText("   Экстр4: " + QString::number(tempPLISextremums2.at(3)));
             if( bytes.size()>=16) bytes.remove(0, 16);
+
             //16 байт - ошибки и значения параметров ПЛИС
             errorCh1 = bytes.at(0);
             errorCh2 = bytes.at(2);
-            m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(0),1);   //Младшие значащие байты
-            m_MainControlWidget->m_signalErrWidget->setVal(bytes.at(2),2);
+            m_ManagementWidget->m_resultWidget->setError(bytes);   //Младшие значащие байты
 
-            charToShort.ch[0] = bytes.at(4);
-            charToShort.ch[1] = bytes.at(5);
+            if( bytes.size()>=4) bytes.remove(0, 4);
 
-            m_ManagementWidget->m_plisSettings->lazer1Button->setText(QString::number(charToShort.sh));
+            QVector<short> tempData;
+            int dataSize=6;
+            for(int i=0;i<dataSize;i++){
+                charToShort.ch[0] = bytes.at(2*i);
+                charToShort.ch[1] = bytes.at(2*i+1);
+                tempData.append(charToShort.sh);
+            }
+            m_ManagementWidget->m_plisSettings->setButtonsData(tempData);
+            if( bytes.size()>=dataSize*2) bytes.remove(0, dataSize*2);
+            tempData.clear();
 
-            charToShort.ch[0] = bytes.at(6);
-            charToShort.ch[1] = bytes.at(7);
-            m_ManagementWidget->m_plisSettings->lazer2Button->setText(QString::number(charToShort.sh));
-
-            charToShort.ch[0] = bytes.at(8);
-            charToShort.ch[1] = bytes.at(9);
-            m_ManagementWidget->m_plisSettings->borderLeftButton->setText(QString::number(charToShort.sh));
-
-            charToShort.ch[0] = bytes.at(10);
-            charToShort.ch[1] = bytes.at(11);
-            m_ManagementWidget->m_plisSettings->borderRightButton->setText(QString::number(charToShort.sh));
-
-            charToShort.ch[0] = bytes.at(12);
-            charToShort.ch[1] = bytes.at(13);
-            m_ManagementWidget->m_plisSettings->compCH1Button->setText(QString::number(charToShort.sh));
-
-            charToShort.ch[0] = bytes.at(14);
-            charToShort.ch[1] = bytes.at(15);
-            m_ManagementWidget->m_plisSettings->compCH2Button->setText(QString::number(charToShort.sh));
-
-            if( bytes.size()>=16) bytes.remove(0, 16);
             //Средние и длительности
-            if(ldmModel==200){
-                charToShort.ch[0] = bytes.at(0);
-                charToShort.ch[1] = bytes.at(1);
-                m_ManagementWidget->m_plisSettings->lazer1averageNum2->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(2);
-                charToShort.ch[1] = bytes.at(3);
-                m_ManagementWidget->m_plisSettings->lazer2averageNum2->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(4);
-                charToShort.ch[1] = bytes.at(5);
-                m_ManagementWidget->m_plisSettings->lazer1averageNum3->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(6);
-                charToShort.ch[1] = bytes.at(7);
-                m_ManagementWidget->m_plisSettings->lazer2averageNum1->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(8);
-                charToShort.ch[1] = bytes.at(9);
-                m_ManagementWidget->m_plisSettings->lazer1averageNum1->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(10);
-                charToShort.ch[1] = bytes.at(11);
-                m_ManagementWidget->m_plisSettings->lazer2averageNum3->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(12);
-                charToShort.ch[1] = bytes.at(13);
-                m_ManagementWidget->m_plisSettings->lazer1durationNum2->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(14);
-                charToShort.ch[1] = bytes.at(15);
-                m_ManagementWidget->m_plisSettings->lazer2durationNum2->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(16);
-                charToShort.ch[1] = bytes.at(17);
-                m_ManagementWidget->m_plisSettings->lazer1durationNum3->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(18);
-                charToShort.ch[1] = bytes.at(19);
-                m_ManagementWidget->m_plisSettings->lazer2durationNum1->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(20);
-                charToShort.ch[1] = bytes.at(21);
-                m_ManagementWidget->m_plisSettings->lazer1durationNum1->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(22);
-                charToShort.ch[1] = bytes.at(23);
-                m_ManagementWidget->m_plisSettings->lazer2durationNum3->setText(QString::number(charToShort.sh));
-
-                if( bytes.size()>=24) bytes.remove(0,24);
+            if(ldmModel==200)   dataSize=12;
+            else                dataSize=4;
+            for(int i=0;i<dataSize;i++){
+                charToShort.ch[0] = bytes.at(2*i);
+                charToShort.ch[1] = bytes.at(2*i+1);
+                tempData.append(charToShort.sh);
             }
-            else{
-                charToShort.ch[0] = bytes.at(0);
-                charToShort.ch[1] = bytes.at(1);
-                m_ManagementWidget->m_plisSettings->lazer1averageNum1->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(2);
-                charToShort.ch[1] = bytes.at(3);
-                m_ManagementWidget->m_plisSettings->lazer2averageNum1->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(4);
-                charToShort.ch[1] = bytes.at(5);
-                m_ManagementWidget->m_plisSettings->lazer1durationNum1->setText(QString::number(charToShort.sh));
+            m_ManagementWidget->m_plisSettings->setLazersData(tempData);
+            if( bytes.size()>=dataSize*2) bytes.remove(0, dataSize*2);
+            tempData.clear();
 
-                charToShort.ch[0] = bytes.at(6);
-                charToShort.ch[1] = bytes.at(7);
-                 m_ManagementWidget->m_plisSettings->lazer2durationNum1->setText(QString::number(charToShort.sh));
-                if( bytes.size()>=8) bytes.remove(0, 8);
-            }
-
+            //Параметры зеленого и голубого оффсета
+            dataSize=2;
             if(ldmModel==20 || ldmModel==40 || ldmModel==50){
-                //Параметры зеленого и голубого оффсета
-                charToShort.ch[0] = bytes.at(0);
-                charToShort.ch[1] = bytes.at(1);
-                m_ManagementWidget->m_plisSettings->offsetGreenButton->setText(QString::number(charToShort.sh));
-                charToShort.ch[0] = bytes.at(2);
-                charToShort.ch[1] = bytes.at(3);
-                m_ManagementWidget->m_plisSettings->offsetBlueButton->setText(QString::number(charToShort.sh));
-                if( bytes.size()>=4) bytes.remove(0, 4);
+                for(int i=0;i<dataSize;i++){
+                    charToShort.ch[0] = bytes.at(2*i);
+                    charToShort.ch[1] = bytes.at(2*i+1);
+                    tempData.append(charToShort.sh);
+                }
+                m_ManagementWidget->m_plisSettings->setOffsetsData(tempData);
+                if( bytes.size()>=dataSize*2) bytes.remove(0, dataSize*2);
+                tempData.clear();
             }
+
+            QVector<double> tempData2;
+            tempData2.append(tempPLISextremums1);
+            tempData2.append(tempPLISextremums2);
+
 
             if(tempPLISextremums1.size()==4){
                 shadowsCh1Plis = filter->shadowFind(tempPLISextremums1);//Расчет теней на основании экстремумов из плисины
-                m_MainControlWidget->m_resultWidget->shad1Ch1->setText("   Фронт: " + QString::number(shadowsCh1Plis.at(0)));
-                m_MainControlWidget->m_resultWidget->shad2Ch1->setText("   Спад: " + QString::number(shadowsCh1Plis.at(1)));
+                tempData2.append(shadowsCh1Plis);
+            }
+            else{
+                tempData2.append(0);
+                tempData2.append(0);
             }
             if(tempPLISextremums2.size()==4){
                 shadowsCh2Plis = filter->shadowFind(tempPLISextremums2);//Расчет теней на основании экстремумов из плисины
-                m_MainControlWidget->m_resultWidget->shad1Ch2->setText("   Фронт: " + QString::number(shadowsCh2Plis.at(0)));
-                m_MainControlWidget->m_resultWidget->shad2Ch2->setText("   Спад: " + QString::number(shadowsCh2Plis.at(1)));
+               tempData2.append(shadowsCh2Plis);
             }
-            if(shadowsCh1Plis.size()>1 && shadowsCh2Plis.size()>1){
+            else{
+                tempData2.append(0);
+                tempData2.append(0);
+            }
+
+            if(shadowsCh1Plis.size()==2 && shadowsCh2Plis.size()==2){
                 diameterPlis = filter->diameterFind(shadowsCh1Plis,shadowsCh2Plis);
-                if(diameterPlis.at(0) > 0 && diameterPlis.at(1) > 0){
-                    m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр: " +QString::number(diameterPlis.at(0) + diameterPlis.at(1)));
-                    m_MainControlWidget->m_resultWidget->radiusPLISX->setText("   Радиус X: " + QString::number(diameterPlis.at(0)));
-                    m_MainControlWidget->m_resultWidget->radiusPLISY->setText("   Радиус Y: " + QString::number(diameterPlis.at(1)));
-
-                }
-                else{
-                    m_MainControlWidget->m_resultWidget->diametrPlisLabel->setText("Диаметр:-");
-
-                    m_MainControlWidget->m_resultWidget->radiusPLISX->setText("Радиус X:-");
-                    m_MainControlWidget->m_resultWidget->radiusPLISY->setText("Радиус Y:-");
-
-                }
+                tempData2.append(diameterPlis.at(0));
+                tempData2.append(diameterPlis.at(1));
             }
 
             //32 байт финальные радиусы и центры
@@ -952,37 +681,33 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
                 finalDiamCenters[i] = charToDouble.d;
             }
             if(errorCh1==0)
-                m_MainControlWidget->m_resultWidget->radiusFinalX->setText("Диаметр Х:  " +QString::number(finalDiamCenters.at(0)/1000,'f',3) + "мм");
+                tempData2.append(finalDiamCenters.at(0));
             else
-                m_MainControlWidget->m_resultWidget->radiusFinalX->setText("Диаметр Х: - мм");
-            if(errorCh2==0)
-                m_MainControlWidget->m_resultWidget->radiusFinalY->setText("Диаметр Y:  " +QString::number(finalDiamCenters.at(1)/1000,'f',3) + "мм");
-            else
-                m_MainControlWidget->m_resultWidget->radiusFinalY->setText("Диаметр Y: - мм");
+                tempData2.append(0);
 
-            if(errorCh1==0 && errorCh2==0){
-                m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр:  " +QString::number(finalDiamCenters.at(0)/2/1000 + finalDiamCenters.at(1)/2/1000,'f',3) + "мм");
-                m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(finalDiamCenters.at(2)/1000,'f',2) + ", " + QString::number(finalDiamCenters.at(3)/1000,'f',2) + "мм");
-                m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameterPlis.at(2)/1000,diameterPlis.at(3)/1000);
-                m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameterPlis.at(0)/1000,diameterPlis.at(1)/1000);
-            }
-            else{
-                m_MainControlWidget->m_resultWidget->diametrFinalLabel->setText("Диаметр: - мм");
-                m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение:-");
-                m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(0,0);
-                m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(0,0);
-            }
+            if(errorCh2==0)
+                tempData2.append(finalDiamCenters.at(1));
+            else
+                tempData2.append(0);
+
+            tempData2.append(finalDiamCenters.at(2));
+            tempData2.append(finalDiamCenters.at(3));
 
             if( bytes.size()>=32) bytes.remove(0, 32);
 
-            if(notYetFlag)                                                             //Если есть непринятые каналы
-                manualGetShotButton();                                                  //Запрашиваем шот
+            m_ManagementWidget->m_resultWidget->setData(tempData2);
+            shadowsCh1Plis.clear();
+            shadowsCh2Plis.clear();
+
+            if(m_ManagementWidget->m_TransmitionSettings->getStatusGetButton())                 //Если нажата кнопка
+                notYetFlag = countCheckedCH();                                                  //Запрашиваем шот
         }
         else {
-            dataReady = 0;
+            countAvaibleDots = 0;
             m_console->putData("Warning: MCU has no data\n");
         }
-        emit dataReadyUpdate(dataReady);
+        statusBar->setDataReady(countAvaibleDots);
+        m_timer->start();                                                              //Если получили статус, то можно запрашивать еще
         break;
 
 
@@ -1011,94 +736,35 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
             }
             m1FromMCU = filter->medianFilterX(r1FromMCU,m_windowSize,m_average,m_limit);
             m2FromMCU = filter->medianFilterY(r2FromMCU,m_windowSize,m_average,m_limit);
+            d_viewer->addDataToGraph(r1FromMCU,r2FromMCU,c1FromMCU,c2FromMCU,m1FromMCU,m2FromMCU);
             m_ManagementWidget->m_DiameterTransmition->r1ValueLabel->setNum(m1FromMCU.last());
             m_ManagementWidget->m_DiameterTransmition->r2ValueLabel->setNum(m2FromMCU.last());
-            addDataToGraph();
         }
         m_timer->start();//Продолжаем запрос статуса
         break;
 
     case REQUEST_POINTS:
         if ((value==CH1)|| (value==CH2) || (value==CH3) || (value==CH4)){                                                //Если пришли точки по одному из каналов, то обрабатываем
-            countRecievedDots+=bytes.count();                                           //Считаем, сколько уже пришло
+            countRecievedDots=bytes.size();                                           //Считаем, сколько уже пришло
             if(wordLen) countRecievedDots/=2;
-            statusBar->setDownloadBarValue(countRecievedDots);                          //Прогресс бар апгрейд
-            currentShot.append(bytes);                                                  //Добавляем в шот данные, которые пришли
+
             if(countRecievedDots>=countWaitingDots){                                    //Приняли канал целиком
                 //Кладем принятый шот в соответствующий мап
-                if (value == CH1){
-                    if(shotsCH1.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
-                         shotCountRecieved++;                                           //Начинаем следующую пачку
-                         qDebug() << "Attantion! Dublicate CH1";
-                    }
-                    chName="CH1_NF";
-                    //currentShot=currentShot.mid(16);                                    //Смещение влево
-                    //currentShot.append(16,0);
-                    shotsCH1.insert(shotCountRecieved,currentShot);                     //Добавили пришедший канал в мап с текущим индексом
-                    m_console->putData(" :RECIEVED ANSWER_POINTS CH1_NF  ");
-
-                    // if(m_ManagementWidget->m_TransmitionSettings->ch2InCheckBox->isChecked()) {                //Если нужна фильтрация (внутренняя)
-                    //     QByteArray filtered = filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
-                    //     shotsCH2In.insert(shotCountRecieved,filtered);
-                    // }
+                if(shots.at(qCountTrailingZeroBits(value)).contains(shotCountRecieved)){                       //Если текущий принятый канал уже содержит такой номер шота, переходим к следующей пачке
+                    shotCountRecieved++;
+                    qDebug() << "Attantion! Dublicate CH" + QString::number(value);
                 }
-                else if(value == CH2){  // ха ха ха!!! несерьёзно. смотри почему  len  = 140 становится!
-
-                   if(shotsCH2.contains(shotCountRecieved)) {                         //Если в мапе уже есть запись с текущим индексом пачки
-                        shotCountRecieved++;                                           //Начинаем следующую пачку
-                        qDebug() << "Attantion! Dublicate CH2";
-                   }
-                   chName="CH1_F";
-                   //currentShot=currentShot.mid(38);                                 //Смещение отфильтрованного сигнала из плисы
-                   //currentShot.append(38,0);
-                   shotsCH2.insert(shotCountRecieved,currentShot);                                     //Добавили пришедший канал в мап с текущим индексом
-                   m_console->putData(" :RECIEVED ANSWER_POINTS CH1_F  ");
-                }
-                else if(value == CH3){
-                     if(shotsCH3.contains(shotCountRecieved)) {
-                         shotCountRecieved++;
-                         qDebug() << "Attantion! Dublicate CH3";
-                     }
-                     chName="CH2_NF";
-                     //currentShot=currentShot.mid(16);                                    //Смещение влево
-                    // currentShot.append(16,0);
-                     shotsCH3.insert(shotCountRecieved,currentShot);
-                     m_console->putData(" :RECIEVED ANSWER_POINTS CH2_NF  ");
-                     // if(m_ManagementWidget->m_TransmitionSettings->ch4InCheckBox->isChecked()){                                                      //Если нужна фильтрация
-                     //    QByteArray filtered =filter->toButterFilter(currentShot,currentShot.size());          //Получаем фильтрованный массив
-                     //    shotsCH4In.insert(shotCountRecieved,filtered);                                    //Добавляем его на график
-                     // }
-                }
-                else if(value == CH4){
-                     if(shotsCH4.contains(shotCountRecieved)) {
-                         shotCountRecieved++;
-                         qDebug() << "Attantion! Dublicate CH4";
-                     }
-                     chName="CH2_F";
-                     //currentShot=currentShot.mid(38);                                 //Смещение отфильтрованного сигнала из плисы
-                     //currentShot.append(38,0);
-                     shotsCH4.insert(shotCountRecieved,currentShot);
-                     m_console->putData(" :RECIEVED ANSWER_POINTS CH2_F  ");
-                }
-
-                //Обнуляем всякое
-                countRecievedDots=0;                                                    //Обнуляем количество пришедших точек
-                currentShot.clear();                                                    //Чистим временное хранилище текущего принимаемого канала
+                shots[qCountTrailingZeroBits(value)].insert(shotCountRecieved,bytes);                          //Добавили пришедший канал в мап с текущим индексом
+                m_console->putData(" :RECIEVED ANSWER_POINTS CH" + QString::number(value).toUtf8() );
 
                 if (notYetFlag==0){                                                     //Если приняли все заправшиваемые каналы                                                  //Все точки всех отмеченных каналов приняты
                     m_console->putData("\n");
+                    m_ManagementWidget->m_HistorySettings->addShot(shotCountRecieved);
                     shotCountRecieved++;                                                //Увеличиваем счетчик пачек
-                    m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(shotCountRecieved-1));
-                    m_ManagementWidget->m_HistorySettings->shotsComboBox->setCurrentIndex(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()-1);
-                    if(m_ManagementWidget->m_TransmitionSettings->getStatusGetButton()) //Если кнопка все еще нажата
-                        getButtonClicked(true);                                           //Вызываем слот нажатия кнопки и инициации получения новой пачки
-                    else
-                        getButtonClicked(false);                                          //Иначе обнуляем все счетчики, разблокируем чекбоксы и т.д.
                 }
                 m_timer->start();                                                       //Стартуем таймер опроса статуса
             }
         }
-
         else if(value == NO_DATA_READY){                              //Точки по какой-то причин не готовы. Это может случиться только если точки были запрошены вручную, игнорируя статус данных
             QMessageBox::critical(nullptr,"Ошибка!","Данные не готовы для получения!");
             m_console->putData("Warning: MCU has no data\n");
@@ -1115,160 +781,59 @@ void MainWindow::handlerTranspAnswerReceive(QByteArray &bytes) {
 
 //Выбрать шот из списка
 void MainWindow::selectShot(){
-    if(!shotsCH1.isEmpty() || !shotsCH2.isEmpty() ||!shotsCH3.isEmpty() ||!shotsCH4.isEmpty()){
+    if(!shots.at(0).isEmpty() || !shots.at(1).isEmpty() ||!shots.at(2).isEmpty() ||!shots.at(3).isEmpty()){
         QByteArray ch;
+        int shift;
         QVector<unsigned short> chWord;
-        int shotNum = m_ManagementWidget->m_HistorySettings->shotsComboBox->currentText().toInt();
+        int shotNum = m_ManagementWidget->m_HistorySettings->curShot();
         viewer->clearGraphs(ShotViewer::AllCH);
         //Первый канал
-        if(shotsCH1.contains(shotNum)){
-            ch = shotsCH1[shotNum];
-            chWord.clear();
-            if(shift2Factor>0){
-                ch.remove(ch.size()-shift2Factor,shift2Factor);                   //Сдвигаем нефильтрованный сигнал вправо на количество ячеек в зависимости от модели
-                ch.prepend(shift2Factor,0xFF);
-            }
-            else if(shift2Factor<0){
-                ch.remove(0,-shift2Factor);                                       //Сдвигаем нефильтрованный сигнал влево на количество ячеек в зависимости от модели
-                ch.append(-shift2Factor,0);
-            }
-            /***************************************************************/
-            if(wordLen){
-                for(int i=0;i<ch.size()-1;i+=2){
-                    chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
+        for(int i=0;i<shots.size();i++){
+            shift =  shiftFactor.at((i+1)%2);
+            if(shots.at(i).contains(shotNum)){
+                ch = shots.at(i)[shotNum];
+                chWord.clear();
+                if(shift>0){
+                    ch.remove(ch.size()-shift,shift);                   //Сдвигаем нефильтрованный сигнал вправо на количество ячеек в зависимости от модели
+                    ch.prepend(shift,0xFF);
                 }
-                 viewer->addUserGraph(chWord,chWord.size(),1);
-            }
-            /***************************************************************/
-            else
-                viewer->addUserGraph(ch,ch.size(),1);
-        }
-        if(shotsCH2.contains(shotNum)){
-            ch = shotsCH2[shotNum];
-            chWord.clear();
-            if(shift1Factor>0){
-                ch.remove(ch.size()-shift1Factor,shift1Factor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
-                ch.prepend(shift1Factor,0xFF);
-            }
-            else if(shift1Factor<0){
-                ch.remove(0,-shift1Factor);                                       //Сдвигаем фильтрованный сигнал влево на количество ячеек в зависимости от модели
-                ch.append(-shift1Factor,0);
-            }
-            /***************************************************************/
-            if(wordLen){
-                for(int i=0;i<ch.size()-1;i+=2){
-                    chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
+                else if(shift<0){
+                    ch.remove(0,-shift);                                       //Сдвигаем нефильтрованный сигнал влево на количество ячеек в зависимости от модели
+                    ch.append(-shift,0);
                 }
-                 viewer->addUserGraph(chWord,chWord.size(),2);
+
+                /***********************рисуем сигнал****************************/
+                if(wordLen){
+                    for(int i=0;i<ch.size()-1;i+=2){
+                        chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
+                    }
+                    viewer->addUserGraph(chWord,chWord.size(),i+1);
+                }
+                else
+                    viewer->addUserGraph(ch,ch.size(),i+1);
+
+                /***********************рисуем границы****************************/
+                if(i==1){
+                    viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeft()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRight())},1,3);
+                    viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compLevel(1))},1,3);
+                }
+                else if(i==3){
+                    viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeft()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRight())},2,3);
+                    viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compLevel(2))},2,3);
+                }
             }
-            /***************************************************************/
-            else
-                viewer->addUserGraph(ch,ch.size(),2);
-            //viewer->addLines(tempPLISextremums1,1,1);
-            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},1,3);
-            viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH1Button->text().toInt())},1,3);
-        }
-        if(shotsCH2In.contains(shotNum)){                                                           //Добавление на график внутреннего отфильтрованного сигнала с экстремумами и тенями
-            ch = shotsCH2In[shotNum];
-            viewer->addUserGraph(ch,ch.size(),2);
-            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());                  //Поиск экстремумов
-            viewer->addDots(dots,1);
-            QVector <unsigned int> xDots;
-            for (int i = 0;i<4;i++){
-                xDots.append(dots.at(i).at(0));
-            }
-            shadowsCh1 = filter->shadowFind(xDots);                                                 //Поиск теней
-            m_MainControlWidget->m_resultWidget->leftShadow1Label->setText("   Фронт(внутр): " +QString::number(shadowsCh1.at(0)));
-            m_MainControlWidget->m_resultWidget->rightShadow1Label->setText("   Спад(внутр): " +QString::number(shadowsCh1.at(1)));
-            viewer->addLines(shadowsCh1,1,2);
         }
 
-        //Второй канал
-        if(shotsCH3.contains(shotNum)){
-            ch = shotsCH3[shotNum];
-            chWord.clear();
-            if(shift2Factor>0){
-                ch.remove(ch.size()-shift2Factor,shift2Factor);                   //Сдвигаем нефильтрованный сигнал вправо на количество ячеек в зависимости от модели
-                ch.prepend(shift2Factor,0xFF);
-            }
-            else if(shift2Factor<0){
-                ch.remove(0,-shift2Factor);                                       //Сдвигаем нефильтрованный сигнал влево на количество ячеек в зависимости от модели
-                ch.append(-shift2Factor,0);
-            }
-            /***************************************************************/
-            if(wordLen){
-                for(int i=0;i<ch.size()-1;i+=2){
-                    chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
-                }
-                 viewer->addUserGraph(chWord,chWord.size(),3);
-            }
-            /***************************************************************/
-            else
-                viewer->addUserGraph(ch,ch.size(),3);
-        }
-        if(shotsCH4.contains(shotNum)){
-            ch = shotsCH4[shotNum];
-            chWord.clear();
-            if(shift1Factor>0){
-                ch.remove(ch.size()-shift1Factor,shift1Factor);                   //Сдвигаем фильтрованный сигнал вправо на количество ячеек в зависимости от модели
-                ch.prepend(shift1Factor,0xFF);
-            }
-            else if(shift1Factor<0){
-                ch.remove(0,-shift1Factor);                                       //Сдвигаем фильтрованный сигнал влево на количество ячеек в зависимости от модели
-                ch.append(-shift1Factor,0);
-            }
-            /***************************************************************/
-            if(wordLen){
-                for(int i=0;i<ch.size()-1;i+=2){
-                    chWord.append((ch.at(i) << 8) + (ch.at(i+1) & 0xFF));
-                }
-                 viewer->addUserGraph(chWord,chWord.size(),4);
-            }
-            /***************************************************************/
-            else
-                viewer->addUserGraph(ch,ch.size(),4);
-
-            //viewer->addLines(tempPLISextremums2,2,1);   //найденные в плисине экстремумы.
-            viewer->addLines(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->borderLeftButton->text().toInt()),static_cast<double>(signalSize-m_ManagementWidget->m_plisSettings->borderRightButton->text().toInt())},2,3);
-            viewer->addLines2(QVector<double>{static_cast<double>(m_ManagementWidget->m_plisSettings->compCH2Button->text().toInt())},2,3);
-        }
-        if(shotsCH4In.contains(shotNum)){
-            ch = shotsCH4In[shotNum];
-            viewer->addUserGraph(ch,ch.size(),4);
-            QVector<QVector<unsigned int>> dots = filter->extrFind2(ch,ch.size());
-            viewer->addDots(dots,2);
-            QVector <unsigned int> xDots;
-            for (int i = 0;i<4;i++){
-                xDots.append(dots.at(i).at(0));
-            }
-            shadowsCh2 = filter->shadowFind(xDots);
-            viewer->addLines(shadowsCh2,2,2);
-            m_MainControlWidget->m_resultWidget->leftShadow2Label->setText("   Фронт(внутр): " + QString::number(shadowsCh2.at(0)));
-            m_MainControlWidget->m_resultWidget->rightShadow2Label->setText("   Спад(внутр): " + QString::number(shadowsCh2.at(1)));
-
-        }
         viewer->replotGraphs(ShotViewer::AllCH);
-        //Расчет диаметра
-        if(shadowsCh1.size()>1 && shadowsCh2.size()>1){
-            diameter = filter->diameterFind(shadowsCh1,shadowsCh2);
-            m_MainControlWidget->m_resultWidget->radiusX->setText("   Радиус Х (внутр): " + QString::number(diameter.at(0)));
-            m_MainControlWidget->m_resultWidget->radiusY->setText("   Радиус Y (внутр):" + QString::number(diameter.at(1)));
-            m_MainControlWidget->m_resultWidget->diametrLabel->setText("Диаметр(внутр): " +QString::number(diameter.at(0) + diameter.at(1)));
-//            m_MainControlWidget->m_resultWidget->m_centerViewer->setCoord(diameter.at(2)/1000,diameter.at(3)/1000);
-//            m_MainControlWidget->m_resultWidget->m_centerViewer->setRad(diameter.at(0)/1000,diameter.at(1)/1000);
-//            m_MainControlWidget->m_resultWidget->centerPositionLabel->setText("Смещение: " + QString::number(diameter.at(2)) + ", " + QString::number(diameter.at(3)));
-        }
     }
 }
 
 //Очистить список
 void MainWindow::on_clearButton(){
     shotCountRecieved=0;
-    shotsCH1.clear();
-    shotsCH2.clear();
-    shotsCH3.clear();
-    shotsCH4.clear();
-    m_ManagementWidget->m_HistorySettings->shotsComboBox->clear();
+    for(int i=0;i<shots.size();i++){
+        shots[i].clear();
+    }
     viewer->clearGraphs(ShotViewer::AllCH);
     viewer->replotGraphs(ShotViewer::AllCH);
 }
@@ -1278,35 +843,11 @@ void MainWindow::handlerTranspError() {
     m_console->putData("\n Transporting Error \n");
     emit on_disconnect_triggered();                         //Отключаемся   
 }
+
 //Слот на сигнал от m_transp, что произошла повторная отправка
 void MainWindow::reSentInc(){
     statusBar->incReSent();
     m_console->putData("\n Resent \n");
-}
-// Обработчик таймаута опроса состояния MCU
-void MainWindow::handlerTimer() {
-    emit infoUpdate(m_transp->getQueueCount());
-    QByteArray data;
-    if (m_online) {
-        sendByteToMK(REQUEST_STATUS,0,"\nSEND REQUEST_STATUS: ");
-        m_timer->stop();
-    }
-    else {
-        if (serial->isOpen())
-            sendByteToMK(ASK_MCU,0,"SEND ASK_MCU: ");
-    }
-}
-
-
-
-void MainWindow::writeToLogfileMeta(QString name){
-    QFile tempFile;
-    tempFile.setFileName(dirnameDefault + "/" + QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss")+ name);
-    tempFile.open(QIODevice::WriteOnly);
-    tempFile.write(currentShot,32);
-    tempFile.write(endShotLine,endShotLine.size());
-    tempFile.flush();
-    tempFile.close();
 }
 
 void MainWindow::fillTable(QCPGraphDataContainer &dataMap){
@@ -1314,22 +855,16 @@ void MainWindow::fillTable(QCPGraphDataContainer &dataMap){
     QCPGraphDataContainer::const_iterator end = dataMap.end();
     m_table->setRowCount(0);
 
-    for (QCPGraphDataContainer::const_iterator it=begin; it!=end; ++it)
-    {
+    for (QCPGraphDataContainer::const_iterator it=begin; it!=end; ++it){
         m_table->setRowCount(m_table->rowCount()+1);
         m_table->setItem(m_table->rowCount() - 1, 0, new QTableWidgetItem(QString("%1").arg(it->key)));
         m_table->setItem(m_table->rowCount() - 1, 1, new QTableWidgetItem(QString("%1").arg(it->value)));
-
     }
     for(int i=tableSize;i<m_table->rowCount();i++)
         m_table->hideRow(i);
 }
 
-void MainWindow::on_ShdowSet_triggered(){
-
-    ShadowSettings->show();
-}
-
+//Изменения настроек фильтра
 void MainWindow::settingsChanged(){
     filter->updateSettings(ShadowSettings->getShadowFindSettings());//Забрали обновленные настройки
 }
@@ -1338,52 +873,46 @@ void MainWindow::settingsChanged(){
 void MainWindow::saveHistory(QString &dirname){
     QByteArray zeroBytes(100,0),dataBytes;
     QMap <int,QByteArray> tempMap;
-    QList<QMap<int,QByteArray>> dataList;
+    QFile *tempFile = new QFile();
     qint64 error=0;
     filename = QDate::currentDate().toString("yyyy_MM_dd") + QTime::currentTime().toString("__hh_mm_ss");
-    file->setFileName(dirname + "/" + filename);
 
-    if(m_ManagementWidget->m_HistorySettings->shotsComboBox->count()==0){
+    tempFile->setFileName(dirname + "/" + filename);
+
+    if(m_ManagementWidget->m_HistorySettings->curShot()==0){
         QMessageBox::warning(this, "Внимание!", "История пуста. Примите новые сигналы для их сохранения",QMessageBox::Ok);
         return;
     }
-    if(!file->open(QIODevice::ReadWrite)){
+    if(!tempFile->open(QIODevice::ReadWrite)){
         QMessageBox::warning(this, "Внимание!", "Файл для сохранения истории не может быть открыт",QMessageBox::Ok);
         return;
     }
 
-    dataList.append(shotsCH1);
-    dataList.append(shotsCH2);
-    dataList.append(shotsCH3);
-    dataList.append(shotsCH4);
-    QVector<int> lastKeys;
-    lastKeys.append(shotsCH1.isEmpty()?0:shotsCH1.lastKey());
-    lastKeys.append(shotsCH2.isEmpty()?0:shotsCH2.lastKey());
-    lastKeys.append(shotsCH3.isEmpty()?0:shotsCH3.lastKey());
-    lastKeys.append(shotsCH4.isEmpty()?0:shotsCH4.lastKey());
     int maxLastKey=0;
     for(int i=0;i<4;i++)
-        if(lastKeys.at(i)>maxLastKey)
-            maxLastKey = lastKeys.at(i);
+        if( shots.at(i).isEmpty()?0:shots.at(i).lastKey()>maxLastKey )
+            maxLastKey = shots.at(i).lastKey();
 
     for(int j = 0; j<4;j++){
-        tempMap = dataList.at(j);
+        tempMap = shots.at(j);
         for (int i = 0;i<maxLastKey;i++) {
             if(tempMap.contains(i)){
                dataBytes = tempMap[i];
-               if(file->write(dataBytes)<0)
-               error++;
+               if(tempFile->write(dataBytes)<0)
+                error++;
             }
             else
-                if(file->write(zeroBytes)<0)
+                if(tempFile->write(zeroBytes)<0)
                     error++;
-            if(file->write(endShotLine)<0)       //Разделение между шотами одного канала
+
+            if(tempFile->write(endShotLine)<0)       //Разделение между шотами одного канала
                 error++;
         }
-        if(file->write(endChannelLine)<0)        //Разделение между каналами
+        if(tempFile->write(endChannelLine)<0)        //Разделение между каналами
             error++;
     }
-    file->close();
+    tempFile->close();
+    tempFile->deleteLater();
     if(error>0)
         QMessageBox::warning(this, "Внимание!", " При записи лога произошло "+ QString::number(error) + "ошибок!",QMessageBox::Ok);
     else
@@ -1391,10 +920,9 @@ void MainWindow::saveHistory(QString &dirname){
 }
 
 //Открытие истории
-void MainWindow::on_action_triggered()
+void MainWindow::loadHistory()
 {
     QString filename = QFileDialog::getOpenFileName(this, "Открыть историю... ");
-    //QString filename = "C:\qt_pr\STMviewer\build-STMviewer-Desktop_Qt_5_15_2_MinGW_64_bit-Debug\log\2021_10_29__19_17_34";
     QFile *tempFile = new QFile();                                                            //Файл лога
 
     tempFile->setFileName(filename);
@@ -1404,9 +932,11 @@ void MainWindow::on_action_triggered()
     }
     QByteArray tempBuf = tempFile->readAll();                                           //Читаем большой буфер с несколькими кадрами
     tempFile->close();
+    tempFile->deleteLater();
     QByteArray chAll;
     int line;
-    QMap<int,QMap<int,QByteArray>> channels;
+
+    shots.clear();
 
     for(int i=0;i<4;i++){
         line = tempBuf.indexOf(endChannelLine);                 //индекс вхождения строки окончания канала
@@ -1414,318 +944,29 @@ void MainWindow::on_action_triggered()
         tempBuf.remove(0,chAll.size()+endChannelLine.size());   //Удалили первый канал из общего буфера
 
         int n=0;
-        QMap<int,QByteArray> shots;
+        QMap<int,QByteArray> ch;
         while(chAll.size()!=0){
             int endShot = chAll.indexOf(endShotLine);                   //бьем канал на шоты
-            shots.insert(n,chAll.left(endShot));                        //Вставляем первый шот во временный мап
-            chAll.remove(0,shots[n].size()+endChannelLine.size());      //Удаляем шот и линию окончания из канала
+            ch.insert(n,chAll.left(endShot));                        //Вставляем первый шот во временный мап
+            chAll.remove(0,ch[n].size()+endChannelLine.size());      //Удаляем шот и линию окончания из канала
             n++;
         }
-        channels.insert(i,shots);
+        shots.append(ch);
     }
 
-    shotsCH1 = channels[0];
-    shotsCH2 = channels[1];
-    shotsCH3 = channels[2];
-    shotsCH4 = channels[3];
-
-    for(int i = 0; i<shotsCH1.size();i++)
-        m_ManagementWidget->m_HistorySettings->shotsComboBox->addItem(QString::number(i));
+    for(int i = 0; i<shots.at(0).size();i++)
+        m_ManagementWidget->m_HistorySettings->addShot(i);
 
 }
 
-
-/*******************************РАБОТА С ДИАМЕТРАМИ****************************/
-// Обработчик таймаута запроса диаметра
-void MainWindow::handlerGettingDiameterTimer(){
-    m_timer->stop();//Временно не запрашиваем статус
-    sendByteToMK(REQUEST_DIAMETER,0,"\nSEND REQUEST_DIAMETER: ");
-}
-
-void MainWindow::addDataToGraph(){
-    int size = r1FromMCU.size();//Размер данных, которые надо добавить на график
-    for(int i = 0;i<size; i++){
-        xDiameter.append(lastIndex++);
-    }
-    yr1.append(r1FromMCU);
-    yr2.append(r2FromMCU);
-    yc1.append(c1FromMCU);
-    yc2.append(c2FromMCU);
-    ym1.append(m1FromMCU);
-    ym2.append(m2FromMCU);
-    //Фурье
-    xFurie.clear();
-    ySpectr1.clear();
-    ySpectr2.clear();
-    yFurieFiltered1.clear();
-    yFurieFiltered2.clear();
-    yf1.clear();
-    yf2.clear();
-    furie(&yr1,&ySpectr1,&yFurieFiltered1,m_furieLimit);
-    furie(&yr2,&ySpectr2,&yFurieFiltered2,m_furieLimit);
-
-    double freqX = 0;
-    double delta = 926.0/yr1.size(); //926 - частота генерации диаметров
-
-    for (int i=0;i <ySpectr1.size();i++){
-        freqX+=delta;
-        xFurie.append(freqX);
-    }
-
-    yf1.append(yFurieFiltered1);
-    yf2.append(yFurieFiltered2);
-
-
-
-    filled+=size;
-    if(!diameterMode)
-        realTimeDiameter();
-    else
-        collectDiameter();
-    plotDiameter();
-}
-
-
-void MainWindow::plotDiameter()
-{
-    QPen m_pen;
-    //m_pen.setWidth(2);
-    if(m_ManagementWidget->m_DiameterTransmition->diemetersCheckBox->isChecked()){
-        if(r1 == nullptr){
-            r1 = diametersPlot->addGraph();
-            r1->setName("Диаметр по оси Х");
-        }
-        if(r2 == nullptr){
-            r2 = diametersPlot->addGraph();
-            r2->setName("Диаметр по оси Y");
-        }
-       r1->setData(xDiameter,yr1);
-       r2->setData(xDiameter,yr2);
-     }
-     else{
-        if(r1 != nullptr){
-            diametersPlot->removeGraph(r1);
-            r1 = nullptr;
-        }
-        if(r2 != nullptr){
-            diametersPlot->removeGraph(r2);
-            r2 = nullptr;
-        }
-    }
-
-    if(m_ManagementWidget->m_DiameterTransmition->centersCheckBox->isChecked()){
-        if(c1 == nullptr){
-            c1 = diametersPlot->addGraph();
-            c1->setName("Отклонение от центра по оси Х");
-        }
-        if(c2 == nullptr){
-            c2 = diametersPlot->addGraph();
-            c2->setName("Отклонение от центра по оси Y");
-        }
-       c1->setData(xDiameter,yc1);
-       c2->setData(xDiameter,yc2);
-     }
-     else{
-        if(c1 != nullptr){
-            diametersPlot->removeGraph(c1);
-            c1 = nullptr;
-        }
-        if(c2 != nullptr){
-            diametersPlot->removeGraph(c2);
-            c2 = nullptr;
-        }
-    }
-    if(m_ManagementWidget->m_DiameterTransmition->medianFilterCheckbox->isChecked()){
-        if(m1 == nullptr){
-            m1 = diametersPlot->addGraph();
-            m1->setName("Фильтрованный диаметр по оси X");
-            m_pen.setColor(Qt::red);
-            m1->setPen(m_pen);
-        }
-        if(m2 == nullptr){
-            m2 = diametersPlot->addGraph();
-            m2->setName("Фильтрованный диаметр по оси Y");
-            m_pen.setColor(Qt::green);
-            m2->setPen(m_pen);
-        }
-       m1->setData(xDiameter,ym1);
-       m2->setData(xDiameter,ym2);
-     }
-     else{
-        if(m1 != nullptr){
-            diametersPlot->removeGraph(m1);
-            m1 = nullptr;
-
-        }
-        if(m2 != nullptr){
-            diametersPlot->removeGraph(m2);
-            m2 = nullptr;
-        }
-    }
-
-    if(m_ManagementWidget->m_DiameterTransmition->furieCheckbox->isChecked()){
-        if(f1 == nullptr && spec1 == nullptr){
-            m_pen.setColor(Qt::red);
-            f1 = diametersPlot->addGraph();
-            f1->setName("Фильтрованный диаметр по оси X");
-            f1->setPen(m_pen);
-            spec1 = spectrePlot->addGraph();
-            spec1->setName("Спектр радиуса Х");
-            spec1->setPen(m_pen);
-
-        }
-        if(f2 == nullptr && spec2 == nullptr){
-            m_pen.setColor(Qt::green);
-            f2 = diametersPlot->addGraph();
-            f2->setName("Фильтрованный диаметр по оси Y");
-            f2->setPen(m_pen);
-            spec2 = spectrePlot->addGraph();
-            spec2->setName("Спектр радиуса Y");
-            spec2->setPen(m_pen);
-        }
-       f1->setData(xDiameter,yf1);
-       f2->setData(xDiameter,yf2);
-       spec1->setData(xFurie,ySpectr1);
-       spec2->setData(xFurie,ySpectr2);
-     }
-     else{
-        if(f1 != nullptr && spec1 == nullptr){
-            diametersPlot->removeGraph(f1);
-            spectrePlot->removeGraph(spec1);
-            f1 = nullptr;
-            spec1 = nullptr;
-
-        }
-        if(f2 != nullptr && spec2 == nullptr){
-            diametersPlot->removeGraph(f2);
-            spectrePlot->removeGraph(spec2);
-            f2 = nullptr;
-            spec2 = nullptr;
-        }
-    }
-
-
-    diametersPlot->xAxis->rescale();
-    if(!diameterMode)
-        diametersPlot->xAxis->setRange(diametersPlot->xAxis->range().upper, xWindowDiameter, Qt::AlignRight);
-    diametersPlot->replot();
-
-    spectrePlot->replot();
-
-}
-
-void MainWindow::realTimeDiameter(){
-    int overload = filled-xWindowDiameter;//Если данных больше, чем окно, отрезаем хвост
-    if(overload>=0){
-        if(yr1.size()>overload){    //Если то, сколько надо отрезать с конца больше размера вектора, режем
-            xDiameter.remove(0,overload);
-            yr1.remove(0,overload);
-            yr2.remove(0,overload);
-            yc1.remove(0,overload);
-            yc2.remove(0,overload);
-            ym1.remove(0,overload);
-            ym2.remove(0,overload);
-            yf1.remove(0,overload);
-            yf2.remove(0,overload);
-            filled-=overload;
-        }
-        else{//Иначе, режем все
-            clearDiameterVectors();
-            filled=0;
-        }
-    }
-}
-
-void MainWindow::collectDiameter(){
-    m_ManagementWidget->m_DiameterTransmition->collectCountLabel->setNum(filled);//Выводим, сколько точек уже приянто
-}
-
-void MainWindow::furie(QVector<double> *in, QVector<double> *spectr, QVector<double> *out, double  cutOfFreq){
-
-    int size = in->size();
-    double decr;//на сколько Дб надо опустить
-    double re,im;
-    QVector<std::complex<double> > dataIn, dataSpectr(size,0),dataOut(size,0);
-
-    for (int i =0;i<size;i++)
-     dataIn.append(in->at(i));
-
-    // создаем план прямого преобазования фурье
-    fftw_plan plan=fftw_plan_dft_1d(size, (fftw_complex*) &dataIn[0], (fftw_complex*) &dataSpectr[0], FFTW_FORWARD, FFTW_ESTIMATE);
-    fftw_execute(plan);
-    fftw_destroy_plan(plan);
-
-    //Преобразуем выход фурья в децибелы
-    //Фильтрация
-    for (int i=0;i<size/2+1;i++){
-        spectr->append(10*std::log10(sqrt(dataSpectr.at(i).real()*dataSpectr.at(i).real() + dataSpectr.at(i).imag()*dataSpectr.at(i).imag())));
-        if(spectr->at(i)>cutOfFreq && i>0){
-            decr = (spectr->at(i)-cutOfFreq)/10;
-            re = dataSpectr.at(i).real()/(pow(10,decr));
-            im = dataSpectr.at(i).real()/(pow(10,decr));
-            dataSpectr[i].real(re);
-            dataSpectr[i].imag(im);
-            dataSpectr[size-i-1].real(re);
-            dataSpectr[size-i-1].imag(im);
-            (*spectr)[i] = 10*std::log10(sqrt(dataSpectr.at(i).real()*dataSpectr.at(i).real() + dataSpectr.at(i).imag()*dataSpectr.at(i).imag()));
-        }
-        //y2Temp_.append(10*std::log10(sqrt(dataOut.at(i).real()*dataOut.at(i).real() + dataOut.at(i).imag()*dataOut.at(i).imag())));
-    }
-
-    // создаем план обратного преобазования фурье
-    fftw_plan plan2=fftw_plan_dft_1d(dataOut.size(), (fftw_complex*) &dataSpectr[0], (fftw_complex*) &dataOut[0], FFTW_BACKWARD , FFTW_ESTIMATE);
-    fftw_execute(plan2);
-    fftw_destroy_plan(plan2);
-
-    for (int i=0;i<size;i++)
-      out->append(dataOut.at(i).real()/size);
-}
-
-void MainWindow::clearDiameterVectors(){
-    yr1.clear();
-    yr2.clear();
-    yc1.clear();
-    yc2.clear();
-    ym1.clear();
-    ym2.clear();
-    yf1.clear();
-    yf2.clear();
-    ySpectr1.clear();
-    ySpectr2.clear();
-    xDiameter.clear();
-    xFurie.clear();
-}
-
-
-void MainWindow::mouseWheel1(){
-  // if an axis is selected, only allow the direction of that axis to be zoomed
-  // if no axis is selected, both directions may be zoomed
-
-  if (diametersPlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
-      diametersPlot->axisRect()->setRangeZoom(diametersPlot->xAxis->orientation());
-
-  else if (diametersPlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
-    diametersPlot->axisRect()->setRangeZoom(diametersPlot->yAxis->orientation());
-
-  else
-    diametersPlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
-}
-void MainWindow::mouseWheel2(){
-  // if an axis is selected, only allow the direction of that axis to be zoomed
-  // if no axis is selected, both directions may be zoomed
-
-  if (spectrePlot->xAxis->selectedParts().testFlag(QCPAxis::spAxis))
-      spectrePlot->axisRect()->setRangeZoom(spectrePlot->xAxis->orientation());
-
-  else if (spectrePlot->yAxis->selectedParts().testFlag(QCPAxis::spAxis))
-    spectrePlot->axisRect()->setRangeZoom(spectrePlot->yAxis->orientation());
-
-  else
-    spectrePlot->axisRect()->setRangeZoom(Qt::Horizontal|Qt::Vertical);
-}
 
 void MainWindow::onCtrlF5Pressed(){
     m_ManagementWidget->m_plisSettings->setEnabled(true);
+    ui->TableShow->setVisible(true);
+    ui->showConsole->setVisible(true);
+    ui->ShdowSet->setVisible(true);
+    ui->mainToolBar->addWidget(tableSizeSpinbox);
+    ui->mainToolBar->addWidget(tableSizeLabel);
+    tableSizeSpinbox->setVisible(true);
+    tableSizeLabel->setVisible(true);
 }
-
-

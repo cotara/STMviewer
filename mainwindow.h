@@ -17,9 +17,8 @@
 #include "QGroupBox"
 #include "shotviewer.h"
 #include "firfilter.h"
-
+#include "diameterviewer.h"
 #include "shadowSettings\settingsshadowsfinddialog.h"
-#include "controlPanel\maincontrolwidget.h"
 #include "managementPanel\managementwidget.h"
 #include "shadowSettings\catchdatadialog.h"
 #include "qcustomplot/qcustomplot.h"
@@ -87,12 +86,6 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-signals:
-    void statusUpdate(bool);
-    void dataReadyUpdate(int);
-    void infoUpdate(int);
-    void downloadUpdate(bool);
-
 private slots:
     void toDeveloperMode();
     void on_settings_triggered();
@@ -102,7 +95,6 @@ private slots:
     void sendVectorToMK(char dst, QVector<double> dataV, const QString &msg);
     void chOrderSend(int);
     int countCheckedCH(void);
-    void manualGetShotButton();
     void getButtonClicked(bool checked);
     void selectShot();
     void on_clearButton();
@@ -112,23 +104,16 @@ private slots:
     void handlerTranspError();
     void reSentInc();
     void handlerTimer();
-    void handlerGettingDiameterTimer();
 
-    //Запись в файл
-    void writeToLogfileMeta(QString name);
     //отрисовка таблицы
     void fillTable(QCPGraphDataContainer &dataMap);
-    void on_ShdowSet_triggered();
 
     //Изменение настроек расчетов
     void settingsChanged();
 
-
     void saveHistory(QString &dirname);     //Запись лога
-    void on_action_triggered();             //Чтение лога
+    void loadHistory();             //Чтение лога
 
-    void mouseWheel1();
-    void mouseWheel2();
     void onCtrlF5Pressed();
 
 private:
@@ -137,18 +122,18 @@ private:
     QSerialPort *serial;
     Slip *m_slip;
     Transp *m_transp;
-    QTimer *m_timer,*m_GettingDiameterTimer;
+    QTimer *m_timer;
 
     QVector <double> fromBytes(QByteArray &bytes);
     //Интерфейс
     QVBoxLayout *layoutV;
-    MainControlWidget *m_MainControlWidget;
     ManagementWidget *m_ManagementWidget;
     QTableWidget *m_table;
     Console *m_console;
     QTabWidget *m_tab;
 
     ShotViewer *viewer;
+    DiameterViewer *d_viewer;
     firFilter *filter;
     SettingsShadowsFindDialog *ShadowSettings;
     StatusBar *statusBar;
@@ -158,10 +143,9 @@ private:
     QSpinBox  *tableSizeSpinbox;
 
     //Переменные
-    QMap<int,QByteArray> shotsCH1,shotsCH2,shotsCH2In,shotsCH3,shotsCH4,shotsCH4In;
-    QByteArray currentShot;
+    QList<QMap<int,QByteArray>> shots;
     int shotCountRecieved=0;                                        //Текущее количество отмеченных каналов и текущее количество принятых шотов
-    int packetSize=100, countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
+    int countAvaibleDots=0,countWaitingDots=0;           //Размер рабиения (100 по умолчанию), количество доступных точек в плате, количество ожидаемых точек от платы
     int signalSize = 10800;
     int countRecievedDots=0, channelsOrder=10;                    //Количество полученных точек, последовательность каналов, отправляемая в плату
     int notYetFlag=0;                                                       //Флаг, означающий, что не все каналы запрошеы и получены (если отмечено более одного канала, а кнопку получить жмем 1 раз)
@@ -169,15 +153,14 @@ private:
     QVector<double> diameter, diameterPlis;
     QVector<double> finalDiamCenters{0,0,0,0};
     QVector<double> tempPLISextremums1{3735,3795,5135,5191},tempPLISextremums2{973,1035,3010,3078};
-    int xWindowDiameter = 5000;
     int tableSize=100;
     bool m_online = false;
-    QCPGraph *r1=nullptr,*r2=nullptr,*c1=nullptr,*c2=nullptr,*m1=nullptr,*m2=nullptr,*f1=nullptr,*f2=nullptr,*spec1=nullptr,*spec2=nullptr;
+
     //Работа с файлами
     QDir *dir;
     QString dirnameDefault = "log";
     QString filename;
-    QFile *file;
+
     QByteArray endShotLine = QByteArray::fromRawData("\xFF\x00\xFF\x00", 4);
     QByteArray endChannelLine = QByteArray::fromRawData("\xFE\x00\xFE\x00", 4);
     union conversation_t{
@@ -199,7 +182,6 @@ private:
     void furie( QVector<double> *in,QVector<double> *spectr,QVector<double> *out, double  cutOfFreq);
 
     void clearDiameterVectors();
-    void addDataToGraph();
     QVector<double> xDiameter,yr1,yr2,yc1,yc2,ym1,ym2,yf1,yf2;//То, что выводится на график
     QVector<double> xFurie,ySpectr1,ySpectr2,yFurieFiltered1,yFurieFiltered2;//Фурье
     QVector<double> shadowsFromMCU,r1FromMCU,r2FromMCU,c1FromMCU,c2FromMCU,m1FromMCU,m2FromMCU;//То, что приходит с MCU
@@ -211,7 +193,7 @@ private:
    const QVector<double> ldm50Params = {3750,3750,283500,283500,56400,56400};
    const double ldm20Res = 4, ldm50Res = 9.325, ldm120Res = 40, ldm121Res = 20;
    int ldmModel = 20;
-   int shift1Factor = 0,shift2Factor = 0;
+   QVector<int> shiftFactor={0,0};
    QVector<double> ldmGeomParams = ldm20Params;
    char errorCh1=0, errorCh2=0;
    bool wordLen=false;

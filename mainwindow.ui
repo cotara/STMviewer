@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>900</width>
-    <height>200</height>
+    <height>430</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -46,7 +46,7 @@
      <x>0</x>
      <y>0</y>
      <width>900</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -59,7 +59,7 @@
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
+     <enum>Qt::LayoutDirection::LeftToRight</enum>
     </property>
     <property name="autoFillBackground">
      <bool>false</bool>
@@ -69,15 +69,12 @@
     </property>
     <addaction name="ShdowSet"/>
     <addaction name="AutoRange"/>
-    <addaction name="SaveLog"/>
-    <addaction name="action"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
      <string>Вид</string>
     </property>
-    <addaction name="ShowMainControl"/>
-    <addaction name="ShowManagementPanel"/>
+    <addaction name="ShowRightPanel"/>
     <addaction name="TableShow"/>
     <addaction name="showConsole"/>
    </widget>
@@ -87,7 +84,7 @@
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="layoutDirection">
-    <enum>Qt::LeftToRight</enum>
+    <enum>Qt::LayoutDirection::LeftToRight</enum>
    </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
@@ -99,15 +96,12 @@
    <addaction name="disconnect"/>
    <addaction name="settings"/>
    <addaction name="separator"/>
-   <addaction name="SaveLog"/>
-   <addaction name="action"/>
    <addaction name="separator"/>
    <addaction name="ShdowSet"/>
    <addaction name="AutoRange"/>
    <addaction name="showConsole"/>
    <addaction name="TableShow"/>
-   <addaction name="ShowMainControl"/>
-   <addaction name="ShowManagementPanel"/>
+   <addaction name="ShowRightPanel"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="connect">
@@ -176,22 +170,7 @@
     <string>Отобразить значения сигнала в таблице</string>
    </property>
   </action>
-  <action name="ShowMainControl">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="res.qrc">
-     <normaloff>:/1/Resources/Leftsidebar.svg</normaloff>:/1/Resources/Leftsidebar.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Парель контроля</string>
-   </property>
-   <property name="toolTip">
-    <string>Показать панель контроля</string>
-   </property>
-  </action>
-  <action name="ShowManagementPanel">
+  <action name="ShowRightPanel">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -216,24 +195,6 @@
    </property>
    <property name="toolTip">
     <string>Автомасштаб</string>
-   </property>
-  </action>
-  <action name="SaveLog">
-   <property name="icon">
-    <iconset resource="res.qrc">
-     <normaloff>:/1/Resources/floppy-disk.png</normaloff>:/1/Resources/floppy-disk.png</iconset>
-   </property>
-   <property name="text">
-    <string>Сохранить историю в файл</string>
-   </property>
-  </action>
-  <action name="action">
-   <property name="icon">
-    <iconset resource="res.qrc">
-     <normaloff>:/1/Resources/open.png</normaloff>:/1/Resources/open.png</iconset>
-   </property>
-   <property name="text">
-    <string>Открыть файл истории</string>
    </property>
   </action>
  </widget>

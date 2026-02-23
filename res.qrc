@@ -153,6 +153,9 @@
         <file>Resources/waiting.gif</file>
         <file>Resources/Rightsidebar.png</file>
         <file>Resources/scale.png</file>
+        <file>Resources/doubleset.png</file>
+        <file>Resources/empty-set.png</file>
+        <file>Resources/okSet.png</file>
     </qresource>
     <qresource prefix="/qss">
         <file>style.css</file>

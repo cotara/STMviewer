@@ -126,7 +126,10 @@ QGroupBox{
     padding-top: 15px;
 }
 QGroupBox::title {
-    subcontrol-position: top center; /* position at the top center */
+    subcontrol-origin: margin;
+    subcontrol-position: top left; /* position at the top center */
+    left: 8px;
+    padding: 0px 5px 0px 5px;
     color: #003AA3;
 }
 
@@ -154,3 +157,16 @@ QProgressBar::chunk {
     width: 10px;
     margin: 0.5px;
 }
+/* Стили для ScrollArea и ее контента */
+QScrollArea {
+    background-color: white;
+    border: none;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: white;
+}
+
+QScrollArea > QWidget > QWidget > QGroupBox {
+    background-color: white;
+}/**/

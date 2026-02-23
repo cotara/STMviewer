@@ -1,17 +1,17 @@
 #include "transmitionsettings.h"
 #include "qmessagebox.h"
 
-TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
+TransmitionSettings::TransmitionSettings(QWidget *parent) : CollapsibleGroupBox(parent)
 {
     setTitle("Параметры передачи");
     setObjectName("transmitionsettings");
     layout = new QVBoxLayout(this);
 
     //Настройки передачи
-    chCheckBox.append(new QCheckBox("Канал 1. Нефильтрованный"));
-    chCheckBox.append(new QCheckBox("Канал 1. Фильтрованный"));
-    chCheckBox.append(new QCheckBox("Канал 2. Нефильтрованный"));
-    chCheckBox.append(new QCheckBox("Канал 2. Фильтрованный"));
+    chCheckBox.append(new QCheckBox("К1.Origin"));
+    chCheckBox.append(new QCheckBox("К1.Filter"));
+    chCheckBox.append(new QCheckBox("К2.Origin"));
+    chCheckBox.append(new QCheckBox("К2.Filter"));
 
 
     //Сдвиг фильтрованного сигнала
@@ -31,8 +31,8 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
     shift2Layout->addWidget(shift2Label);
     shift2Layout->addWidget(shift2Spinbox);
 
-    connect(shift1Spinbox,&QSpinBox::valueChanged, this, [=](int val) {emit shiftChanged(1, val);});
-    connect(shift2Spinbox,&QSpinBox::valueChanged, this, [=](int val) {emit shiftChanged(2, val);});
+    connect(shift1Spinbox,&QSpinBox::valueChanged, this, [=](int val) {emit shiftChanged(0, val);});
+    connect(shift2Spinbox,&QSpinBox::valueChanged, this, [=](int val) {emit shiftChanged(1, val);});
 
     layout->addLayout(shift1Layout);
     layout->addLayout(shift2Layout);
@@ -48,20 +48,19 @@ TransmitionSettings::TransmitionSettings(QWidget *parent) : QGroupBox(parent)
         emit getButtonClicked(en);
     });
 
+    chChkLayout = new QHBoxLayout();
+    layout->addLayout(chChkLayout);
     for(int i=0;i<chCheckBox.count();i++){
-        layout->addWidget(chCheckBox.at(i));
-        connect(chCheckBox.at(i),&QCheckBox::checkStateChanged,this, [=](){
-            if(chCheckBox.at(i)->isChecked()){
+        chChkLayout->addWidget(chCheckBox.at(i));
+        connect(chCheckBox.at(i),&QCheckBox::checkStateChanged,this, [this, i](){
+            if(qobject_cast<QCheckBox*>(sender()) -> isChecked())
                 order|= 1<<i;
-            }
             else
                 order&=~(1<<i);
 
             emit chChooseChanged(order);
         });
     }
-
-
 
     chCheckBox.at(1)->setChecked(true);
     chCheckBox.at(3)->setChecked(true);
